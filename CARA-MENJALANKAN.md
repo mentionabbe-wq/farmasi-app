@@ -35,7 +35,19 @@ npm run dev
 
 ## Deploy ke Server / VPS
 
-### Cara 1 — Node.js langsung + PM2
+### Cara 1 — CasaOS (paling mudah)
+
+1. Buka CasaOS → **App Store** → **Custom Install**
+2. Paste URL berikut:
+   ```
+   https://raw.githubusercontent.com/mentionabbe-wq/farmasi-app/main/docker-compose.casaos.yml
+   ```
+3. Klik **Install** → tunggu selesai
+4. Buka `http://<ip-server>:3000`
+
+Data tersimpan otomatis di `/DATA/AppData/farmasi-app/` dan tidak hilang saat update.
+
+### Cara 2 — Node.js langsung + PM2
 ```bash
 npm install -g pm2
 npm install
@@ -44,15 +56,15 @@ pm2 start server.js --name farmasi-app
 pm2 startup   # auto-start saat server reboot
 ```
 
-### Cara 2 — Docker
+### Cara 3 — Docker Compose
 ```bash
-docker-compose up -d
+docker compose up -d
 ```
 Buka browser: http://localhost:3000
 
 Data tersimpan di Docker volume (tidak hilang saat container restart).
 
-### Cara 3 — Railway / Render (gratis)
+### Cara 4 — Railway / Render (cloud gratis)
 1. Push folder ini ke GitHub
 2. Buat project baru di https://railway.app atau https://render.com
 3. Hubungkan ke repo GitHub
@@ -64,19 +76,21 @@ Data tersimpan di Docker volume (tidak hilang saat container restart).
 ## Struktur File
 ```
 farmasi-app/
-├── server.js          ← titik masuk server
+├── server.js                 ← titik masuk server
 ├── src/
-│   ├── db.js          ← setup SQLite
-│   └── routes/        ← API endpoints
+│   ├── db.js                 ← JSON file storage
+│   └── routes/               ← API endpoints
 ├── public/
-│   ├── index.html     ← frontend SPA
+│   ├── index.html            ← frontend SPA
 │   ├── css/style.css
 │   └── js/
-│       ├── api.js     ← fungsi panggil API
-│       └── app.js     ← logika UI
-├── data/              ← database SQLite (auto-dibuat)
-├── uploads/           ← file arsip yang diupload
-└── Dockerfile
+│       ├── api.js            ← fungsi panggil API
+│       └── app.js            ← logika UI
+├── data/                     ← file JSON data (auto-dibuat)
+├── uploads/                  ← file arsip yang diupload
+├── Dockerfile
+├── docker-compose.yml        ← untuk development / Docker lokal
+└── docker-compose.casaos.yml ← untuk instalasi CasaOS
 ```
 
 ## API Endpoints

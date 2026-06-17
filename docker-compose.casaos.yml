@@ -1,0 +1,63 @@
+name: farmasi-app
+
+services:
+  app:
+    image: ghcr.io/mentionabbe-wq/farmasi-app:latest
+    container_name: farmasi-app
+    ports:
+      - target: 3000
+        published: "3000"
+        protocol: tcp
+    volumes:
+      - type: bind
+        source: /DATA/AppData/farmasi-app/data
+        target: /app/data
+      - type: bind
+        source: /DATA/AppData/farmasi-app/uploads
+        target: /app/uploads
+    environment:
+      - PORT=3000
+      - DATA_DIR=/app/data
+      - UPLOAD_DIR=/app/uploads
+      - MAX_FILE_SIZE=10485760
+    restart: unless-stopped
+    network_mode: bridge
+
+x-casaos:
+  architectures:
+    - amd64
+    - arm64
+  main: app
+  description:
+    en_us: >-
+      Pharmacy Daily Notes — manage monthly budget, drug purchases, stock
+      mutations to inpatient/outpatient pharmacy, daily sales by category
+      (BPJS, General, Insurance), document archive (SOP, incident reports),
+      and export recap to Excel.
+    id_id: >-
+      Catatan Harian Farmasi — kelola anggaran bulanan, pembelian obat,
+      mutasi stok ke farmasi ranap/ralan, penjualan harian per kategori
+      (BPJS, Umum, Asuransi), arsip dokumen (SPO, kronologi), dan
+      download rekap ke Excel.
+  tagline:
+    en_us: Pharmacy management, simplified
+    id_id: Manajemen farmasi yang mudah dan lengkap
+  developer: mentionabbe-wq
+  author: mentionabbe-wq
+  icon: https://raw.githubusercontent.com/mentionabbe-wq/farmasi-app/main/public/icon.svg
+  thumbnail: ""
+  title:
+    en_us: Farmasi App
+    id_id: Aplikasi Farmasi
+  category: Utilities
+  port_map: "3000"
+  scheme: http
+  index: /
+  tips:
+    before_install:
+      en_us: >-
+        Data is saved in /DATA/AppData/farmasi-app/ on your CasaOS host.
+        It persists across updates and restarts.
+      id_id: >-
+        Data tersimpan di /DATA/AppData/farmasi-app/ di host CasaOS Anda.
+        Data tetap aman saat update atau restart container.
