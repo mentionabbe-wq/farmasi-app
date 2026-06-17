@@ -1,0 +1,279 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Catatan Harian Farmasi</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@3.0.0/dist/tabler-icons.min.css">
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+<div id="app">
+
+  <header class="topbar">
+    <div class="topbar-icon"><i class="ti ti-pill"></i></div>
+    <div>
+      <div class="topbar-title">Catatan Harian Farmasi</div>
+      <div class="topbar-sub" id="topbar-date"></div>
+    </div>
+    <div class="topbar-rs">RS Medika</div>
+  </header>
+
+  <nav class="nav">
+    <button class="nav-btn active" data-page="dashboard"><i class="ti ti-layout-dashboard"></i>Dashboard</button>
+    <button class="nav-btn" data-page="anggaran"><i class="ti ti-wallet"></i>Anggaran</button>
+    <button class="nav-btn" data-page="pembelian"><i class="ti ti-shopping-cart"></i>Pembelian</button>
+    <button class="nav-btn" data-page="mutasi"><i class="ti ti-transfer"></i>Mutasi</button>
+    <button class="nav-btn" data-page="penjualan"><i class="ti ti-cash"></i>Penjualan</button>
+    <button class="nav-btn" data-page="arsip"><i class="ti ti-archive"></i>Arsip</button>
+    <button class="nav-btn" data-page="rekap"><i class="ti ti-report-analytics"></i>Rekap</button>
+  </nav>
+
+  <main class="content">
+
+    <!-- DASHBOARD -->
+    <section class="page active" id="page-dashboard">
+      <div class="cards-row" id="dash-cards"></div>
+      <div class="grid-2">
+        <div class="card">
+          <div class="section-title"><span><i class="ti ti-wallet"></i> Anggaran Aktif</span></div>
+          <div id="dash-anggaran"></div>
+        </div>
+        <div class="card">
+          <div class="section-title"><span><i class="ti ti-cash"></i> Penjualan Hari Ini</span></div>
+          <div id="dash-penjualan"></div>
+        </div>
+      </div>
+      <div class="grid-2" style="margin-top:12px">
+        <div class="card">
+          <div class="section-title"><span><i class="ti ti-transfer"></i> Mutasi Terakhir</span></div>
+          <div id="dash-mutasi"></div>
+        </div>
+        <div class="card">
+          <div class="section-title"><span><i class="ti ti-shopping-cart"></i> Pembelian Terakhir</span></div>
+          <div id="dash-pembelian"></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ANGGARAN -->
+    <section class="page" id="page-anggaran">
+      <div class="card">
+        <div class="section-title">Input Anggaran Periode</div>
+        <div class="form-row">
+          <div class="form-group"><label>Bulan / Tahun</label><input type="month" id="ang-bulan"></div>
+          <div class="form-group"><label>Total Anggaran (Rp)</label><input type="number" id="ang-total" placeholder="0"></div>
+        </div>
+        <div class="form-row">
+          <div class="form-group"><label>Alokasi Ranap (Rp)</label><input type="number" id="ang-ranap" placeholder="0"></div>
+          <div class="form-group"><label>Alokasi Ralan (Rp)</label><input type="number" id="ang-ralan" placeholder="0"></div>
+        </div>
+        <div class="form-group" style="margin-bottom:12px"><label>Keterangan</label><textarea id="ang-ket" placeholder="Catatan anggaran..."></textarea></div>
+        <button class="btn primary" id="ang-save-btn"><i class="ti ti-device-floppy"></i>Simpan Anggaran</button>
+      </div>
+      <div class="card">
+        <div class="section-title">Riwayat Anggaran</div>
+        <div class="table-wrap">
+          <table><thead><tr><th>Periode</th><th>Total Anggaran</th><th>Ranap</th><th>Ralan</th><th>Terpakai</th><th>Sisa</th><th>Keterangan</th><th></th></tr></thead>
+          <tbody id="ang-tbody"></tbody></table>
+        </div>
+      </div>
+    </section>
+
+    <!-- PEMBELIAN -->
+    <section class="page" id="page-pembelian">
+      <div class="card">
+        <div class="section-title">Input Pembelian</div>
+        <div class="form-row triple">
+          <div class="form-group"><label>Tanggal</label><input type="date" id="beli-tgl"></div>
+          <div class="form-group"><label>No. Faktur</label><input type="text" id="beli-faktur" placeholder="INV-001"></div>
+          <div class="form-group"><label>Supplier</label><input type="text" id="beli-supplier" placeholder="Nama supplier"></div>
+        </div>
+        <div class="form-row triple">
+          <div class="form-group"><label>Nama Obat / Alkes</label><input type="text" id="beli-nama" placeholder="Nama item"></div>
+          <div class="form-group"><label>Jumlah</label><input type="number" id="beli-jml" placeholder="0"></div>
+          <div class="form-group"><label>Satuan</label><input type="text" id="beli-satuan" placeholder="Tablet / Vial / Box"></div>
+        </div>
+        <div class="form-row">
+          <div class="form-group"><label>Harga Satuan (Rp)</label><input type="number" id="beli-harga" placeholder="0"></div>
+          <div class="form-group"><label>Periode Anggaran</label><select id="beli-anggaran"><option value="">-- Pilih --</option></select></div>
+        </div>
+        <div class="form-group" style="margin-bottom:12px"><label>Keterangan</label><textarea id="beli-ket" placeholder="Catatan..."></textarea></div>
+        <button class="btn primary" id="beli-save-btn"><i class="ti ti-device-floppy"></i>Simpan Pembelian</button>
+      </div>
+      <div class="card">
+        <div class="section-title">Daftar Pembelian</div>
+        <div class="table-wrap">
+          <table><thead><tr><th>Tanggal</th><th>Faktur</th><th>Supplier</th><th>Item</th><th>Jml</th><th>Sat.</th><th>Harga Sat.</th><th>Total</th><th>Anggaran</th><th></th></tr></thead>
+          <tbody id="beli-tbody"></tbody></table>
+        </div>
+      </div>
+    </section>
+
+    <!-- MUTASI -->
+    <section class="page" id="page-mutasi">
+      <div class="card">
+        <div class="section-title">Input Mutasi Stok</div>
+        <div class="form-row triple">
+          <div class="form-group"><label>Tanggal</label><input type="date" id="mut-tgl"></div>
+          <div class="form-group"><label>No. Surat Mutasi</label><input type="text" id="mut-no" placeholder="MUT-001"></div>
+          <div class="form-group"><label>Tujuan</label><select id="mut-tujuan-select"></select></div>
+        </div>
+        <div class="form-row triple">
+          <div class="form-group"><label>Nama Obat / Alkes</label><input type="text" id="mut-nama" placeholder="Nama item"></div>
+          <div class="form-group"><label>Jumlah</label><input type="number" id="mut-jml" placeholder="0"></div>
+          <div class="form-group"><label>Satuan</label><input type="text" id="mut-satuan" placeholder="Tablet / Vial"></div>
+        </div>
+        <div class="form-row">
+          <div class="form-group"><label>Harga Satuan (Rp)</label><input type="number" id="mut-harga" placeholder="0"></div>
+          <div class="form-group"><label>Petugas</label><input type="text" id="mut-petugas" placeholder="Nama petugas"></div>
+        </div>
+        <div class="form-group" style="margin-bottom:12px"><label>Keterangan</label><textarea id="mut-ket" placeholder="Catatan..."></textarea></div>
+        <button class="btn primary" id="mut-save-btn"><i class="ti ti-device-floppy"></i>Simpan Mutasi</button>
+      </div>
+      <div class="card">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
+          <div style="font-size:14px;font-weight:500">Data Mutasi per Tujuan</div>
+          <button class="btn sm" id="btn-kelola-tujuan"><i class="ti ti-settings-2"></i>Kelola Tujuan</button>
+        </div>
+        <div class="tab-bar" id="mut-tab-bar"></div>
+        <div id="mut-tab-panels"></div>
+      </div>
+    </section>
+
+    <!-- PENJUALAN -->
+    <section class="page" id="page-penjualan">
+      <div class="card">
+        <div class="section-title">
+          Input Penjualan Harian
+          <button class="btn sm" id="btn-kelola-kategori"><i class="ti ti-settings-2"></i>Kelola Kategori</button>
+        </div>
+        <div class="form-row">
+          <div class="form-group"><label>Tanggal</label><input type="date" id="pj-tgl"></div>
+          <div class="form-group"><label>Shift / Keterangan</label><input type="text" id="pj-shift" placeholder="Pagi / Siang / Sore"></div>
+        </div>
+        <div class="divider"></div>
+        <div class="form-section-label">Jumlah Resep &amp; Nominal per Kategori</div>
+        <div id="pj-kat-inputs"></div>
+        <div class="divider"></div>
+        <div class="pj-preview-row"><span style="color:var(--tx2)">Total Resep</span><span id="pj-total-resep-preview" style="font-weight:500">0 resep</span></div>
+        <div class="pj-preview-row"><span style="color:var(--tx2)">Total Nominal</span><span id="pj-total-nominal-preview" class="text-green">Rp 0</span></div>
+        <button class="btn primary" id="pj-save-btn" style="margin-top:12px"><i class="ti ti-device-floppy"></i>Simpan Penjualan</button>
+      </div>
+      <div class="cards-row" id="pj-summary-cards"></div>
+      <div class="card">
+        <div class="section-title">
+          Riwayat Penjualan
+          <input type="month" id="pj-filter-bulan" class="input-sm">
+        </div>
+        <div class="table-wrap" id="pj-table-wrap"></div>
+      </div>
+    </section>
+
+    <!-- ARSIP -->
+    <section class="page" id="page-arsip">
+      <div class="card">
+        <div class="section-title">Upload Dokumen Arsip</div>
+        <div class="form-row">
+          <div class="form-group"><label>Judul Dokumen</label><input type="text" id="arsip-judul" placeholder="Nama dokumen"></div>
+          <div class="form-group"><label>Kategori</label>
+            <select id="arsip-kategori">
+              <option value="SPO">SPO (Standar Prosedur Operasional)</option>
+              <option value="Kronologi">Kronologi Kejadian</option>
+              <option value="Laporan">Laporan</option>
+              <option value="SK">Surat Keputusan</option>
+              <option value="Lainnya">Lainnya</option>
+            </select>
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group"><label>Tanggal Dokumen</label><input type="date" id="arsip-tgl"></div>
+          <div class="form-group"><label>No. Dokumen</label><input type="text" id="arsip-no" placeholder="SPO/FARM/001"></div>
+        </div>
+        <div class="form-group" style="margin-bottom:12px"><label>Deskripsi</label><textarea id="arsip-deskripsi" placeholder="Deskripsi singkat dokumen..."></textarea></div>
+        <div class="file-upload-area" id="file-upload-area">
+          <input type="file" id="arsip-file" accept=".pdf,.doc,.docx,.xls,.xlsx,.jpg,.jpeg,.png" multiple>
+          <i class="ti ti-cloud-upload upload-icon"></i>
+          <div class="upload-label">Klik untuk upload atau seret file ke sini</div>
+          <div class="upload-hint">PDF, Word, Excel, JPG, PNG — maks. 10MB per file</div>
+        </div>
+        <div id="file-preview" class="tag-row"></div>
+        <button class="btn primary" id="arsip-save-btn" style="margin-top:12px"><i class="ti ti-device-floppy"></i>Simpan Arsip</button>
+      </div>
+      <div class="card">
+        <div class="section-title">
+          Daftar Arsip
+          <select id="arsip-filter-kat" class="input-sm">
+            <option value="">Semua Kategori</option>
+            <option value="SPO">SPO</option>
+            <option value="Kronologi">Kronologi</option>
+            <option value="Laporan">Laporan</option>
+            <option value="SK">SK</option>
+            <option value="Lainnya">Lainnya</option>
+          </select>
+        </div>
+        <div id="arsip-list"></div>
+      </div>
+    </section>
+
+    <!-- REKAP -->
+    <section class="page" id="page-rekap">
+      <div class="card">
+        <div class="section-title">Filter Rekap</div>
+        <div class="form-row">
+          <div class="form-group"><label>Dari Tanggal</label><input type="date" id="rekap-dari"></div>
+          <div class="form-group"><label>Sampai Tanggal</label><input type="date" id="rekap-sampai"></div>
+        </div>
+        <button class="btn" id="rekap-filter-btn"><i class="ti ti-search"></i>Tampilkan Rekap</button>
+      </div>
+      <div class="cards-row" id="rekap-summary"></div>
+      <div class="grid-2">
+        <div class="card"><div class="section-title"><span><i class="ti ti-cash"></i> Rekap Penjualan</span></div><div id="rekap-penjualan"></div></div>
+        <div class="card"><div class="section-title"><span><i class="ti ti-shopping-cart"></i> Rekap Pembelian</span></div><div id="rekap-pembelian"></div></div>
+      </div>
+      <div class="card" style="margin-top:12px">
+        <div class="section-title"><span><i class="ti ti-transfer"></i> Rekap Mutasi per Tujuan</span></div>
+        <div id="rekap-mutasi"></div>
+      </div>
+      <div class="action-row" style="margin-top:4px">
+        <a id="btn-excel" class="btn excel" href="#"><i class="ti ti-file-spreadsheet"></i>Download Rekap Excel</a>
+        <button class="btn" onclick="window.print()"><i class="ti ti-printer"></i>Cetak</button>
+      </div>
+    </section>
+
+  </main>
+</div>
+
+<!-- MODAL TUJUAN -->
+<div class="modal-backdrop" id="modal-tujuan">
+  <div class="modal">
+    <div class="modal-title"><i class="ti ti-map-pin"></i>Kelola Tujuan Mutasi</div>
+    <div id="tujuan-list-modal"></div>
+    <div class="modal-input-row">
+      <input type="text" id="tujuan-new-input" placeholder="Nama tujuan baru...">
+      <button class="btn primary" id="tujuan-add-btn"><i class="ti ti-plus"></i>Tambah</button>
+    </div>
+    <button class="btn full-w" id="tujuan-close-btn">Tutup</button>
+  </div>
+</div>
+
+<!-- MODAL KATEGORI -->
+<div class="modal-backdrop" id="modal-kategori">
+  <div class="modal">
+    <div class="modal-title"><i class="ti ti-tag"></i>Kelola Kategori Penjualan</div>
+    <div id="kategori-list-modal"></div>
+    <div class="modal-input-row">
+      <input type="text" id="kategori-new-input" placeholder="Nama kategori baru...">
+      <button class="btn primary" id="kategori-add-btn"><i class="ti ti-plus"></i>Tambah</button>
+    </div>
+    <button class="btn full-w" id="kategori-close-btn">Tutup</button>
+  </div>
+</div>
+
+<div id="toast"></div>
+<div id="loading-overlay"><div class="spinner"></div></div>
+
+<script src="js/api.js"></script>
+<script src="js/app.js"></script>
+</body>
+</html>
