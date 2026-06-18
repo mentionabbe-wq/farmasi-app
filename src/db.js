@@ -31,5 +31,8 @@ if (!fs.existsSync(fp('kategori_pj'))) {
 ;['anggaran','pembelian','mutasi','penjualan','arsip'].forEach(n => {
   if (!fs.existsSync(fp(n))) write(n, [])
 })
+if (!fs.existsSync(fp('settings'))) {
+  write('settings', { rs_name: 'RS Medika' })
+}
 
 module.exports = { read, write }

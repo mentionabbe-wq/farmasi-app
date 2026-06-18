@@ -7,7 +7,7 @@ const BADGE = ['blue','green','amber','purple','coral','teal','gray']
 const KAT_HEX = ['#185FA5','#0F6E56','#854F0B','#3C3489','#993C1D','#085041','#444441']
 const KAT_COLORS_ARSIP = { SPO:'blue', Kronologi:'amber', Laporan:'green', SK:'purple', Lainnya:'gray' }
 
-let STATE = { tujuan: [], kategori: [], activeMutTab: null }
+let STATE = { tujuan: [], kategori: [], activeMutTab: null, activePjTab: '__all__' }
 
 function showLoading(v) { document.getElementById('loading-overlay').classList.toggle('show', v) }
 
@@ -137,9 +137,9 @@ async function loadPembelian() {
 
 function renderPembelianTable(data) {
   const tbody = qs('beli-tbody')
-  if (!data.length) { tbody.innerHTML = '<tr><td colspan="10"><div class="empty">Belum ada data pembelian</div></td></tr>'; return }
+  if (!data.length) { tbody.innerHTML = '<tr><td colspan="9"><div class="empty">Belum ada data pembelian</div></td></tr>'; return }
   tbody.innerHTML = data.map(d => `<tr>
-    <td>${d.tgl}</td><td style="font-size:12px">${d.faktur||'-'}</td><td>${d.supplier||'-'}</td><td>${d.nama}</td>
+    <td>${d.tgl}</td><td>${d.supplier||'-'}</td><td>${d.nama}</td>
     <td style="text-align:right">${fmtN(d.jml)}</td><td>${d.satuan||''}</td>
     <td style="text-align:right">${fmt(d.harga)}</td><td style="text-align:right;font-weight:600">${fmt(d.total)}</td>
     <td>${d.anggaran?`<span class="badge gray">${d.anggaran}</span>`:'-'}</td>
@@ -151,8 +151,8 @@ qs('beli-save-btn').addEventListener('click', async () => {
   if (!nama || !jml) { toast('Nama item dan jumlah wajib diisi', 'error'); return }
   showLoading(true)
   try {
-    await API.savePembelian({ tgl: qs('beli-tgl').value||today(), faktur: qs('beli-faktur').value, supplier: qs('beli-supplier').value, nama, jml: +jml, satuan: qs('beli-satuan').value, harga: +(qs('beli-harga').value||0), anggaran: qs('beli-anggaran').value, ket: qs('beli-ket').value })
-    ;['beli-tgl','beli-faktur','beli-supplier','beli-nama','beli-jml','beli-satuan','beli-harga','beli-ket'].forEach(id => qs(id).value = '')
+    await API.savePembelian({ tgl: qs('beli-tgl').value||today(), supplier: qs('beli-supplier').value, nama, jml: +jml, satuan: qs('beli-satuan').value, harga: +(qs('beli-harga').value||0), anggaran: qs('beli-anggaran').value, ket: qs('beli-ket').value })
+    ;['beli-tgl','beli-supplier','beli-nama','beli-jml','beli-satuan','beli-harga','beli-ket'].forEach(id => qs(id).value = '')
     qs('beli-anggaran').value = ''
     renderPembelianTable(await API.getPembelian())
     toast('Pembelian disimpan')
@@ -247,7 +247,7 @@ async function openModal(type) {
 }
 async function closeModal(type) {
   qs('modal-' + type).classList.remove('open')
-  if (type === 'tujuan') { const [t, m] = await Promise.all([API.getTujuan(), API.getMutasi()]); STATE.tujuan = t; buildMutasiTabs(t, m); renderMutasiSelect(t) }
+  if (type === 'tujuan') { const [t, m] = await Promise.all([API.getTujuan(), API.getMutasi()]); STATE.tujuan = t; buildMutasiTabs(t, m); renderMutasiSelect(t); renderPjTujuanSelect(t) }
   if (type === 'kategori') { const k = await API.getKategori(); STATE.kategori = k; renderPjInputs(k); await renderPjSummary() }
 }
 
@@ -278,44 +278,46 @@ document.addEventListener('click', async e => {
 let pendingPjFiles = []
 
 async function loadPenjualan() {
-  const kats = await API.getKategori()
+  const [kats, tujuan] = await Promise.all([API.getKategori(), API.getTujuan()])
   STATE.kategori = kats
+  STATE.tujuan = tujuan
   renderPjInputs(kats)
+  renderPjTujuanSelect(tujuan)
   await renderPjSummary()
   await renderPenjualanTable()
+}
+
+function renderPjTujuanSelect(tujuan) {
+  qs('pj-tujuan-select').innerHTML = tujuan.map(t => `<option value="${t.id}">${t.label}</option>`).join('')
 }
 
 function renderPjInputs(kats) {
   qs('pj-kat-inputs').innerHTML = (kats || STATE.kategori).map((k, i) => `
     <div class="kat-block" style="border-left-color:${KAT_HEX[i%KAT_HEX.length]}">
       <div class="kat-block-title" style="color:${KAT_HEX[i%KAT_HEX.length]}">${k.label}</div>
-      <div class="form-row">
-        <div class="form-group"><label>Jumlah Resep</label><input type="number" id="pj-resep-${k.id}" placeholder="0" min="0" oninput="calcPjPreview()"></div>
-        <div class="form-group"><label>Nominal Penjualan (Rp)</label><input type="number" id="pj-nominal-${k.id}" placeholder="0" min="0" oninput="calcPjPreview()"></div>
-      </div>
+      <div class="form-group"><label>Total Belanja (Rp)</label><input type="number" id="pj-nominal-${k.id}" placeholder="0" min="0" oninput="calcPjPreview()"></div>
     </div>`).join('')
 }
 
 function calcPjPreview() {
-  let tr = 0, tn = 0
-  STATE.kategori.forEach(k => { tr += +(qs('pj-resep-' + k.id)?.value || 0); tn += +(qs('pj-nominal-' + k.id)?.value || 0) })
-  qs('pj-total-resep-preview').textContent = fmtN(tr) + ' resep'
+  let tn = 0
+  STATE.kategori.forEach(k => { tn += +(qs('pj-nominal-' + k.id)?.value || 0) })
   qs('pj-total-nominal-preview').textContent = fmt(tn)
 }
 
 qs('pj-save-btn').addEventListener('click', async () => {
   const kats = STATE.kategori
-  const detail = {}; let totalResep = 0, totalNominal = 0
+  const detail = {}; let totalNominal = 0
   kats.forEach(k => {
-    const r = +(qs('pj-resep-' + k.id)?.value || 0), n = +(qs('pj-nominal-' + k.id)?.value || 0)
-    detail[k.id] = { resep: r, nominal: n, label: k.label }
-    totalResep += r; totalNominal += n
+    const n = +(qs('pj-nominal-' + k.id)?.value || 0)
+    detail[k.id] = { resep: 0, nominal: n, label: k.label }
+    totalNominal += n
   })
-  if (!totalResep && !totalNominal) { toast('Isi minimal satu kategori', 'error'); return }
+  if (!totalNominal) { toast('Isi minimal satu kategori', 'error'); return }
   showLoading(true)
   try {
-    await API.savePenjualan({ tgl: qs('pj-tgl').value || today(), shift: qs('pj-shift').value, detail, total_resep: totalResep, total_nominal: totalNominal })
-    kats.forEach(k => { const ri = qs('pj-resep-' + k.id), ni = qs('pj-nominal-' + k.id); if (ri) ri.value = ''; if (ni) ni.value = '' })
+    await API.savePenjualan({ tgl: qs('pj-tgl').value || today(), tujuan: qs('pj-tujuan-select').value, shift: qs('pj-shift').value, detail, total_resep: 0, total_nominal: totalNominal })
+    kats.forEach(k => { const ni = qs('pj-nominal-' + k.id); if (ni) ni.value = '' })
     qs('pj-shift').value = ''; calcPjPreview()
     await renderPjSummary(); await renderPenjualanTable()
     toast('Penjualan disimpan')
@@ -325,51 +327,64 @@ qs('pj-save-btn').addEventListener('click', async () => {
 async function renderPjSummary() {
   const [data, kats] = await Promise.all([API.getPenjualan(), API.getKategori()])
   STATE.kategori = kats
-  const totalR = data.reduce((s, d) => s + d.total_resep, 0)
   const totalN = data.reduce((s, d) => s + d.total_nominal, 0)
   qs('pj-summary-cards').innerHTML = `
-    <div class="metric-card"><div class="metric-label">Total Resep</div><div class="metric-val">${fmtN(totalR)}</div><div class="metric-sub">semua kategori</div></div>
-    <div class="metric-card"><div class="metric-label">Total Penjualan</div><div class="metric-val green">${fmt(totalN)}</div></div>
+    <div class="metric-card"><div class="metric-label">Total Belanja</div><div class="metric-val green">${fmt(totalN)}</div><div class="metric-sub">semua kategori</div></div>
     ${kats.map((k, i) => {
-      const r = data.reduce((s, d) => s + (d.detail[k.id]?.resep || 0), 0)
-      const n = data.reduce((s, d) => s + (d.detail[k.id]?.nominal || 0), 0)
-      return `<div class="metric-card"><div class="metric-label">${k.label}</div><div class="metric-val" style="font-size:16px;color:${KAT_HEX[i%KAT_HEX.length]}">${fmtN(r)} resep</div><div class="metric-sub">${fmt(n)}</div></div>`
+      const n = data.reduce((s, d) => s + ((d.detail||{})[k.id]?.nominal || 0), 0)
+      return `<div class="metric-card"><div class="metric-label">${k.label}</div><div class="metric-val" style="font-size:16px;color:${KAT_HEX[i%KAT_HEX.length]}">${fmt(n)}</div></div>`
     }).join('')}`
 }
 
 async function renderPenjualanTable() {
   const bulan = qs('pj-filter-bulan').value
-  const kats = STATE.kategori
   const data = await API.getPenjualan(bulan ? { bulan } : {})
-  const wrap = qs('pj-table-wrap')
-  if (!data.length) { wrap.innerHTML = '<div class="empty"><i class="ti ti-cash"></i>Belum ada data penjualan</div>'; return }
+  buildPenjualanTabs(STATE.tujuan, data, STATE.kategori)
+}
 
-  const katCols = kats.map(k => `<th colspan="2" style="text-align:center;border-left:1px solid var(--border)">${k.label}</th>`).join('')
-  const katSubCols = kats.map(() => `<th style="border-left:1px solid var(--border)">Resep</th><th>Nominal</th>`).join('')
-  const rows = data.map(d => {
+function buildPenjualanTabs(tujuan, allData, kats) {
+  const tabs = [{ id: '__all__', label: 'Semua' }, ...tujuan]
+  qs('pj-tab-bar').innerHTML = tabs.map((t, i) =>
+    `<button class="tab${t.id === STATE.activePjTab ? ' active' : ''}" data-pjtab="${t.id}">
+      ${t.id === '__all__' ? '<i class="ti ti-layout-list"></i>' : `<span class="badge ${BADGE[(i-1)%BADGE.length]}">${t.label.slice(0,2).toUpperCase()}</span>`}
+      ${t.label}</button>`
+  ).join('')
+  qs('pj-tab-panels').innerHTML = tabs.map(t => {
+    const items = t.id === '__all__' ? allData : allData.filter(d => d.tujuan === t.id)
+    return `<div class="tab-panel${t.id === STATE.activePjTab ? ' active' : ''}" id="pj-panel-${t.id}">${renderPjTableHTML(items, kats)}</div>`
+  }).join('')
+  document.querySelectorAll('#pj-tab-bar .tab').forEach(btn => {
+    btn.addEventListener('click', () => {
+      STATE.activePjTab = btn.dataset.pjtab
+      document.querySelectorAll('#pj-tab-bar .tab').forEach(b => b.classList.toggle('active', b.dataset.pjtab === STATE.activePjTab))
+      document.querySelectorAll('#pj-tab-panels .tab-panel').forEach(p => p.classList.toggle('active', p.id === 'pj-panel-' + STATE.activePjTab))
+    })
+  })
+}
+
+function renderPjTableHTML(items, kats) {
+  if (!items.length) return '<div class="empty"><i class="ti ti-cash"></i>Belum ada data penjualan</div>'
+  const katCols = kats.map(k => `<th style="text-align:right;border-left:1px solid var(--bd)">${k.label}</th>`).join('')
+  const rows = items.map(d => {
     const katCells = kats.map(k => {
-      const r = d.detail[k.id]?.resep || 0, n = d.detail[k.id]?.nominal || 0
-      return `<td style="text-align:right;border-left:1px solid var(--border)">${fmtN(r)}</td><td style="text-align:right">${n ? fmt(n) : '-'}</td>`
+      const n = (d.detail||{})[k.id]?.nominal || 0
+      return `<td style="text-align:right;border-left:1px solid var(--bd)">${n ? fmt(n) : '-'}</td>`
     }).join('')
-    const bar = d.total_resep > 0 ? `<div class="pj-mini-bar">${kats.map((k, i) => { const pct = Math.round((d.detail[k.id]?.resep || 0) / d.total_resep * 100); return `<div style="width:${pct}%;background:${KAT_HEX[i%KAT_HEX.length]};min-width:${pct>0?'2px':'0'}"></div>` }).join('')}</div>` : ''
-    return `<tr><td>${d.tgl}</td><td style="font-size:12px;color:var(--text-sec)">${d.shift || '-'}</td>
-      <td style="text-align:right">${fmtN(d.total_resep)}${bar}</td>
+    return `<tr><td>${d.tgl}</td><td style="font-size:12px;color:var(--tx2)">${d.shift||'-'}</td>
       <td style="text-align:right;font-weight:600;color:var(--green)">${fmt(d.total_nominal)}</td>
       ${katCells}
       <td><button class="btn sm danger" data-id="${d.id}" data-action="del-pj"><i class="ti ti-trash"></i></button></td></tr>`
   }).join('')
   const totKat = kats.map(k => {
-    const r = data.reduce((s, d) => s + (d.detail[k.id]?.resep || 0), 0)
-    const n = data.reduce((s, d) => s + (d.detail[k.id]?.nominal || 0), 0)
-    return `<td style="text-align:right;font-weight:600;border-left:1px solid var(--border)">${fmtN(r)}</td><td style="text-align:right;font-weight:600">${fmt(n)}</td>`
+    const n = items.reduce((s, d) => s + ((d.detail||{})[k.id]?.nominal || 0), 0)
+    return `<td style="text-align:right;font-weight:600;border-left:1px solid var(--bd)">${fmt(n)}</td>`
   }).join('')
-  wrap.innerHTML = `<table>
-    <thead><tr><th rowspan="2">Tanggal</th><th rowspan="2">Shift</th><th rowspan="2" style="text-align:right">Total Resep</th><th rowspan="2" style="text-align:right">Total Nominal</th>${katCols}<th rowspan="2"></th></tr><tr>${katSubCols}</tr></thead>
+  return `<div class="table-wrap"><table>
+    <thead><tr><th>Tanggal</th><th>Shift</th><th style="text-align:right">Total Belanja</th>${katCols}<th></th></tr></thead>
     <tbody>${rows}</tbody>
     <tfoot><tr><td colspan="2" style="font-size:12px">TOTAL</td>
-      <td style="text-align:right">${fmtN(data.reduce((s,d)=>s+d.total_resep,0))}</td>
-      <td style="text-align:right;color:var(--green)">${fmt(data.reduce((s,d)=>s+d.total_nominal,0))}</td>
-      ${totKat}<td></td></tr></tfoot></table>`
+      <td style="text-align:right;color:var(--green)">${fmt(items.reduce((s,d)=>s+d.total_nominal,0))}</td>
+      ${totKat}<td></td></tr></tfoot></table></div>`
 }
 
 qs('pj-filter-bulan').addEventListener('change', renderPenjualanTable)
@@ -411,6 +426,27 @@ document.addEventListener('click', async e => {
     catch (e) { toast(e.message, 'error') }
   }
 })
+
+/* ── SETTINGS ── */
+qs('btn-settings').addEventListener('click', async () => {
+  const s = await API.getSettings()
+  qs('settings-rs-name').value = s.rs_name || ''
+  qs('modal-settings').classList.add('open')
+})
+
+qs('settings-save-btn').addEventListener('click', async () => {
+  const rs_name = qs('settings-rs-name').value.trim()
+  if (!rs_name) { toast('Nama RS tidak boleh kosong', 'error'); return }
+  try {
+    await API.saveSettings({ rs_name })
+    qs('topbar-rs').textContent = rs_name
+    qs('modal-settings').classList.remove('open')
+    toast('Pengaturan disimpan')
+  } catch (e) { toast(e.message, 'error') }
+})
+
+qs('settings-close-btn').addEventListener('click', () => qs('modal-settings').classList.remove('open'))
+qs('modal-settings').addEventListener('click', e => { if (e.target === qs('modal-settings')) qs('modal-settings').classList.remove('open') })
 
 /* ── ARSIP ── */
 let pendingFiles = []
@@ -554,6 +590,7 @@ function renderRekapMutasi(sum) {
 /* ── INIT ── */
 async function init() {
   qs('topbar-date').textContent = new Date().toLocaleDateString('id-ID', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })
+  try { const s = await API.getSettings(); qs('topbar-rs').textContent = s.rs_name || 'RS Medika' } catch {}
   const defDate = today()
   ;['beli-tgl','mut-tgl','arsip-tgl','pj-tgl'].forEach(id => { const el = qs(id); if (el) el.value = defDate })
   qs('rekap-sampai').value = defDate

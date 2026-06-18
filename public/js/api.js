@@ -51,5 +51,9 @@ const API = (() => {
     // Rekap
     getRekapSummary: (p = {}) => req('GET', '/rekap/summary?' + new URLSearchParams(p)),
     excelUrl: (dari, sampai) => `/api/rekap/excel?dari=${dari || ''}&sampai=${sampai || ''}`,
+
+    // Settings
+    getSettings: () => req('GET', '/settings'),
+    saveSettings: d => req('POST', '/settings', d),
   }
 })()

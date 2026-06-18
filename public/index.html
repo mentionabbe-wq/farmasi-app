@@ -16,7 +16,8 @@
       <div class="topbar-title">Catatan Harian Farmasi</div>
       <div class="topbar-sub" id="topbar-date"></div>
     </div>
-    <div class="topbar-rs">RS Medika</div>
+    <div class="topbar-rs" id="topbar-rs">RS Medika</div>
+    <button class="topbar-gear" id="btn-settings" title="Pengaturan"><i class="ti ti-settings"></i></button>
   </header>
 
   <nav class="nav">
@@ -84,9 +85,8 @@
     <section class="page" id="page-pembelian">
       <div class="card">
         <div class="section-title">Input Pembelian</div>
-        <div class="form-row triple">
+        <div class="form-row">
           <div class="form-group"><label>Tanggal</label><input type="date" id="beli-tgl"></div>
-          <div class="form-group"><label>No. Faktur</label><input type="text" id="beli-faktur" placeholder="INV-001"></div>
           <div class="form-group"><label>Supplier</label><input type="text" id="beli-supplier" placeholder="Nama supplier"></div>
         </div>
         <div class="form-row triple">
@@ -104,7 +104,7 @@
       <div class="card">
         <div class="section-title">Daftar Pembelian</div>
         <div class="table-wrap">
-          <table><thead><tr><th>Tanggal</th><th>Faktur</th><th>Supplier</th><th>Item</th><th>Jml</th><th>Sat.</th><th>Harga Sat.</th><th>Total</th><th>Anggaran</th><th></th></tr></thead>
+          <table><thead><tr><th>Tanggal</th><th>Supplier</th><th>Item</th><th>Jml</th><th>Sat.</th><th>Harga Sat.</th><th>Total</th><th>Anggaran</th><th></th></tr></thead>
           <tbody id="beli-tbody"></tbody></table>
         </div>
       </div>
@@ -148,16 +148,16 @@
           Input Penjualan Harian
           <button class="btn sm" id="btn-kelola-kategori"><i class="ti ti-settings-2"></i>Kelola Kategori</button>
         </div>
-        <div class="form-row">
+        <div class="form-row triple">
           <div class="form-group"><label>Tanggal</label><input type="date" id="pj-tgl"></div>
+          <div class="form-group"><label>Farmasi</label><select id="pj-tujuan-select"></select></div>
           <div class="form-group"><label>Shift / Keterangan</label><input type="text" id="pj-shift" placeholder="Pagi / Siang / Sore"></div>
         </div>
         <div class="divider"></div>
         <div class="form-section-label">Jumlah Resep &amp; Nominal per Kategori</div>
         <div id="pj-kat-inputs"></div>
         <div class="divider"></div>
-        <div class="pj-preview-row"><span style="color:var(--tx2)">Total Resep</span><span id="pj-total-resep-preview" style="font-weight:500">0 resep</span></div>
-        <div class="pj-preview-row"><span style="color:var(--tx2)">Total Nominal</span><span id="pj-total-nominal-preview" class="text-green">Rp 0</span></div>
+        <div class="pj-preview-row"><span style="color:var(--tx2)">Total Belanja</span><span id="pj-total-nominal-preview" class="text-green">Rp 0</span></div>
         <button class="btn primary" id="pj-save-btn" style="margin-top:12px"><i class="ti ti-device-floppy"></i>Simpan Penjualan</button>
       </div>
       <div class="cards-row" id="pj-summary-cards"></div>
@@ -166,7 +166,8 @@
           Riwayat Penjualan
           <input type="month" id="pj-filter-bulan" class="input-sm">
         </div>
-        <div class="table-wrap" id="pj-table-wrap"></div>
+        <div class="tab-bar" id="pj-tab-bar"></div>
+        <div id="pj-tab-panels"></div>
       </div>
     </section>
 
@@ -242,6 +243,21 @@
     </section>
 
   </main>
+</div>
+
+<!-- MODAL SETTINGS -->
+<div class="modal-backdrop" id="modal-settings">
+  <div class="modal">
+    <div class="modal-title"><i class="ti ti-settings"></i>Pengaturan Aplikasi</div>
+    <div class="form-group" style="margin-bottom:16px">
+      <label>Nama Rumah Sakit / Klinik</label>
+      <input type="text" id="settings-rs-name" placeholder="Contoh: RSUD Dr. Soetomo">
+    </div>
+    <div style="display:flex;gap:8px">
+      <button class="btn primary" id="settings-save-btn"><i class="ti ti-device-floppy"></i>Simpan</button>
+      <button class="btn" id="settings-close-btn">Batal</button>
+    </div>
+  </div>
 </div>
 
 <!-- MODAL TUJUAN -->
