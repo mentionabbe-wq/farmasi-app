@@ -1,33 +1,27 @@
 name: farmasi-app
 
 services:
-  app:
-    image: ghcr.io/mentionabbe-wq/farmasi-app:latest
+  farmasi-app:
+    build:
+      context: https://github.com/mentionabbe-wq/farmasi-app.git
     container_name: farmasi-app
     ports:
-      - target: 3000
-        published: "3000"
-        protocol: tcp
+      - "3000:3000"
     volumes:
-      - type: bind
-        source: /DATA/AppData/farmasi-app/data
-        target: /app/data
-      - type: bind
-        source: /DATA/AppData/farmasi-app/uploads
-        target: /app/uploads
+      - /DATA/AppData/farmasi-app/data:/app/data
+      - /DATA/AppData/farmasi-app/uploads:/app/uploads
     environment:
       - PORT=3000
       - DATA_DIR=/app/data
       - UPLOAD_DIR=/app/uploads
       - MAX_FILE_SIZE=10485760
     restart: unless-stopped
-    network_mode: bridge
 
 x-casaos:
   architectures:
     - amd64
     - arm64
-  main: app
+  main: farmasi-app
   description:
     en_us: >-
       Pharmacy Daily Notes — manage monthly budget, drug purchases, stock
