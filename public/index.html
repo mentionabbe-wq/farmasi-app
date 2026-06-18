@@ -89,13 +89,8 @@
           <div class="form-group"><label>Tanggal</label><input type="date" id="beli-tgl"></div>
           <div class="form-group"><label>Supplier</label><input type="text" id="beli-supplier" placeholder="Nama supplier"></div>
         </div>
-        <div class="form-row triple">
-          <div class="form-group"><label>Nama Obat / Alkes</label><input type="text" id="beli-nama" placeholder="Nama item"></div>
-          <div class="form-group"><label>Jumlah</label><input type="number" id="beli-jml" placeholder="0"></div>
-          <div class="form-group"><label>Satuan</label><input type="text" id="beli-satuan" placeholder="Tablet / Vial / Box"></div>
-        </div>
         <div class="form-row">
-          <div class="form-group"><label>Harga Satuan (Rp)</label><input type="number" id="beli-harga" placeholder="0"></div>
+          <div class="form-group"><label>Total Belanja (Rp)</label><input type="number" id="beli-jml" placeholder="0"></div>
           <div class="form-group"><label>Periode Anggaran</label><select id="beli-anggaran"><option value="">-- Pilih --</option></select></div>
         </div>
         <div class="form-group" style="margin-bottom:12px"><label>Keterangan</label><textarea id="beli-ket" placeholder="Catatan..."></textarea></div>
@@ -104,7 +99,7 @@
       <div class="card">
         <div class="section-title">Daftar Pembelian</div>
         <div class="table-wrap">
-          <table><thead><tr><th>Tanggal</th><th>Supplier</th><th>Item</th><th>Jml</th><th>Sat.</th><th>Harga Sat.</th><th>Total</th><th>Anggaran</th><th></th></tr></thead>
+          <table><thead><tr><th>Tanggal</th><th>Supplier</th><th>Total Belanja</th><th>Anggaran</th><th></th></tr></thead>
           <tbody id="beli-tbody"></tbody></table>
         </div>
       </div>
@@ -119,13 +114,8 @@
           <div class="form-group"><label>No. Surat Mutasi</label><input type="text" id="mut-no" placeholder="MUT-001"></div>
           <div class="form-group"><label>Tujuan</label><select id="mut-tujuan-select"></select></div>
         </div>
-        <div class="form-row triple">
-          <div class="form-group"><label>Nama Obat / Alkes</label><input type="text" id="mut-nama" placeholder="Nama item"></div>
-          <div class="form-group"><label>Jumlah</label><input type="number" id="mut-jml" placeholder="0"></div>
-          <div class="form-group"><label>Satuan</label><input type="text" id="mut-satuan" placeholder="Tablet / Vial"></div>
-        </div>
         <div class="form-row">
-          <div class="form-group"><label>Harga Satuan (Rp)</label><input type="number" id="mut-harga" placeholder="0"></div>
+          <div class="form-group"><label>Jumlah Item</label><input type="number" id="mut-jml" placeholder="0"></div>
           <div class="form-group"><label>Petugas</label><input type="text" id="mut-petugas" placeholder="Nama petugas"></div>
         </div>
         <div class="form-group" style="margin-bottom:12px"><label>Keterangan</label><textarea id="mut-ket" placeholder="Catatan..."></textarea></div>
@@ -157,7 +147,8 @@
         <div class="form-section-label">Jumlah Resep &amp; Nominal per Kategori</div>
         <div id="pj-kat-inputs"></div>
         <div class="divider"></div>
-        <div class="pj-preview-row"><span style="color:var(--tx2)">Total Belanja</span><span id="pj-total-nominal-preview" class="text-green">Rp 0</span></div>
+        <div class="pj-preview-row"><span style="color:var(--tx2)">Total Resep</span><span id="pj-total-resep-preview" style="font-weight:500">0 resep</span></div>
+        <div class="pj-preview-row"><span style="color:var(--tx2)">Total Nominal</span><span id="pj-total-nominal-preview" class="text-green">Rp 0</span></div>
         <button class="btn primary" id="pj-save-btn" style="margin-top:12px"><i class="ti ti-device-floppy"></i>Simpan Penjualan</button>
       </div>
       <div class="cards-row" id="pj-summary-cards"></div>

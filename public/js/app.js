@@ -137,22 +137,21 @@ async function loadPembelian() {
 
 function renderPembelianTable(data) {
   const tbody = qs('beli-tbody')
-  if (!data.length) { tbody.innerHTML = '<tr><td colspan="9"><div class="empty">Belum ada data pembelian</div></td></tr>'; return }
+  if (!data.length) { tbody.innerHTML = '<tr><td colspan="5"><div class="empty">Belum ada data pembelian</div></td></tr>'; return }
   tbody.innerHTML = data.map(d => `<tr>
-    <td>${d.tgl}</td><td>${d.supplier||'-'}</td><td>${d.nama}</td>
-    <td style="text-align:right">${fmtN(d.jml)}</td><td>${d.satuan||''}</td>
-    <td style="text-align:right">${fmt(d.harga)}</td><td style="text-align:right;font-weight:600">${fmt(d.total)}</td>
+    <td>${d.tgl}</td><td>${d.supplier||'-'}</td>
+    <td style="text-align:right;font-weight:600">${fmt(d.total)}</td>
     <td>${d.anggaran?`<span class="badge gray">${d.anggaran}</span>`:'-'}</td>
     <td><button class="btn sm danger" data-id="${d.id}" data-action="del-beli"><i class="ti ti-trash"></i></button></td></tr>`).join('')
 }
 
 qs('beli-save-btn').addEventListener('click', async () => {
-  const nama = qs('beli-nama').value, jml = qs('beli-jml').value
-  if (!nama || !jml) { toast('Nama item dan jumlah wajib diisi', 'error'); return }
+  const jml = qs('beli-jml').value
+  if (!jml) { toast('Total belanja wajib diisi', 'error'); return }
   showLoading(true)
   try {
-    await API.savePembelian({ tgl: qs('beli-tgl').value||today(), supplier: qs('beli-supplier').value, nama, jml: +jml, satuan: qs('beli-satuan').value, harga: +(qs('beli-harga').value||0), anggaran: qs('beli-anggaran').value, ket: qs('beli-ket').value })
-    ;['beli-tgl','beli-supplier','beli-nama','beli-jml','beli-satuan','beli-harga','beli-ket'].forEach(id => qs(id).value = '')
+    await API.savePembelian({ tgl: qs('beli-tgl').value||today(), supplier: qs('beli-supplier').value, jml: +jml, anggaran: qs('beli-anggaran').value, ket: qs('beli-ket').value })
+    ;['beli-tgl','beli-supplier','beli-jml','beli-ket'].forEach(id => qs(id).value = '')
     qs('beli-anggaran').value = ''
     renderPembelianTable(await API.getPembelian())
     toast('Pembelian disimpan')
@@ -188,17 +187,15 @@ function buildMutasiTabs(tujuan, mutasi) {
     const items = mutasi.filter(d => d.tujuan === t.id)
     const total = items.reduce((s, d) => s + (d.total || 0), 0)
     const rows = items.length ? items.map(d => `<tr>
-      <td style="font-size:12px">${d.tgl}</td><td style="font-size:12px">${d.no||'-'}</td><td>${d.nama}</td>
-      <td style="text-align:right">${fmtN(d.jml)}</td><td>${d.satuan||''}</td>
-      <td style="text-align:right;font-size:12px">${d.harga?fmt(d.harga):'-'}</td>
-      <td style="text-align:right;font-size:12px">${d.total?fmt(d.total):'-'}</td>
+      <td style="font-size:12px">${d.tgl}</td><td style="font-size:12px">${d.no||'-'}</td>
+      <td style="text-align:right">${fmtN(d.jml)}</td>
       <td style="font-size:12px">${d.petugas||'-'}</td>
-      <td style="font-size:11px;color:var(--text-sec);max-width:100px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${d.ket||'-'}</td>
+      <td style="font-size:11px;color:var(--tx2);max-width:120px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${d.ket||'-'}</td>
       <td><button class="btn sm danger" data-id="${d.id}" data-action="del-mut"><i class="ti ti-trash"></i></button></td></tr>`).join('')
-      : `<tr><td colspan="10"><div class="empty">Belum ada mutasi ke ${t.label}</div></td></tr>`
+      : `<tr><td colspan="6"><div class="empty">Belum ada mutasi ke ${t.label}</div></td></tr>`
     return `<div class="tab-panel${t.id === STATE.activeMutTab ? ' active' : ''}" id="mut-panel-${t.id}">
-      <div class="table-wrap"><table><thead><tr><th>Tanggal</th><th>No.</th><th>Item</th><th>Jml</th><th>Sat.</th><th>Harga Sat.</th><th>Total</th><th>Petugas</th><th>Ket.</th><th></th></tr></thead><tbody>${rows}</tbody></table></div>
-      ${items.length ? `<div style="text-align:right;font-size:13px;font-weight:600;margin-top:8px;color:var(--text-sec)">Total: <span style="color:var(--text)">${fmt(total)}</span> (${items.length} item)</div>` : ''}</div>`
+      <div class="table-wrap"><table><thead><tr><th>Tanggal</th><th>No.</th><th>Jml</th><th>Petugas</th><th>Ket.</th><th></th></tr></thead><tbody>${rows}</tbody></table></div>
+      ${items.length ? `<div style="text-align:right;font-size:12px;margin-top:8px;color:var(--tx2)">${items.length} item</div>` : ''}</div>`
   }).join('')
 
   document.querySelectorAll('#mut-tab-bar .tab').forEach(btn => {
@@ -211,12 +208,12 @@ function buildMutasiTabs(tujuan, mutasi) {
 }
 
 qs('mut-save-btn').addEventListener('click', async () => {
-  const nama = qs('mut-nama').value, jml = qs('mut-jml').value, tujuan = qs('mut-tujuan-select').value
-  if (!nama || !jml || !tujuan) { toast('Nama, jumlah, dan tujuan wajib diisi', 'error'); return }
+  const jml = qs('mut-jml').value, tujuan = qs('mut-tujuan-select').value
+  if (!jml || !tujuan) { toast('Jumlah dan tujuan wajib diisi', 'error'); return }
   showLoading(true)
   try {
-    await API.saveMutasi({ tgl: qs('mut-tgl').value||today(), no: qs('mut-no').value, tujuan, nama, jml: +jml, satuan: qs('mut-satuan').value, harga: +(qs('mut-harga').value||0), petugas: qs('mut-petugas').value, ket: qs('mut-ket').value })
-    ;['mut-tgl','mut-no','mut-nama','mut-jml','mut-satuan','mut-harga','mut-petugas','mut-ket'].forEach(id => qs(id).value = '')
+    await API.saveMutasi({ tgl: qs('mut-tgl').value||today(), no: qs('mut-no').value, tujuan, jml: +jml, petugas: qs('mut-petugas').value, ket: qs('mut-ket').value })
+    ;['mut-tgl','mut-no','mut-jml','mut-petugas','mut-ket'].forEach(id => qs(id).value = '')
     const [t, m] = await Promise.all([API.getTujuan(), API.getMutasi()])
     buildMutasiTabs(t, m); renderMutasiSelect(t)
     toast('Mutasi disimpan')
@@ -295,29 +292,33 @@ function renderPjInputs(kats) {
   qs('pj-kat-inputs').innerHTML = (kats || STATE.kategori).map((k, i) => `
     <div class="kat-block" style="border-left-color:${KAT_HEX[i%KAT_HEX.length]}">
       <div class="kat-block-title" style="color:${KAT_HEX[i%KAT_HEX.length]}">${k.label}</div>
-      <div class="form-group"><label>Total Belanja (Rp)</label><input type="number" id="pj-nominal-${k.id}" placeholder="0" min="0" oninput="calcPjPreview()"></div>
+      <div class="form-row">
+        <div class="form-group"><label>Jumlah Resep</label><input type="number" id="pj-resep-${k.id}" placeholder="0" min="0" oninput="calcPjPreview()"></div>
+        <div class="form-group"><label>Nominal Penjualan (Rp)</label><input type="number" id="pj-nominal-${k.id}" placeholder="0" min="0" oninput="calcPjPreview()"></div>
+      </div>
     </div>`).join('')
 }
 
 function calcPjPreview() {
-  let tn = 0
-  STATE.kategori.forEach(k => { tn += +(qs('pj-nominal-' + k.id)?.value || 0) })
+  let tr = 0, tn = 0
+  STATE.kategori.forEach(k => { tr += +(qs('pj-resep-' + k.id)?.value || 0); tn += +(qs('pj-nominal-' + k.id)?.value || 0) })
+  qs('pj-total-resep-preview').textContent = fmtN(tr) + ' resep'
   qs('pj-total-nominal-preview').textContent = fmt(tn)
 }
 
 qs('pj-save-btn').addEventListener('click', async () => {
   const kats = STATE.kategori
-  const detail = {}; let totalNominal = 0
+  const detail = {}; let totalResep = 0, totalNominal = 0
   kats.forEach(k => {
-    const n = +(qs('pj-nominal-' + k.id)?.value || 0)
-    detail[k.id] = { resep: 0, nominal: n, label: k.label }
-    totalNominal += n
+    const r = +(qs('pj-resep-' + k.id)?.value || 0), n = +(qs('pj-nominal-' + k.id)?.value || 0)
+    detail[k.id] = { resep: r, nominal: n, label: k.label }
+    totalResep += r; totalNominal += n
   })
-  if (!totalNominal) { toast('Isi minimal satu kategori', 'error'); return }
+  if (!totalResep && !totalNominal) { toast('Isi minimal satu kategori', 'error'); return }
   showLoading(true)
   try {
-    await API.savePenjualan({ tgl: qs('pj-tgl').value || today(), tujuan: qs('pj-tujuan-select').value, shift: qs('pj-shift').value, detail, total_resep: 0, total_nominal: totalNominal })
-    kats.forEach(k => { const ni = qs('pj-nominal-' + k.id); if (ni) ni.value = '' })
+    await API.savePenjualan({ tgl: qs('pj-tgl').value || today(), tujuan: qs('pj-tujuan-select').value, shift: qs('pj-shift').value, detail, total_resep: totalResep, total_nominal: totalNominal })
+    kats.forEach(k => { const ri = qs('pj-resep-' + k.id), ni = qs('pj-nominal-' + k.id); if (ri) ri.value = ''; if (ni) ni.value = '' })
     qs('pj-shift').value = ''; calcPjPreview()
     await renderPjSummary(); await renderPenjualanTable()
     toast('Penjualan disimpan')
@@ -327,12 +328,15 @@ qs('pj-save-btn').addEventListener('click', async () => {
 async function renderPjSummary() {
   const [data, kats] = await Promise.all([API.getPenjualan(), API.getKategori()])
   STATE.kategori = kats
+  const totalR = data.reduce((s, d) => s + d.total_resep, 0)
   const totalN = data.reduce((s, d) => s + d.total_nominal, 0)
   qs('pj-summary-cards').innerHTML = `
-    <div class="metric-card"><div class="metric-label">Total Belanja</div><div class="metric-val green">${fmt(totalN)}</div><div class="metric-sub">semua kategori</div></div>
+    <div class="metric-card"><div class="metric-label">Total Resep</div><div class="metric-val">${fmtN(totalR)}</div><div class="metric-sub">semua kategori</div></div>
+    <div class="metric-card"><div class="metric-label">Total Penjualan</div><div class="metric-val green">${fmt(totalN)}</div></div>
     ${kats.map((k, i) => {
+      const r = data.reduce((s, d) => s + ((d.detail||{})[k.id]?.resep || 0), 0)
       const n = data.reduce((s, d) => s + ((d.detail||{})[k.id]?.nominal || 0), 0)
-      return `<div class="metric-card"><div class="metric-label">${k.label}</div><div class="metric-val" style="font-size:16px;color:${KAT_HEX[i%KAT_HEX.length]}">${fmt(n)}</div></div>`
+      return `<div class="metric-card"><div class="metric-label">${k.label}</div><div class="metric-val" style="font-size:16px;color:${KAT_HEX[i%KAT_HEX.length]}">${fmtN(r)} resep</div><div class="metric-sub">${fmt(n)}</div></div>`
     }).join('')}`
 }
 
@@ -364,25 +368,30 @@ function buildPenjualanTabs(tujuan, allData, kats) {
 
 function renderPjTableHTML(items, kats) {
   if (!items.length) return '<div class="empty"><i class="ti ti-cash"></i>Belum ada data penjualan</div>'
-  const katCols = kats.map(k => `<th style="text-align:right;border-left:1px solid var(--bd)">${k.label}</th>`).join('')
+  const katCols = kats.map(k => `<th colspan="2" style="text-align:center;border-left:1px solid var(--bd)">${k.label}</th>`).join('')
+  const katSubCols = kats.map(() => `<th style="border-left:1px solid var(--bd)">Resep</th><th>Nominal</th>`).join('')
   const rows = items.map(d => {
     const katCells = kats.map(k => {
-      const n = (d.detail||{})[k.id]?.nominal || 0
-      return `<td style="text-align:right;border-left:1px solid var(--bd)">${n ? fmt(n) : '-'}</td>`
+      const r = (d.detail||{})[k.id]?.resep || 0, n = (d.detail||{})[k.id]?.nominal || 0
+      return `<td style="text-align:right;border-left:1px solid var(--bd)">${fmtN(r)}</td><td style="text-align:right">${n ? fmt(n) : '-'}</td>`
     }).join('')
+    const bar = d.total_resep > 0 ? `<div class="pj-mini-bar">${kats.map((k, i) => { const pct = Math.round(((d.detail||{})[k.id]?.resep || 0) / d.total_resep * 100); return `<div style="width:${pct}%;background:${KAT_HEX[i%KAT_HEX.length]};min-width:${pct>0?'2px':'0'}"></div>` }).join('')}</div>` : ''
     return `<tr><td>${d.tgl}</td><td style="font-size:12px;color:var(--tx2)">${d.shift||'-'}</td>
+      <td style="text-align:right">${fmtN(d.total_resep)}${bar}</td>
       <td style="text-align:right;font-weight:600;color:var(--green)">${fmt(d.total_nominal)}</td>
       ${katCells}
       <td><button class="btn sm danger" data-id="${d.id}" data-action="del-pj"><i class="ti ti-trash"></i></button></td></tr>`
   }).join('')
   const totKat = kats.map(k => {
+    const r = items.reduce((s, d) => s + ((d.detail||{})[k.id]?.resep || 0), 0)
     const n = items.reduce((s, d) => s + ((d.detail||{})[k.id]?.nominal || 0), 0)
-    return `<td style="text-align:right;font-weight:600;border-left:1px solid var(--bd)">${fmt(n)}</td>`
+    return `<td style="text-align:right;font-weight:600;border-left:1px solid var(--bd)">${fmtN(r)}</td><td style="text-align:right;font-weight:600">${fmt(n)}</td>`
   }).join('')
   return `<div class="table-wrap"><table>
-    <thead><tr><th>Tanggal</th><th>Shift</th><th style="text-align:right">Total Belanja</th>${katCols}<th></th></tr></thead>
+    <thead><tr><th rowspan="2">Tanggal</th><th rowspan="2">Shift</th><th rowspan="2" style="text-align:right">Total Resep</th><th rowspan="2" style="text-align:right">Total Nominal</th>${katCols}<th rowspan="2"></th></tr><tr>${katSubCols}</tr></thead>
     <tbody>${rows}</tbody>
     <tfoot><tr><td colspan="2" style="font-size:12px">TOTAL</td>
+      <td style="text-align:right">${fmtN(items.reduce((s,d)=>s+d.total_resep,0))}</td>
       <td style="text-align:right;color:var(--green)">${fmt(items.reduce((s,d)=>s+d.total_nominal,0))}</td>
       ${totKat}<td></td></tr></tfoot></table></div>`
 }

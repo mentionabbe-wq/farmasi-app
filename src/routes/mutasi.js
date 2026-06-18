@@ -11,15 +11,13 @@ router.get('/', (req, res) => {
 })
 
 router.post('/', (req, res) => {
-  const { tgl, no = '', tujuan, nama, jml, satuan = '', harga = 0, petugas = '', ket = '' } = req.body
-  if (!nama || !jml || !tujuan) return res.status(400).json({ error: 'nama, jml, dan tujuan wajib diisi' })
+  const { tgl, no = '', tujuan, jml, petugas = '', ket = '' } = req.body
+  if (!jml || !tujuan) return res.status(400).json({ error: 'jml dan tujuan wajib diisi' })
   const item = {
     id: Date.now(),
     tgl: tgl || new Date().toISOString().slice(0, 10),
-    no, tujuan, nama,
-    jml: +jml, satuan,
-    harga: +harga,
-    total: +jml * +harga,
+    no, tujuan,
+    jml: +jml,
     petugas, ket,
     created_at: new Date().toISOString()
   }
