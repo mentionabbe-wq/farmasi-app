@@ -228,12 +228,21 @@ function renderPembelianTable(data) {
   const tbody = qs('beli-tbody')
   const filterSup = qs('beli-filter-supplier').value
   const rows = filterSup ? data.filter(d => d.supplier === filterSup) : data
-  if (!rows.length) { tbody.innerHTML = `<tr><td colspan="5"><div class="empty">${filterSup ? 'Tidak ada pembelian dari supplier ini' : 'Belum ada data pembelian'}</div></td></tr>`; return }
-  tbody.innerHTML = rows.map(d => `<tr>
-    <td>${d.tgl}</td><td>${d.supplier||'-'}</td>
-    <td style="text-align:right;font-weight:600">${fmt(d.total)}</td>
-    <td>${d.anggaran?`<span class="badge gray">${d.anggaran}</span>`:'-'}</td>
-    <td><button class="btn sm danger" data-id="${d.id}" data-action="del-beli"><i class="ti ti-trash"></i></button></td></tr>`).join('')
+  if (!rows.length) { tbody.innerHTML = `<tr><td colspan="8"><div class="empty">${filterSup ? 'Tidak ada pembelian dari supplier ini' : 'Belum ada data pembelian'}</div></td></tr>`; return }
+  const today = new Date().toISOString().slice(0, 10)
+  tbody.innerHTML = rows.map(d => {
+    const jt = d.tgl_jatuh_tempo
+    const jatuhStyle = jt && jt < today ? 'color:#E24B4A;font-weight:600' : jt && jt === today ? 'color:var(--amb-dk);font-weight:600' : ''
+    return `<tr>
+      <td>${d.tgl}</td>
+      <td style="font-size:12px">${d.no_faktur||'-'}</td>
+      <td style="font-size:12px">${d.tgl_faktur||'-'}</td>
+      <td style="font-size:12px;${jatuhStyle}">${jt||'-'}${jt&&jt<today?' ⚠':''}${jt&&jt===today?' (hari ini)':''}</td>
+      <td>${d.supplier||'-'}</td>
+      <td style="text-align:right;font-weight:600">${fmt(d.total)}</td>
+      <td>${d.anggaran?`<span class="badge gray">${d.anggaran}</span>`:'-'}</td>
+      <td><button class="btn sm danger" data-id="${d.id}" data-action="del-beli"><i class="ti ti-trash"></i></button></td></tr>`
+  }).join('')
 }
 
 let _beliData = []
@@ -244,8 +253,8 @@ qs('beli-save-btn').addEventListener('click', async () => {
   if (!jml) { toast('Total belanja wajib diisi', 'error'); return }
   showLoading(true)
   try {
-    await API.savePembelian({ tgl: qs('beli-tgl').value||today(), supplier: qs('beli-supplier').value, jml: +jml, anggaran: qs('beli-anggaran').value, ket: qs('beli-ket').value })
-    ;['beli-tgl','beli-jml','beli-ket'].forEach(id => qs(id).value = '')
+    await API.savePembelian({ tgl: qs('beli-tgl').value||today(), no_faktur: qs('beli-no-faktur').value, tgl_faktur: qs('beli-tgl-faktur').value, tgl_jatuh_tempo: qs('beli-tgl-jatuh-tempo').value, supplier: qs('beli-supplier').value, jml: +jml, anggaran: qs('beli-anggaran').value, ket: qs('beli-ket').value })
+    ;['beli-tgl','beli-jml','beli-ket','beli-no-faktur','beli-tgl-faktur','beli-tgl-jatuh-tempo'].forEach(id => qs(id).value = '')
     qs('beli-anggaran').value = ''; qs('beli-supplier').value = ''
     _beliData = await API.getPembelian(); renderPembelianTable(_beliData)
     toast('Pembelian disimpan')

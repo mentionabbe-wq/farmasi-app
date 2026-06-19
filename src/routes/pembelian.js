@@ -16,9 +16,9 @@ router.get('/', (req, res) => {
 })
 
 router.post('/', (req, res) => {
-  const { tgl, supplier = '', jml, anggaran = '', ket = '' } = req.body
+  const { tgl, supplier = '', jml, anggaran = '', ket = '', no_faktur = '', tgl_faktur = '', tgl_jatuh_tempo = '' } = req.body
   if (!jml) return res.status(400).json({ error: 'total belanja wajib diisi' })
-  const item = { id: Date.now(), tgl: tgl || new Date().toISOString().slice(0,10), supplier, total: +jml, anggaran, ket, created_at: new Date().toISOString() }
+  const item = { id: Date.now(), tgl: tgl || new Date().toISOString().slice(0,10), no_faktur, tgl_faktur, tgl_jatuh_tempo, supplier, total: +jml, anggaran, ket, created_at: new Date().toISOString() }
   const data = read('pembelian')
   data.push(item)
   write('pembelian', data)

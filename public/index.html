@@ -110,6 +110,11 @@
             </div>
           </div>
         </div>
+        <div class="form-row triple">
+          <div class="form-group"><label>No. Faktur</label><input type="text" id="beli-no-faktur" placeholder="INV-001"></div>
+          <div class="form-group"><label>Tanggal Faktur</label><input type="date" id="beli-tgl-faktur"></div>
+          <div class="form-group"><label>Tanggal Jatuh Tempo</label><input type="date" id="beli-tgl-jatuh-tempo"></div>
+        </div>
         <div class="form-row">
           <div class="form-group"><label>Total Belanja (Rp)</label><input type="number" id="beli-jml" placeholder="0"></div>
           <div class="form-group"><label>Periode Anggaran</label><select id="beli-anggaran"><option value="">-- Pilih --</option></select></div>
@@ -126,7 +131,7 @@
           </div>
         </div>
         <div class="table-wrap">
-          <table><thead><tr><th>Tanggal</th><th>Supplier</th><th>Total Belanja</th><th>Anggaran</th><th></th></tr></thead>
+          <table><thead><tr><th>Tanggal</th><th>No. Faktur</th><th>Tgl. Faktur</th><th>Jatuh Tempo</th><th>Supplier</th><th>Total Belanja</th><th>Anggaran</th><th></th></tr></thead>
           <tbody id="beli-tbody"></tbody></table>
         </div>
       </div>
