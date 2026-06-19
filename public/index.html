@@ -236,29 +236,42 @@
     <!-- STOK OPNAME -->
     <section class="page" id="page-stokopname">
       <div class="card">
-        <div class="section-title">Input Stok Opname</div>
-        <div class="form-row triple">
-          <div class="form-group"><label>Tanggal</label><input type="date" id="so-tgl"></div>
-          <div class="form-group"><label>Nama Obat / Item</label><input type="text" id="so-nama" placeholder="Nama item"></div>
-          <div class="form-group"><label>Satuan</label><input type="text" id="so-satuan" placeholder="pcs / botol / box"></div>
+        <div class="section-title">Input Ringkasan Stok Opname</div>
+        <div class="form-row">
+          <div class="form-group"><label>Tanggal SO</label><input type="date" id="so-tgl"></div>
+          <div class="form-group"><label>Keterangan</label><input type="text" id="so-ket" placeholder="Stok opname bulan Juni 2026..."></div>
         </div>
-        <div class="form-row triple">
-          <div class="form-group"><label>Stok Sistem</label><input type="number" id="so-sistem" placeholder="0" min="0" oninput="calcSoSelisih()"></div>
-          <div class="form-group"><label>Stok Fisik</label><input type="number" id="so-fisik" placeholder="0" min="0" oninput="calcSoSelisih()"></div>
-          <div class="form-group"><label>Selisih (otomatis)</label><input type="text" id="so-selisih-preview" readonly style="background:var(--bg2);font-weight:600"></div>
+        <div class="form-row">
+          <div class="form-group"><label>Nilai Stok Sebelum SO (Rp)</label><input type="number" id="so-sebelum" placeholder="0" min="0" oninput="calcSoSelisih()"></div>
+          <div class="form-group"><label>Nilai Stok Sesudah SO (Rp)</label><input type="number" id="so-sesudah" placeholder="0" min="0" oninput="calcSoSelisih()"></div>
         </div>
-        <div class="form-group" style="margin-bottom:12px"><label>Keterangan</label><textarea id="so-ket" placeholder="Catatan..."></textarea></div>
+        <div class="form-group" style="margin-bottom:12px"><label>Selisih (otomatis)</label><input type="text" id="so-selisih-preview" readonly style="background:var(--bg2);font-weight:600"></div>
         <button class="btn primary" id="so-save-btn"><i class="ti ti-device-floppy"></i>Simpan</button>
       </div>
-      <div class="cards-row" id="so-summary-cards"></div>
       <div class="card">
-        <div class="section-title">
-          Daftar Stok Opname
-          <input type="month" id="so-filter-bulan" class="input-sm">
-        </div>
+        <div class="section-title">Riwayat Stok Opname</div>
         <div class="table-wrap">
-          <table><thead><tr><th>Tanggal</th><th>Nama Item</th><th>Satuan</th><th style="text-align:right">Stok Sistem</th><th style="text-align:right">Stok Fisik</th><th style="text-align:right">Selisih</th><th>Keterangan</th><th></th></tr></thead>
+          <table><thead><tr><th>Tanggal</th><th style="text-align:right">Nilai Sebelum</th><th style="text-align:right">Nilai Sesudah</th><th style="text-align:right">Selisih</th><th>Keterangan</th><th></th></tr></thead>
           <tbody id="so-tbody"></tbody></table>
+        </div>
+      </div>
+      <div class="card">
+        <div class="section-title">Ringkasan Penjualan &amp; Pembelian</div>
+        <div class="form-row">
+          <div class="form-group"><label>Dari Tanggal</label><input type="date" id="so-dari"></div>
+          <div class="form-group"><label>Sampai Tanggal</label><input type="date" id="so-sampai"></div>
+        </div>
+        <button class="btn" id="so-rekap-btn"><i class="ti ti-search"></i>Tampilkan Ringkasan</button>
+        <div class="cards-row" id="so-rekap-cards" style="margin-top:14px"></div>
+        <div class="grid-2" style="margin-top:12px">
+          <div>
+            <div style="font-size:13px;font-weight:600;margin-bottom:8px;color:var(--tx2)"><i class="ti ti-cash"></i> Penjualan per Kategori</div>
+            <div id="so-rekap-penjualan"></div>
+          </div>
+          <div>
+            <div style="font-size:13px;font-weight:600;margin-bottom:8px;color:var(--tx2)"><i class="ti ti-shopping-cart"></i> Pembelian per Supplier</div>
+            <div id="so-rekap-pembelian"></div>
+          </div>
         </div>
       </div>
     </section>

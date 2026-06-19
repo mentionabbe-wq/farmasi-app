@@ -677,43 +677,27 @@ document.addEventListener('click', async e => {
 
 /* ── STOK OPNAME ── */
 function calcSoSelisih() {
-  const ss = +(qs('so-sistem').value || 0), sf = +(qs('so-fisik').value || 0)
-  const sel = sf - ss
-  qs('so-selisih-preview').value = sel === 0 ? '0' : (sel > 0 ? '+' : '') + fmtN(sel)
+  const sb = +(qs('so-sebelum').value || 0), ss = +(qs('so-sesudah').value || 0)
+  const sel = ss - sb
+  qs('so-selisih-preview').value = sel === 0 ? 'Rp 0' : (sel > 0 ? '+' : '') + fmt(sel)
   qs('so-selisih-preview').style.color = sel > 0 ? 'var(--green)' : sel < 0 ? '#E24B4A' : 'inherit'
 }
 
 async function loadStokOpname() {
-  const bulan = qs('so-filter-bulan').value
-  const data = await API.getStokOpname(bulan ? { bulan } : {})
-  renderStokOpnameSummary(data)
+  const data = await API.getStokOpname()
   renderStokOpnameTable(data)
-}
-
-function renderStokOpnameSummary(data) {
-  const total = data.length
-  const adaSelisih = data.filter(d => d.selisih !== 0).length
-  const lebih = data.filter(d => d.selisih > 0).length
-  const kurang = data.filter(d => d.selisih < 0).length
-  qs('so-summary-cards').innerHTML = `
-    <div class="metric-card"><div class="metric-label">Total Item Dicek</div><div class="metric-val">${fmtN(total)}</div></div>
-    <div class="metric-card"><div class="metric-label">Ada Selisih</div><div class="metric-val amber">${fmtN(adaSelisih)}</div></div>
-    <div class="metric-card"><div class="metric-label">Selisih Lebih</div><div class="metric-val green">${fmtN(lebih)}</div></div>
-    <div class="metric-card"><div class="metric-label">Selisih Kurang</div><div class="metric-val" style="color:#E24B4A">${fmtN(kurang)}</div></div>`
 }
 
 function renderStokOpnameTable(data) {
   const tbody = qs('so-tbody')
-  if (!data.length) { tbody.innerHTML = '<tr><td colspan="8"><div class="empty"><i class="ti ti-clipboard-list"></i>Belum ada data stok opname</div></td></tr>'; return }
+  if (!data.length) { tbody.innerHTML = '<tr><td colspan="6"><div class="empty"><i class="ti ti-clipboard-list"></i>Belum ada data stok opname</div></td></tr>'; return }
   tbody.innerHTML = data.map(d => {
     const selColor = d.selisih > 0 ? 'color:var(--green)' : d.selisih < 0 ? 'color:#E24B4A' : ''
-    const selText = (d.selisih > 0 ? '+' : '') + fmtN(d.selisih)
+    const selText = (d.selisih > 0 ? '+' : '') + fmt(d.selisih)
     return `<tr>
       <td>${d.tgl}</td>
-      <td style="font-weight:500">${d.nama}</td>
-      <td style="font-size:12px;color:var(--tx2)">${d.satuan||'-'}</td>
-      <td style="text-align:right">${fmtN(d.stok_sistem)}</td>
-      <td style="text-align:right">${fmtN(d.stok_fisik)}</td>
+      <td style="text-align:right">${fmt(d.nilai_sebelum)}</td>
+      <td style="text-align:right;font-weight:600">${fmt(d.nilai_sesudah)}</td>
       <td style="text-align:right;font-weight:600;${selColor}">${selText}</td>
       <td style="font-size:12px;color:var(--tx2)">${d.ket||'-'}</td>
       <td><button class="btn sm danger" data-id="${d.id}" data-action="del-so"><i class="ti ti-trash"></i></button></td>
@@ -721,20 +705,51 @@ function renderStokOpnameTable(data) {
   }).join('')
 }
 
-qs('so-save-btn').addEventListener('click', async () => {
-  const nama = qs('so-nama').value.trim()
-  if (!nama) { toast('Nama item wajib diisi', 'error'); return }
+async function loadSoRekap() {
+  const dari = qs('so-dari').value, sampai = qs('so-sampai').value
   showLoading(true)
   try {
-    await API.saveStokOpname({ tgl: qs('so-tgl').value || today(), nama, satuan: qs('so-satuan').value, stok_sistem: qs('so-sistem').value, stok_fisik: qs('so-fisik').value, ket: qs('so-ket').value })
-    ;['so-nama','so-satuan','so-sistem','so-fisik','so-ket'].forEach(id => qs(id).value = '')
+    const [sum, beli] = await Promise.all([
+      API.getRekapSummary({ dari, sampai }),
+      API.getPembelian({ dari, sampai })
+    ])
+    qs('so-rekap-cards').innerHTML = `
+      <div class="metric-card"><div class="metric-label">Total Resep</div><div class="metric-val">${fmtN(sum.totalPjR)}</div></div>
+      <div class="metric-card"><div class="metric-label">Total Penjualan</div><div class="metric-val purple">${fmt(sum.totalPjN)}</div></div>
+      <div class="metric-card"><div class="metric-label">Total Pembelian</div><div class="metric-val amber">${fmt(sum.totalBeli)}</div></div>`
+
+    qs('so-rekap-penjualan').innerHTML = sum.pjByKat.length
+      ? sum.pjByKat.map((k, i) => `<div class="rekap-row">
+          <div><div style="font-size:13px;font-weight:600;color:${KAT_HEX[i%KAT_HEX.length]}">${k.label}</div>
+          <div style="font-size:11px;color:var(--tx2)">${fmtN(k.resep)} resep</div></div>
+          <div style="font-weight:600">${fmt(k.nominal)}</div></div>`).join('')
+        + `<div style="text-align:right;font-size:12px;margin-top:8px;color:var(--tx2)">Total: ${fmt(sum.totalPjN)}</div>`
+      : '<div class="empty" style="padding:8px">Tidak ada data</div>'
+
+    const supMap = {}
+    beli.forEach(d => { if (d.supplier) supMap[d.supplier] = (supMap[d.supplier] || 0) + (d.total || 0) })
+    const supList = Object.entries(supMap).sort((a, b) => b[1] - a[1])
+    qs('so-rekap-pembelian').innerHTML = supList.length
+      ? supList.map(([nama, total]) => `<div class="rekap-row"><span>${nama}</span><span style="font-weight:600">${fmt(total)}</span></div>`).join('')
+        + `<div style="text-align:right;font-size:12px;margin-top:8px;color:var(--tx2)">Total: ${fmt(sum.totalBeli)}</div>`
+      : '<div class="empty" style="padding:8px">Tidak ada data</div>'
+  } catch (e) { toast(e.message, 'error') } finally { showLoading(false) }
+}
+
+qs('so-save-btn').addEventListener('click', async () => {
+  const sebelum = qs('so-sebelum').value, sesudah = qs('so-sesudah').value
+  if (!sebelum && !sesudah) { toast('Nilai stok wajib diisi', 'error'); return }
+  showLoading(true)
+  try {
+    await API.saveStokOpname({ tgl: qs('so-tgl').value || today(), nilai_sebelum: sebelum, nilai_sesudah: sesudah, ket: qs('so-ket').value })
+    ;['so-sebelum','so-sesudah','so-ket'].forEach(id => qs(id).value = '')
     qs('so-selisih-preview').value = ''; qs('so-selisih-preview').style.color = 'inherit'
     await loadStokOpname()
     toast('Data disimpan')
   } catch (e) { toast(e.message, 'error') } finally { showLoading(false) }
 })
 
-qs('so-filter-bulan').addEventListener('change', loadStokOpname)
+qs('so-rekap-btn').addEventListener('click', loadSoRekap)
 
 document.addEventListener('click', async e => {
   if (e.target.closest('[data-action="del-so"]')) {
@@ -817,8 +832,9 @@ async function init() {
   ;['beli-tgl','mut-tgl','arsip-tgl','pj-tgl','td-tgl','so-tgl'].forEach(id => { const el = qs(id); if (el) el.value = defDate })
   qs('rekap-sampai').value = defDate
   qs('rekap-dari').value = defDate.slice(0, 7) + '-01'
+  qs('so-dari').value = defDate.slice(0, 7) + '-01'
+  qs('so-sampai').value = defDate
   qs('pj-filter-bulan').value = defDate.slice(0, 7)
-  qs('so-filter-bulan').value = defDate.slice(0, 7)
   updateExcelLink()
   setupFileUpload()
   await showPage('dashboard')
