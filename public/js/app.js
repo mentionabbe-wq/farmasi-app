@@ -37,9 +37,9 @@ async function showPage(p) {
 
 /* ── DASHBOARD ── */
 async function loadDashboard() {
-  const [ang, beli, mut, pj, tujuan, kats, tidakDatang] = await Promise.all([
+  const [ang, beli, mut, pj, tujuan, kats, tidakDatang, so] = await Promise.all([
     API.getAnggaran(), API.getPembelian(), API.getMutasi(),
-    API.getPenjualan(), API.getTujuan(), API.getKategori(), API.getTidakDatang()
+    API.getPenjualan(), API.getTujuan(), API.getKategori(), API.getTidakDatang(), API.getStokOpname()
   ])
   STATE.tujuan = tujuan; STATE.kategori = kats
   const todayStr = today()
@@ -92,6 +92,23 @@ async function loadDashboard() {
   qs('dash-tidak-datang').innerHTML = top5.map(([nama, count]) =>
     `<div class="rekap-row"><span>${nama}</span><span class="badge amber">${count}x tidak datang</span></div>`
   ).join('') || '<div class="empty"><i class="ti ti-circle-check"></i>Tidak ada laporan obat tidak datang</div>'
+
+  const soByRuangan = {}
+  so.forEach(d => {
+    const r = d.ruangan || 'Umum'
+    if (!soByRuangan[r]) soByRuangan[r] = { sebelum: 0, sesudah: 0, selisih: 0 }
+    soByRuangan[r].sebelum += d.nilai_sebelum
+    soByRuangan[r].sesudah += d.nilai_sesudah
+    soByRuangan[r].selisih += d.selisih
+  })
+  const soEntries = Object.entries(soByRuangan)
+  qs('dash-so').innerHTML = soEntries.length
+    ? soEntries.map(([ruangan, v]) => `<div class="rekap-row">
+        <div><div style="font-size:13px;font-weight:600">${ruangan}</div>
+        <div style="font-size:11px;color:var(--tx2)">Sebelum: ${fmt(v.sebelum)} → Sesudah: ${fmt(v.sesudah)}</div></div>
+        <div style="font-weight:600;${v.selisih<0?'color:#E24B4A':v.selisih>0?'color:var(--green)':''}">${(v.selisih>0?'+':'')+fmt(v.selisih)}</div>
+      </div>`).join('')
+    : '<div class="empty"><i class="ti ti-clipboard-list"></i>Belum ada data stok opname</div>'
 }
 
 /* ── ANGGARAN ── */
@@ -683,19 +700,28 @@ function calcSoSelisih() {
   qs('so-selisih-preview').style.color = sel > 0 ? 'var(--green)' : sel < 0 ? '#E24B4A' : 'inherit'
 }
 
+let _soData = []
+
 async function loadStokOpname() {
-  const data = await API.getStokOpname()
+  const [data, tujuan] = await Promise.all([API.getStokOpname(), API.getTujuan()])
+  const opts = tujuan.map(t => `<option value="${t.label}">${t.label}</option>`).join('')
+  qs('so-ruangan').innerHTML = opts
+  qs('so-filter-ruangan').innerHTML = '<option value="">Semua Ruangan</option>' + opts
+  _soData = data
   renderStokOpnameTable(data)
 }
 
 function renderStokOpnameTable(data) {
   const tbody = qs('so-tbody')
-  if (!data.length) { tbody.innerHTML = '<tr><td colspan="6"><div class="empty"><i class="ti ti-clipboard-list"></i>Belum ada data stok opname</div></td></tr>'; return }
-  tbody.innerHTML = data.map(d => {
+  const filterR = qs('so-filter-ruangan').value
+  const rows = filterR ? data.filter(d => d.ruangan === filterR) : data
+  if (!rows.length) { tbody.innerHTML = '<tr><td colspan="7"><div class="empty"><i class="ti ti-clipboard-list"></i>Belum ada data stok opname</div></td></tr>'; return }
+  tbody.innerHTML = rows.map(d => {
     const selColor = d.selisih > 0 ? 'color:var(--green)' : d.selisih < 0 ? 'color:#E24B4A' : ''
     const selText = (d.selisih > 0 ? '+' : '') + fmt(d.selisih)
     return `<tr>
       <td>${d.tgl}</td>
+      <td><span class="badge gray">${d.ruangan||'-'}</span></td>
       <td style="text-align:right">${fmt(d.nilai_sebelum)}</td>
       <td style="text-align:right;font-weight:600">${fmt(d.nilai_sesudah)}</td>
       <td style="text-align:right;font-weight:600;${selColor}">${selText}</td>
@@ -741,14 +767,15 @@ qs('so-save-btn').addEventListener('click', async () => {
   if (!sebelum && !sesudah) { toast('Nilai stok wajib diisi', 'error'); return }
   showLoading(true)
   try {
-    await API.saveStokOpname({ tgl: qs('so-tgl').value || today(), nilai_sebelum: sebelum, nilai_sesudah: sesudah, ket: qs('so-ket').value })
+    await API.saveStokOpname({ tgl: qs('so-tgl').value || today(), ruangan: qs('so-ruangan').value, nilai_sebelum: sebelum, nilai_sesudah: sesudah, ket: qs('so-ket').value })
     ;['so-sebelum','so-sesudah','so-ket'].forEach(id => qs(id).value = '')
     qs('so-selisih-preview').value = ''; qs('so-selisih-preview').style.color = 'inherit'
-    await loadStokOpname()
+    _soData = await API.getStokOpname(); renderStokOpnameTable(_soData)
     toast('Data disimpan')
   } catch (e) { toast(e.message, 'error') } finally { showLoading(false) }
 })
 
+qs('so-filter-ruangan').addEventListener('change', () => renderStokOpnameTable(_soData))
 qs('so-rekap-btn').addEventListener('click', loadSoRekap)
 
 document.addEventListener('click', async e => {
@@ -756,7 +783,7 @@ document.addEventListener('click', async e => {
     if (!confirm2('Hapus data ini?')) return
     const id = e.target.closest('[data-id]').dataset.id
     showLoading(true)
-    try { await API.delStokOpname(id); await loadStokOpname(); toast('Dihapus') }
+    try { await API.delStokOpname(id); _soData = await API.getStokOpname(); renderStokOpnameTable(_soData); toast('Dihapus') }
     catch (err) { toast(err.message, 'error') } finally { showLoading(false) }
   }
 })
@@ -767,17 +794,41 @@ async function loadRekap() {
   updateExcelLink()
   showLoading(true)
   try {
-    const [sum, beli, mut, pj] = await Promise.all([
+    const [sum, beli, mut, pj, so] = await Promise.all([
       API.getRekapSummary({ dari, sampai }),
       API.getPembelian({ dari, sampai }),
       API.getMutasi({ dari, sampai }),
-      API.getPenjualan({ dari, sampai })
+      API.getPenjualan({ dari, sampai }),
+      API.getStokOpname({ dari, sampai })
     ])
     renderRekapSummary(sum)
     renderRekapPenjualan(sum, pj)
     renderRekapPembelian(beli, sum.totalBeli)
     renderRekapMutasi(sum)
+    renderRekapSO(so)
   } catch (e) { toast(e.message, 'error') } finally { showLoading(false) }
+}
+
+function renderRekapSO(data) {
+  const el = qs('rekap-so')
+  if (!data.length) { el.innerHTML = '<div class="empty">Tidak ada data stok opname pada periode ini</div>'; return }
+  const byRuangan = {}
+  data.forEach(d => {
+    const r = d.ruangan || 'Umum'
+    if (!byRuangan[r]) byRuangan[r] = { sebelum: 0, sesudah: 0, selisih: 0, count: 0 }
+    byRuangan[r].sebelum += d.nilai_sebelum
+    byRuangan[r].sesudah += d.nilai_sesudah
+    byRuangan[r].selisih += d.selisih
+    byRuangan[r].count++
+  })
+  el.innerHTML = `<div class="cards-row">${Object.entries(byRuangan).map(([ruangan, v]) => `
+    <div class="metric-card">
+      <div class="metric-label">${ruangan}</div>
+      <div style="font-size:12px;margin:6px 0 2px"><span style="color:var(--tx2)">Sebelum SO</span><br><strong>${fmt(v.sebelum)}</strong></div>
+      <div style="font-size:12px;margin-bottom:2px"><span style="color:var(--tx2)">Sesudah SO</span><br><strong>${fmt(v.sesudah)}</strong></div>
+      <div style="font-size:14px;font-weight:600;margin-top:6px;${v.selisih<0?'color:#E24B4A':v.selisih>0?'color:var(--green)':''}">${(v.selisih>0?'+':'')+fmt(v.selisih)}</div>
+      <div class="metric-sub">${v.count} kali opname</div>
+    </div>`).join('')}</div>`
 }
 
 function updateExcelLink() {

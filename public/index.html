@@ -66,6 +66,10 @@
           <div id="dash-tidak-datang"></div>
         </div>
       </div>
+      <div class="card" style="margin-top:12px">
+        <div class="section-title"><span><i class="ti ti-clipboard-list"></i> Total Stok Opname per Ruangan</span></div>
+        <div id="dash-so"></div>
+      </div>
     </section>
 
     <!-- ANGGARAN -->
@@ -237,8 +241,9 @@
     <section class="page" id="page-stokopname">
       <div class="card">
         <div class="section-title">Input Ringkasan Stok Opname</div>
-        <div class="form-row">
+        <div class="form-row triple">
           <div class="form-group"><label>Tanggal SO</label><input type="date" id="so-tgl"></div>
+          <div class="form-group"><label>Ruangan / Farmasi</label><select id="so-ruangan"></select></div>
           <div class="form-group"><label>Keterangan</label><input type="text" id="so-ket" placeholder="Stok opname bulan Juni 2026..."></div>
         </div>
         <div class="form-row">
@@ -249,9 +254,12 @@
         <button class="btn primary" id="so-save-btn"><i class="ti ti-device-floppy"></i>Simpan</button>
       </div>
       <div class="card">
-        <div class="section-title">Riwayat Stok Opname</div>
+        <div class="section-title">
+          Riwayat Stok Opname
+          <select id="so-filter-ruangan" class="input-sm"><option value="">Semua Ruangan</option></select>
+        </div>
         <div class="table-wrap">
-          <table><thead><tr><th>Tanggal</th><th style="text-align:right">Nilai Sebelum</th><th style="text-align:right">Nilai Sesudah</th><th style="text-align:right">Selisih</th><th>Keterangan</th><th></th></tr></thead>
+          <table><thead><tr><th>Tanggal</th><th>Ruangan</th><th style="text-align:right">Nilai Sebelum</th><th style="text-align:right">Nilai Sesudah</th><th style="text-align:right">Selisih</th><th>Keterangan</th><th></th></tr></thead>
           <tbody id="so-tbody"></tbody></table>
         </div>
       </div>
@@ -294,6 +302,10 @@
       <div class="card" style="margin-top:12px">
         <div class="section-title"><span><i class="ti ti-transfer"></i> Rekap Mutasi per Tujuan</span></div>
         <div id="rekap-mutasi"></div>
+      </div>
+      <div class="card" style="margin-top:12px">
+        <div class="section-title"><span><i class="ti ti-clipboard-list"></i> Total Stok Opname</span></div>
+        <div id="rekap-so"></div>
       </div>
       <div class="action-row" style="margin-top:4px">
         <a id="btn-excel" class="btn excel" href="#"><i class="ti ti-file-spreadsheet"></i>Download Rekap Excel</a>
