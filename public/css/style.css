@@ -225,6 +225,16 @@ tfoot td{font-weight:500;background:var(--bg2);border-top:.5px solid var(--bd2)}
 .empty{text-align:center;padding:28px 16px;color:var(--tx2);font-size:13px}
 .empty i{font-size:30px;display:block;margin-bottom:7px;color:var(--tx3)}
 
+/* ── SEARCHABLE SELECT ── */
+.srch-wrap{display:flex;flex-direction:column}
+.srch-inp{padding:6px 10px;border:.5px solid var(--bd2);border-radius:var(--r) var(--r) 0 0;border-bottom:.5px solid var(--bd);background:var(--bg2);color:var(--tx);font-size:13px;font-family:inherit;transition:border-color .15s}
+.srch-inp:focus{outline:none;border-color:var(--green);border-bottom-color:var(--bd)}
+.srch-inp::placeholder{color:var(--tx3)}
+.srch-wrap select,.srch-wrap .form-group input,.srch-wrap .form-group select{border-radius:0 0 var(--r) var(--r)}
+.modal-srch{width:100%;padding:7px 10px;border:.5px solid var(--bd2);border-radius:var(--r);background:var(--bg2);color:var(--tx);font-size:13px;font-family:inherit;margin-bottom:8px;transition:border-color .15s}
+.modal-srch:focus{outline:none;border-color:var(--green)}
+.modal-srch::placeholder{color:var(--tx3)}
+
 /* ── PRINT ── */
 @media print{
   .topbar,.nav,.btn,.action-row,#toast,#loading-overlay,.modal-backdrop{display:none!important}

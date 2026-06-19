@@ -1,5 +1,18 @@
 /* ── UTILS ── */
 const fmt = n => 'Rp ' + Math.round(n || 0).toLocaleString('id-ID')
+
+function filterSel(srchId, selId) {
+  const q = qs(srchId).value.toLowerCase()
+  Array.from(qs(selId).options).forEach(o => { o.hidden = !!o.value && !o.text.toLowerCase().includes(q) })
+}
+
+function filterModalItems(srchId, listId) {
+  const q = qs(srchId).value.toLowerCase()
+  qs(listId).querySelectorAll('.item-row').forEach(row => {
+    const label = row.querySelector('.item-row-label span')?.textContent.toLowerCase() || ''
+    row.style.display = label.includes(q) ? '' : 'none'
+  })
+}
 const fmtN = n => Math.round(n || 0).toLocaleString('id-ID')
 const today = () => new Date().toISOString().slice(0, 10)
 const qs = id => document.getElementById(id)
@@ -166,6 +179,9 @@ async function loadSupplierSelects() {
   qs('beli-supplier').innerHTML = '<option value="">-- Pilih Supplier --</option>' + opts
   qs('beli-filter-supplier').innerHTML = '<option value="">Semua Supplier</option>' + opts
   qs('td-supplier').innerHTML = '<option value="">-- Pilih Supplier --</option>' + opts
+  if (qs('beli-supplier-srch').value) filterSel('beli-supplier-srch', 'beli-supplier')
+  if (qs('td-supplier-srch').value) filterSel('td-supplier-srch', 'td-supplier')
+  if (qs('beli-sup-filter-srch').value) filterSel('beli-sup-filter-srch', 'beli-filter-supplier')
 }
 
 async function renderSupplierModal() {
@@ -176,6 +192,7 @@ async function renderSupplierModal() {
 }
 
 qs('btn-kelola-supplier').addEventListener('click', async () => {
+  qs('supplier-modal-srch').value = ''
   await renderSupplierModal(); qs('modal-supplier').classList.add('open')
 })
 qs('supplier-close-btn').addEventListener('click', async () => {
@@ -602,13 +619,24 @@ async function loadKatArsip() {
   const opts = list.map(k => `<option value="${k.label}">${k.label}</option>`).join('')
   qs('arsip-kategori').innerHTML = opts
   qs('arsip-filter-kat').innerHTML = '<option value="">Semua Kategori</option>' + opts
+  if (qs('arsip-kat-srch').value) filterSel('arsip-kat-srch', 'arsip-kategori')
 }
+
+let _arsipData = []
 
 async function loadArsip() {
   await loadKatArsip()
   const kat = qs('arsip-filter-kat').value
-  const data = await API.getArsip(kat ? { kat } : {})
-  renderArsipList(data)
+  _arsipData = await API.getArsip(kat ? { kat } : {})
+  renderFilteredArsip()
+}
+
+function renderFilteredArsip() {
+  const q = qs('arsip-search').value.toLowerCase().trim()
+  const filtered = q ? _arsipData.filter(d =>
+    d.judul.toLowerCase().includes(q) || (d.deskripsi || '').toLowerCase().includes(q) || (d.no || '').toLowerCase().includes(q)
+  ) : _arsipData
+  renderArsipList(filtered)
 }
 
 function renderArsipList(data) {
@@ -643,6 +671,7 @@ qs('arsip-save-btn').addEventListener('click', async () => {
 })
 
 qs('arsip-filter-kat').addEventListener('change', loadArsip)
+qs('arsip-search').addEventListener('input', renderFilteredArsip)
 
 document.addEventListener('click', async e => {
   if (e.target.closest('[data-action="del-arsip"]')) {
@@ -663,6 +692,7 @@ async function renderKatArsipModal() {
 }
 
 qs('btn-kelola-kat-arsip').addEventListener('click', async () => {
+  qs('kat-arsip-modal-srch').value = ''
   await renderKatArsipModal()
   qs('modal-kat-arsip').classList.add('open')
 })
@@ -888,6 +918,19 @@ async function init() {
   qs('pj-filter-bulan').value = defDate.slice(0, 7)
   updateExcelLink()
   setupFileUpload()
+
+  // Searchable selects
+  qs('beli-supplier-srch').addEventListener('input', () => filterSel('beli-supplier-srch', 'beli-supplier'))
+  qs('td-supplier-srch').addEventListener('input', () => filterSel('td-supplier-srch', 'td-supplier'))
+  qs('arsip-kat-srch').addEventListener('input', () => filterSel('arsip-kat-srch', 'arsip-kategori'))
+  qs('beli-sup-filter-srch').addEventListener('input', () => filterSel('beli-sup-filter-srch', 'beli-filter-supplier'))
+
+  // Modal search
+  qs('supplier-modal-srch').addEventListener('input', () => filterModalItems('supplier-modal-srch', 'supplier-list-modal'))
+  qs('kat-arsip-modal-srch').addEventListener('input', () => filterModalItems('kat-arsip-modal-srch', 'kat-arsip-list-modal'))
+  qs('tujuan-modal-srch').addEventListener('input', () => filterModalItems('tujuan-modal-srch', 'tujuan-list-modal'))
+  qs('kategori-modal-srch').addEventListener('input', () => filterModalItems('kategori-modal-srch', 'kategori-list-modal'))
+
   await showPage('dashboard')
 }
 
