@@ -2,8 +2,7 @@ name: farmasi-app
 
 services:
   farmasi-app:
-    build:
-      context: https://github.com/mentionabbe-wq/farmasi-app.git
+    image: ghcr.io/mentionabbe-wq/farmasi-app:latest
     container_name: farmasi-app
     ports:
       - "3000:3000"
