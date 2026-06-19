@@ -18,14 +18,14 @@ router.get('/summary', (req, res) => {
   const tujuan     = read('tujuan').sort((a, b) => (a.urutan || 0) - (b.urutan || 0))
   const kats       = read('kategori_pj').sort((a, b) => (a.urutan || 0) - (b.urutan || 0))
 
-  const totalBeli  = pembelian.reduce((s, r) => s + r.total, 0)
-  const totalMut   = mutasi.reduce((s, r) => s + r.total, 0)
+  const totalBeli  = pembelian.reduce((s, r) => s + (r.total || 0), 0)
+  const totalMut   = mutasi.reduce((s, r) => s + (r.jml || 0), 0)
   const totalPjN   = penjualan.reduce((s, r) => s + r.total_nominal, 0)
   const totalPjR   = penjualan.reduce((s, r) => s + r.total_resep, 0)
 
   const mutByTujuan = tujuan.map(t => {
     const rows = mutasi.filter(d => d.tujuan === t.id)
-    return { ...t, total: rows.reduce((s, r) => s + r.total, 0), count: rows.length }
+    return { ...t, total: rows.reduce((s, r) => s + (r.jml || 0), 0), count: rows.length }
   })
 
   const pjByKat = kats.map(k => {
@@ -78,18 +78,18 @@ router.get('/excel', (req, res) => {
 
   // Sheet Pembelian
   const wsBeli = XLSX.utils.aoa_to_sheet([
-    ['Tanggal', 'No. Faktur', 'Supplier', 'Nama Item', 'Jumlah', 'Satuan', 'Harga Satuan (Rp)', 'Total (Rp)', 'Periode Anggaran', 'Keterangan'],
-    ...pembelian.map(d => [d.tgl, d.faktur || '', d.supplier || '', d.nama, d.jml, d.satuan || '', d.harga, d.total, d.anggaran || '', d.ket || ''])
+    ['Tanggal', 'Supplier', 'Total Belanja (Rp)', 'Periode Anggaran', 'Keterangan'],
+    ...pembelian.map(d => [d.tgl, d.supplier || '', d.total, d.anggaran || '', d.ket || ''])
   ])
-  wsBeli['!cols'] = [{ wch: 12 }, { wch: 14 }, { wch: 20 }, { wch: 25 }, { wch: 8 }, { wch: 10 }, { wch: 16 }, { wch: 18 }, { wch: 12 }, { wch: 30 }]
+  wsBeli['!cols'] = [{ wch: 12 }, { wch: 25 }, { wch: 20 }, { wch: 16 }, { wch: 35 }]
   XLSX.utils.book_append_sheet(wb, wsBeli, 'Pembelian')
 
   // Sheet Mutasi (semua)
   const wsMut = XLSX.utils.aoa_to_sheet([
-    ['Tanggal', 'No. Mutasi', 'Tujuan', 'Nama Item', 'Jumlah', 'Satuan', 'Harga Sat. (Rp)', 'Total (Rp)', 'Petugas', 'Keterangan'],
-    ...mutasiAll.map(d => [d.tgl, d.no || '', tujuanMap[d.tujuan] || d.tujuan, d.nama, d.jml, d.satuan || '', d.harga, d.total, d.petugas || '', d.ket || ''])
+    ['Tanggal', 'No. Mutasi', 'Tujuan', 'Jumlah Item', 'Petugas', 'Keterangan'],
+    ...mutasiAll.map(d => [d.tgl, d.no || '', tujuanMap[d.tujuan] || d.tujuan, d.jml, d.petugas || '', d.ket || ''])
   ])
-  wsMut['!cols'] = [{ wch: 12 }, { wch: 14 }, { wch: 20 }, { wch: 25 }, { wch: 8 }, { wch: 10 }, { wch: 16 }, { wch: 16 }, { wch: 16 }, { wch: 30 }]
+  wsMut['!cols'] = [{ wch: 12 }, { wch: 14 }, { wch: 22 }, { wch: 12 }, { wch: 18 }, { wch: 35 }]
   XLSX.utils.book_append_sheet(wb, wsMut, 'Mutasi')
 
   // Sheet Mutasi per tujuan
@@ -97,10 +97,10 @@ router.get('/excel', (req, res) => {
     const items = mutasiAll.filter(d => d.tujuan === t.id)
     if (!items.length) return
     const ws = XLSX.utils.aoa_to_sheet([
-      ['Tanggal', 'No.', 'Nama Item', 'Jumlah', 'Satuan', 'Harga Sat. (Rp)', 'Total (Rp)', 'Petugas', 'Keterangan'],
-      ...items.map(d => [d.tgl, d.no || '', d.nama, d.jml, d.satuan || '', d.harga, d.total, d.petugas || '', d.ket || ''])
+      ['Tanggal', 'No.', 'Jumlah Item', 'Petugas', 'Keterangan'],
+      ...items.map(d => [d.tgl, d.no || '', d.jml, d.petugas || '', d.ket || ''])
     ])
-    ws['!cols'] = [{ wch: 12 }, { wch: 14 }, { wch: 25 }, { wch: 8 }, { wch: 10 }, { wch: 16 }, { wch: 16 }, { wch: 16 }, { wch: 30 }]
+    ws['!cols'] = [{ wch: 12 }, { wch: 14 }, { wch: 12 }, { wch: 18 }, { wch: 35 }]
     XLSX.utils.book_append_sheet(wb, ws, t.label.substring(0, 31).replace(/[:\\/?\*[\]]/g, ''))
   })
 
