@@ -55,6 +55,10 @@
           <div id="dash-pembelian"></div>
         </div>
       </div>
+      <div class="card" style="margin-top:12px">
+        <div class="section-title"><span><i class="ti ti-alert-circle"></i> 5 Besar Obat Tidak Datang</span></div>
+        <div id="dash-tidak-datang"></div>
+      </div>
     </section>
 
     <!-- ANGGARAN -->
@@ -101,6 +105,23 @@
         <div class="table-wrap">
           <table><thead><tr><th>Tanggal</th><th>Supplier</th><th>Total Belanja</th><th>Anggaran</th><th></th></tr></thead>
           <tbody id="beli-tbody"></tbody></table>
+        </div>
+      </div>
+      <div class="card">
+        <div class="section-title">Input Obat Tidak Datang</div>
+        <div class="form-row triple">
+          <div class="form-group"><label>Tanggal</label><input type="date" id="td-tgl"></div>
+          <div class="form-group"><label>Nama Obat / Alkes</label><input type="text" id="td-nama" placeholder="Nama obat yang tidak datang"></div>
+          <div class="form-group"><label>Supplier</label><input type="text" id="td-supplier" placeholder="Nama supplier"></div>
+        </div>
+        <div class="form-group" style="margin-bottom:12px"><label>Keterangan</label><textarea id="td-ket" placeholder="Catatan tambahan..."></textarea></div>
+        <button class="btn primary" id="td-save-btn"><i class="ti ti-device-floppy"></i>Simpan</button>
+      </div>
+      <div class="card">
+        <div class="section-title">Daftar Obat Tidak Datang</div>
+        <div class="table-wrap">
+          <table><thead><tr><th>Tanggal</th><th>Nama Obat</th><th>Supplier</th><th>Keterangan</th><th></th></tr></thead>
+          <tbody id="td-tbody"></tbody></table>
         </div>
       </div>
     </section>

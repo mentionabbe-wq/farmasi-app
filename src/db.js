@@ -28,7 +28,7 @@ if (!fs.existsSync(fp('kategori_pj'))) {
     { id: 'asuransi', label: 'Asuransi',  is_default: true, urutan: 3 }
   ])
 }
-;['anggaran','pembelian','mutasi','penjualan','arsip'].forEach(n => {
+;['anggaran','pembelian','mutasi','penjualan','arsip','tidak_datang'].forEach(n => {
   if (!fs.existsSync(fp(n))) write(n, [])
 })
 if (!fs.existsSync(fp('settings'))) {

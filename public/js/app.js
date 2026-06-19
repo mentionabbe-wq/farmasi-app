@@ -37,22 +37,22 @@ async function showPage(p) {
 
 /* ── DASHBOARD ── */
 async function loadDashboard() {
-  const [ang, beli, mut, pj, tujuan, kats] = await Promise.all([
+  const [ang, beli, mut, pj, tujuan, kats, tidakDatang] = await Promise.all([
     API.getAnggaran(), API.getPembelian(), API.getMutasi(),
-    API.getPenjualan(), API.getTujuan(), API.getKategori()
+    API.getPenjualan(), API.getTujuan(), API.getKategori(), API.getTidakDatang()
   ])
   STATE.tujuan = tujuan; STATE.kategori = kats
   const todayStr = today()
   const pjToday = pj.filter(d => d.tgl === todayStr)
   const totalPjN = pj.reduce((s, d) => s + d.total_nominal, 0)
   const totalBeli = beli.reduce((s, d) => s + d.total, 0)
-  const totalMut = mut.reduce((s, d) => s + (d.total || 0), 0)
+  const totalMut = mut.reduce((s, d) => s + (d.jml || 0), 0)
   const totalAng = ang.reduce((s, d) => s + d.total, 0)
 
   qs('dash-cards').innerHTML = `
     <div class="metric-card"><div class="metric-label">Total Anggaran</div><div class="metric-val blue">${fmt(totalAng)}</div></div>
     <div class="metric-card"><div class="metric-label">Total Pembelian</div><div class="metric-val amber">${fmt(totalBeli)}</div></div>
-    <div class="metric-card"><div class="metric-label">Total Mutasi</div><div class="metric-val green">${fmt(totalMut)}</div></div>
+    <div class="metric-card"><div class="metric-label">Total Mutasi</div><div class="metric-val green">${fmtN(totalMut)} item</div></div>
     <div class="metric-card"><div class="metric-label">Total Penjualan</div><div class="metric-val purple">${fmt(totalPjN)}</div></div>`
 
   const lastAng = ang[0]
@@ -78,6 +78,13 @@ async function loadDashboard() {
 
   qs('dash-mutasi').innerHTML = mut.slice(0, 4).map(d => `<div class="rekap-row"><span>${tujuanMap[d.tujuan] || d.tujuan}</span><span style="font-size:12px;color:var(--tx2)">${d.tgl} · ${fmtN(d.jml)} item</span></div>`).join('') || '<div class="empty"><i class="ti ti-transfer"></i>Belum ada data</div>'
   qs('dash-pembelian').innerHTML = beli.slice(0, 4).map(d => `<div class="rekap-row"><span>${d.supplier||'-'}</span><span style="font-weight:600">${fmt(d.total)}</span></div>`).join('') || '<div class="empty"><i class="ti ti-shopping-cart"></i>Belum ada data</div>'
+
+  const countMap = {}
+  tidakDatang.forEach(d => { countMap[d.nama] = (countMap[d.nama] || 0) + 1 })
+  const top5 = Object.entries(countMap).sort((a, b) => b[1] - a[1]).slice(0, 5)
+  qs('dash-tidak-datang').innerHTML = top5.map(([nama, count]) =>
+    `<div class="rekap-row"><span>${nama}</span><span class="badge amber">${count}x tidak datang</span></div>`
+  ).join('') || '<div class="empty"><i class="ti ti-circle-check"></i>Tidak ada laporan obat tidak datang</div>'
 }
 
 /* ── ANGGARAN ── */
@@ -131,8 +138,9 @@ async function populateAnggaranSelect() {
 /* ── PEMBELIAN ── */
 async function loadPembelian() {
   await populateAnggaranSelect()
-  const data = await API.getPembelian()
-  renderPembelianTable(data)
+  const [beli, td] = await Promise.all([API.getPembelian(), API.getTidakDatang()])
+  renderPembelianTable(beli)
+  renderTidakDatangTable(td)
 }
 
 function renderPembelianTable(data) {
@@ -164,6 +172,41 @@ document.addEventListener('click', async e => {
     const id = e.target.closest('[data-id]').dataset.id
     showLoading(true)
     try { await API.delPembelian(id); renderPembelianTable(await API.getPembelian()); toast('Dihapus') }
+    catch (err) { toast(err.message, 'error') } finally { showLoading(false) }
+  }
+})
+
+/* ── TIDAK DATANG ── */
+function renderTidakDatangTable(data) {
+  const tbody = qs('td-tbody')
+  if (!data.length) { tbody.innerHTML = '<tr><td colspan="5"><div class="empty">Belum ada data obat tidak datang</div></td></tr>'; return }
+  tbody.innerHTML = data.map(d => `<tr>
+    <td>${d.tgl}</td>
+    <td style="font-weight:500">${d.nama}</td>
+    <td>${d.supplier||'-'}</td>
+    <td style="font-size:12px;color:var(--tx2)">${d.ket||'-'}</td>
+    <td><button class="btn sm danger" data-id="${d.id}" data-action="del-td"><i class="ti ti-trash"></i></button></td>
+  </tr>`).join('')
+}
+
+qs('td-save-btn').addEventListener('click', async () => {
+  const nama = qs('td-nama').value.trim()
+  if (!nama) { toast('Nama obat wajib diisi', 'error'); return }
+  showLoading(true)
+  try {
+    await API.saveTidakDatang({ tgl: qs('td-tgl').value || today(), nama, supplier: qs('td-supplier').value, ket: qs('td-ket').value })
+    ;['td-tgl', 'td-nama', 'td-supplier', 'td-ket'].forEach(id => qs(id).value = '')
+    renderTidakDatangTable(await API.getTidakDatang())
+    toast('Data disimpan')
+  } catch (e) { toast(e.message, 'error') } finally { showLoading(false) }
+})
+
+document.addEventListener('click', async e => {
+  if (e.target.closest('[data-action="del-td"]')) {
+    if (!confirm2('Hapus data ini?')) return
+    const id = e.target.closest('[data-id]').dataset.id
+    showLoading(true)
+    try { await API.delTidakDatang(id); renderTidakDatangTable(await API.getTidakDatang()); toast('Dihapus') }
     catch (err) { toast(err.message, 'error') } finally { showLoading(false) }
   }
 })
@@ -587,7 +630,7 @@ function renderRekapPembelian(beli, total) {
   const el = qs('rekap-pembelian')
   if (!beli.length) { el.innerHTML = '<div class="empty">Tidak ada data</div>'; return }
   el.innerHTML = beli.slice(0, 8).map(d => `<div class="rekap-row">
-    <div><div style="font-size:13px">${d.nama}</div><div style="font-size:11px;color:var(--text-sec)">${d.tgl} · ${d.supplier||'-'}</div></div>
+    <div><div style="font-size:13px">${d.supplier||'-'}</div><div style="font-size:11px;color:var(--text-sec)">${d.tgl} · ${d.anggaran||'-'}</div></div>
     <div style="font-weight:600">${fmt(d.total)}</div></div>`).join('') + `<div style="text-align:right;font-size:12px;margin-top:8px;color:var(--text-sec)">Total: ${fmt(total)}</div>`
 }
 
@@ -602,7 +645,7 @@ async function init() {
   qs('topbar-date').textContent = new Date().toLocaleDateString('id-ID', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })
   try { const s = await API.getSettings(); qs('topbar-rs').textContent = s.rs_name || 'RS Medika' } catch {}
   const defDate = today()
-  ;['beli-tgl','mut-tgl','arsip-tgl','pj-tgl'].forEach(id => { const el = qs(id); if (el) el.value = defDate })
+  ;['beli-tgl','mut-tgl','arsip-tgl','pj-tgl','td-tgl'].forEach(id => { const el = qs(id); if (el) el.value = defDate })
   qs('rekap-sampai').value = defDate
   qs('rekap-dari').value = defDate.slice(0, 7) + '-01'
   qs('pj-filter-bulan').value = defDate.slice(0, 7)

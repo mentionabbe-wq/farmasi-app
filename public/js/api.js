@@ -55,5 +55,10 @@ const API = (() => {
     // Settings
     getSettings: () => req('GET', '/settings'),
     saveSettings: d => req('POST', '/settings', d),
+
+    // Tidak Datang
+    getTidakDatang: () => req('GET', '/tidak-datang'),
+    saveTidakDatang: d => req('POST', '/tidak-datang', d),
+    delTidakDatang: id => req('DELETE', `/tidak-datang/${id}`),
   }
 })()
