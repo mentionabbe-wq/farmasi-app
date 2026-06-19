@@ -79,6 +79,13 @@ async function loadDashboard() {
   qs('dash-mutasi').innerHTML = mut.slice(0, 4).map(d => `<div class="rekap-row"><span>${tujuanMap[d.tujuan] || d.tujuan}</span><span style="font-size:12px;color:var(--tx2)">${d.tgl} · ${fmt(d.jml)}</span></div>`).join('') || '<div class="empty"><i class="ti ti-transfer"></i>Belum ada data</div>'
   qs('dash-pembelian').innerHTML = beli.slice(0, 4).map(d => `<div class="rekap-row"><span>${d.supplier||'-'}</span><span style="font-weight:600">${fmt(d.total)}</span></div>`).join('') || '<div class="empty"><i class="ti ti-shopping-cart"></i>Belum ada data</div>'
 
+  const supMap = {}
+  beli.forEach(d => { if (d.supplier) supMap[d.supplier] = (supMap[d.supplier] || 0) + (d.total || 0) })
+  const top5Sup = Object.entries(supMap).sort((a, b) => b[1] - a[1]).slice(0, 5)
+  qs('dash-supplier').innerHTML = top5Sup.map(([nama, total]) =>
+    `<div class="rekap-row"><span>${nama}</span><span style="font-weight:600">${fmt(total)}</span></div>`
+  ).join('') || '<div class="empty"><i class="ti ti-truck"></i>Belum ada data pembelian</div>'
+
   const countMap = {}
   tidakDatang.forEach(d => { countMap[d.nama] = (countMap[d.nama] || 0) + 1 })
   const top5 = Object.entries(countMap).sort((a, b) => b[1] - a[1]).slice(0, 5)
@@ -135,23 +142,67 @@ async function populateAnggaranSelect() {
   qs('beli-anggaran').innerHTML = '<option value="">-- Pilih Periode --</option>' + data.map(d => `<option value="${d.bulan}">${d.bulan}</option>`).join('')
 }
 
+/* ── SUPPLIER ── */
+async function loadSupplierSelects() {
+  const list = await API.getSupplier()
+  const opts = list.map(s => `<option value="${s.nama}">${s.nama}</option>`).join('')
+  qs('beli-supplier').innerHTML = '<option value="">-- Pilih Supplier --</option>' + opts
+  qs('beli-filter-supplier').innerHTML = '<option value="">Semua Supplier</option>' + opts
+}
+
+async function renderSupplierModal() {
+  const list = await API.getSupplier()
+  qs('supplier-list-modal').innerHTML = list.length
+    ? list.map(s => `<div class="item-row"><div class="item-row-label"><span>${s.nama}</span></div><button class="btn sm danger" data-id="${s.id}" data-action="del-supplier"><i class="ti ti-trash"></i></button></div>`).join('')
+    : '<div class="empty" style="padding:8px">Belum ada supplier</div>'
+}
+
+qs('btn-kelola-supplier').addEventListener('click', async () => {
+  await renderSupplierModal(); qs('modal-supplier').classList.add('open')
+})
+qs('supplier-close-btn').addEventListener('click', async () => {
+  qs('modal-supplier').classList.remove('open'); await loadSupplierSelects()
+})
+qs('modal-supplier').addEventListener('click', async e => {
+  if (e.target === qs('modal-supplier')) { qs('modal-supplier').classList.remove('open'); await loadSupplierSelects() }
+})
+qs('supplier-add-btn').addEventListener('click', async () => {
+  const nama = qs('supplier-new-input').value.trim()
+  if (!nama) { toast('Nama supplier tidak boleh kosong', 'error'); return }
+  try { await API.saveSupplier({ nama }); qs('supplier-new-input').value = ''; await renderSupplierModal(); toast('Supplier ditambahkan') }
+  catch (e) { toast(e.message, 'error') }
+})
+document.addEventListener('click', async e => {
+  if (e.target.closest('[data-action="del-supplier"]')) {
+    if (!confirm2('Hapus supplier ini?')) return
+    const id = e.target.closest('[data-id]').dataset.id
+    try { await API.delSupplier(id); await renderSupplierModal(); toast('Dihapus') }
+    catch (e) { toast(e.message, 'error') }
+  }
+})
+
 /* ── PEMBELIAN ── */
 async function loadPembelian() {
-  await populateAnggaranSelect()
+  await Promise.all([populateAnggaranSelect(), loadSupplierSelects()])
   const [beli, td] = await Promise.all([API.getPembelian(), API.getTidakDatang()])
-  renderPembelianTable(beli)
+  _beliData = beli; renderPembelianTable(beli)
   renderTidakDatangTable(td)
 }
 
 function renderPembelianTable(data) {
   const tbody = qs('beli-tbody')
-  if (!data.length) { tbody.innerHTML = '<tr><td colspan="5"><div class="empty">Belum ada data pembelian</div></td></tr>'; return }
-  tbody.innerHTML = data.map(d => `<tr>
+  const filterSup = qs('beli-filter-supplier').value
+  const rows = filterSup ? data.filter(d => d.supplier === filterSup) : data
+  if (!rows.length) { tbody.innerHTML = `<tr><td colspan="5"><div class="empty">${filterSup ? 'Tidak ada pembelian dari supplier ini' : 'Belum ada data pembelian'}</div></td></tr>`; return }
+  tbody.innerHTML = rows.map(d => `<tr>
     <td>${d.tgl}</td><td>${d.supplier||'-'}</td>
     <td style="text-align:right;font-weight:600">${fmt(d.total)}</td>
     <td>${d.anggaran?`<span class="badge gray">${d.anggaran}</span>`:'-'}</td>
     <td><button class="btn sm danger" data-id="${d.id}" data-action="del-beli"><i class="ti ti-trash"></i></button></td></tr>`).join('')
 }
+
+let _beliData = []
+qs('beli-filter-supplier').addEventListener('change', () => renderPembelianTable(_beliData))
 
 qs('beli-save-btn').addEventListener('click', async () => {
   const jml = qs('beli-jml').value
@@ -159,9 +210,9 @@ qs('beli-save-btn').addEventListener('click', async () => {
   showLoading(true)
   try {
     await API.savePembelian({ tgl: qs('beli-tgl').value||today(), supplier: qs('beli-supplier').value, jml: +jml, anggaran: qs('beli-anggaran').value, ket: qs('beli-ket').value })
-    ;['beli-tgl','beli-supplier','beli-jml','beli-ket'].forEach(id => qs(id).value = '')
-    qs('beli-anggaran').value = ''
-    renderPembelianTable(await API.getPembelian())
+    ;['beli-tgl','beli-jml','beli-ket'].forEach(id => qs(id).value = '')
+    qs('beli-anggaran').value = ''; qs('beli-supplier').value = ''
+    _beliData = await API.getPembelian(); renderPembelianTable(_beliData)
     toast('Pembelian disimpan')
   } catch (e) { toast(e.message, 'error') } finally { showLoading(false) }
 })
@@ -171,7 +222,7 @@ document.addEventListener('click', async e => {
     if (!confirm2('Hapus data pembelian ini?')) return
     const id = e.target.closest('[data-id]').dataset.id
     showLoading(true)
-    try { await API.delPembelian(id); renderPembelianTable(await API.getPembelian()); toast('Dihapus') }
+    try { await API.delPembelian(id); _beliData = await API.getPembelian(); renderPembelianTable(_beliData); toast('Dihapus') }
     catch (err) { toast(err.message, 'error') } finally { showLoading(false) }
   }
 })

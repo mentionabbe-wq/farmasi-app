@@ -28,6 +28,7 @@ if (!fs.existsSync(fp('kategori_pj'))) {
     { id: 'asuransi', label: 'Asuransi',  is_default: true, urutan: 3 }
   ])
 }
+if (!fs.existsSync(fp('supplier'))) write('supplier', [])
 if (!fs.existsSync(fp('kat_arsip'))) {
   write('kat_arsip', [
     { id: 'spo',       label: 'SPO',        is_default: true },

@@ -55,9 +55,15 @@
           <div id="dash-pembelian"></div>
         </div>
       </div>
-      <div class="card" style="margin-top:12px">
-        <div class="section-title"><span><i class="ti ti-alert-circle"></i> 5 Besar Obat Tidak Datang</span></div>
-        <div id="dash-tidak-datang"></div>
+      <div class="grid-2" style="margin-top:12px">
+        <div class="card">
+          <div class="section-title"><span><i class="ti ti-truck"></i> 5 Besar Supplier</span></div>
+          <div id="dash-supplier"></div>
+        </div>
+        <div class="card">
+          <div class="section-title"><span><i class="ti ti-alert-circle"></i> 5 Besar Obat Tidak Datang</span></div>
+          <div id="dash-tidak-datang"></div>
+        </div>
       </div>
     </section>
 
@@ -91,7 +97,10 @@
         <div class="section-title">Input Pembelian</div>
         <div class="form-row">
           <div class="form-group"><label>Tanggal</label><input type="date" id="beli-tgl"></div>
-          <div class="form-group"><label>Supplier</label><input type="text" id="beli-supplier" placeholder="Nama supplier"></div>
+          <div class="form-group">
+            <label style="display:flex;align-items:center;justify-content:space-between">Supplier<button class="btn sm" id="btn-kelola-supplier" type="button"><i class="ti ti-settings-2"></i>Kelola</button></label>
+            <select id="beli-supplier"><option value="">-- Pilih Supplier --</option></select>
+          </div>
         </div>
         <div class="form-row">
           <div class="form-group"><label>Total Belanja (Rp)</label><input type="number" id="beli-jml" placeholder="0"></div>
@@ -101,7 +110,10 @@
         <button class="btn primary" id="beli-save-btn"><i class="ti ti-device-floppy"></i>Simpan Pembelian</button>
       </div>
       <div class="card">
-        <div class="section-title">Daftar Pembelian</div>
+        <div class="section-title">
+          Daftar Pembelian
+          <select id="beli-filter-supplier" class="input-sm"><option value="">Semua Supplier</option></select>
+        </div>
         <div class="table-wrap">
           <table><thead><tr><th>Tanggal</th><th>Supplier</th><th>Total Belanja</th><th>Anggaran</th><th></th></tr></thead>
           <tbody id="beli-tbody"></tbody></table>
@@ -286,6 +298,19 @@
       <button class="btn primary" id="kategori-add-btn"><i class="ti ti-plus"></i>Tambah</button>
     </div>
     <button class="btn full-w" id="kategori-close-btn">Tutup</button>
+  </div>
+</div>
+
+<!-- MODAL SUPPLIER -->
+<div class="modal-backdrop" id="modal-supplier">
+  <div class="modal">
+    <div class="modal-title"><i class="ti ti-truck"></i>Kelola Supplier</div>
+    <div id="supplier-list-modal"></div>
+    <div class="modal-input-row">
+      <input type="text" id="supplier-new-input" placeholder="Nama supplier baru...">
+      <button class="btn primary" id="supplier-add-btn"><i class="ti ti-plus"></i>Tambah</button>
+    </div>
+    <button class="btn full-w" id="supplier-close-btn">Tutup</button>
   </div>
 </div>
 

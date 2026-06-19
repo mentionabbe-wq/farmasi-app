@@ -65,5 +65,10 @@ const API = (() => {
     getKatArsip: () => req('GET', '/kat-arsip'),
     saveKatArsip: d => req('POST', '/kat-arsip', d),
     delKatArsip: id => req('DELETE', `/kat-arsip/${id}`),
+
+    // Supplier
+    getSupplier: () => req('GET', '/supplier'),
+    saveSupplier: d => req('POST', '/supplier', d),
+    delSupplier: id => req('DELETE', `/supplier/${id}`),
   }
 })()
