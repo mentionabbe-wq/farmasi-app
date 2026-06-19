@@ -136,7 +136,7 @@
           <div class="form-group"><label>Tujuan</label><select id="mut-tujuan-select"></select></div>
         </div>
         <div class="form-row">
-          <div class="form-group"><label>Jumlah Item</label><input type="number" id="mut-jml" placeholder="0"></div>
+          <div class="form-group"><label>Jumlah Nominal (Rp)</label><input type="number" id="mut-jml" placeholder="0"></div>
           <div class="form-group"><label>Petugas</label><input type="text" id="mut-petugas" placeholder="Nama petugas"></div>
         </div>
         <div class="form-group" style="margin-bottom:12px"><label>Keterangan</label><textarea id="mut-ket" placeholder="Catatan..."></textarea></div>
@@ -192,14 +192,9 @@
         <div class="section-title">Upload Dokumen Arsip</div>
         <div class="form-row">
           <div class="form-group"><label>Judul Dokumen</label><input type="text" id="arsip-judul" placeholder="Nama dokumen"></div>
-          <div class="form-group"><label>Kategori</label>
-            <select id="arsip-kategori">
-              <option value="SPO">SPO (Standar Prosedur Operasional)</option>
-              <option value="Kronologi">Kronologi Kejadian</option>
-              <option value="Laporan">Laporan</option>
-              <option value="SK">Surat Keputusan</option>
-              <option value="Lainnya">Lainnya</option>
-            </select>
+          <div class="form-group">
+            <label style="display:flex;align-items:center;justify-content:space-between">Kategori<button class="btn sm" id="btn-kelola-kat-arsip" type="button"><i class="ti ti-settings-2"></i>Kelola</button></label>
+            <select id="arsip-kategori"></select>
           </div>
         </div>
         <div class="form-row">
@@ -219,14 +214,7 @@
       <div class="card">
         <div class="section-title">
           Daftar Arsip
-          <select id="arsip-filter-kat" class="input-sm">
-            <option value="">Semua Kategori</option>
-            <option value="SPO">SPO</option>
-            <option value="Kronologi">Kronologi</option>
-            <option value="Laporan">Laporan</option>
-            <option value="SK">SK</option>
-            <option value="Lainnya">Lainnya</option>
-          </select>
+          <select id="arsip-filter-kat" class="input-sm"><option value="">Semua Kategori</option></select>
         </div>
         <div id="arsip-list"></div>
       </div>
@@ -298,6 +286,19 @@
       <button class="btn primary" id="kategori-add-btn"><i class="ti ti-plus"></i>Tambah</button>
     </div>
     <button class="btn full-w" id="kategori-close-btn">Tutup</button>
+  </div>
+</div>
+
+<!-- MODAL KAT ARSIP -->
+<div class="modal-backdrop" id="modal-kat-arsip">
+  <div class="modal">
+    <div class="modal-title"><i class="ti ti-tag"></i>Kelola Kategori Arsip</div>
+    <div id="kat-arsip-list-modal"></div>
+    <div class="modal-input-row">
+      <input type="text" id="kat-arsip-new-input" placeholder="Nama kategori baru...">
+      <button class="btn primary" id="kat-arsip-add-btn"><i class="ti ti-plus"></i>Tambah</button>
+    </div>
+    <button class="btn full-w" id="kat-arsip-close-btn">Tutup</button>
   </div>
 </div>
 

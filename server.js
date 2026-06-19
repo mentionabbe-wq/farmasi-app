@@ -22,6 +22,7 @@ app.use('/api/kategori',  require('./src/routes/kategori'))
 app.use('/api/rekap',     require('./src/routes/rekap'))
 app.use('/api/settings',  require('./src/routes/settings'))
 app.use('/api/tidak-datang', require('./src/routes/tidakdatang'))
+app.use('/api/kat-arsip',   require('./src/routes/katarsip'))
 
 app.use((err, req, res, next) => {
   console.error(err)

@@ -86,10 +86,10 @@ router.get('/excel', (req, res) => {
 
   // Sheet Mutasi (semua)
   const wsMut = XLSX.utils.aoa_to_sheet([
-    ['Tanggal', 'No. Mutasi', 'Tujuan', 'Jumlah Item', 'Petugas', 'Keterangan'],
+    ['Tanggal', 'No. Mutasi', 'Tujuan', 'Jumlah Nominal (Rp)', 'Petugas', 'Keterangan'],
     ...mutasiAll.map(d => [d.tgl, d.no || '', tujuanMap[d.tujuan] || d.tujuan, d.jml, d.petugas || '', d.ket || ''])
   ])
-  wsMut['!cols'] = [{ wch: 12 }, { wch: 14 }, { wch: 22 }, { wch: 12 }, { wch: 18 }, { wch: 35 }]
+  wsMut['!cols'] = [{ wch: 12 }, { wch: 14 }, { wch: 22 }, { wch: 20 }, { wch: 18 }, { wch: 35 }]
   XLSX.utils.book_append_sheet(wb, wsMut, 'Mutasi')
 
   // Sheet Mutasi per tujuan
@@ -97,7 +97,7 @@ router.get('/excel', (req, res) => {
     const items = mutasiAll.filter(d => d.tujuan === t.id)
     if (!items.length) return
     const ws = XLSX.utils.aoa_to_sheet([
-      ['Tanggal', 'No.', 'Jumlah Item', 'Petugas', 'Keterangan'],
+      ['Tanggal', 'No.', 'Jumlah Nominal (Rp)', 'Petugas', 'Keterangan'],
       ...items.map(d => [d.tgl, d.no || '', d.jml, d.petugas || '', d.ket || ''])
     ])
     ws['!cols'] = [{ wch: 12 }, { wch: 14 }, { wch: 12 }, { wch: 18 }, { wch: 35 }]

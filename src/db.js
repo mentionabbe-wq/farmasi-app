@@ -28,6 +28,15 @@ if (!fs.existsSync(fp('kategori_pj'))) {
     { id: 'asuransi', label: 'Asuransi',  is_default: true, urutan: 3 }
   ])
 }
+if (!fs.existsSync(fp('kat_arsip'))) {
+  write('kat_arsip', [
+    { id: 'spo',       label: 'SPO',        is_default: true },
+    { id: 'kronologi', label: 'Kronologi',  is_default: true },
+    { id: 'laporan',   label: 'Laporan',    is_default: true },
+    { id: 'sk',        label: 'SK',         is_default: true },
+    { id: 'lainnya',   label: 'Lainnya',    is_default: true }
+  ])
+}
 ;['anggaran','pembelian','mutasi','penjualan','arsip','tidak_datang'].forEach(n => {
   if (!fs.existsSync(fp(n))) write(n, [])
 })

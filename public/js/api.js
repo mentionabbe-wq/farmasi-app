@@ -60,5 +60,10 @@ const API = (() => {
     getTidakDatang: () => req('GET', '/tidak-datang'),
     saveTidakDatang: d => req('POST', '/tidak-datang', d),
     delTidakDatang: id => req('DELETE', `/tidak-datang/${id}`),
+
+    // Kategori Arsip
+    getKatArsip: () => req('GET', '/kat-arsip'),
+    saveKatArsip: d => req('POST', '/kat-arsip', d),
+    delKatArsip: id => req('DELETE', `/kat-arsip/${id}`),
   }
 })()

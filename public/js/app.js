@@ -52,7 +52,7 @@ async function loadDashboard() {
   qs('dash-cards').innerHTML = `
     <div class="metric-card"><div class="metric-label">Total Anggaran</div><div class="metric-val blue">${fmt(totalAng)}</div></div>
     <div class="metric-card"><div class="metric-label">Total Pembelian</div><div class="metric-val amber">${fmt(totalBeli)}</div></div>
-    <div class="metric-card"><div class="metric-label">Total Mutasi</div><div class="metric-val green">${fmtN(totalMut)} item</div></div>
+    <div class="metric-card"><div class="metric-label">Total Mutasi</div><div class="metric-val green">${fmt(totalMut)}</div></div>
     <div class="metric-card"><div class="metric-label">Total Penjualan</div><div class="metric-val purple">${fmt(totalPjN)}</div></div>`
 
   const lastAng = ang[0]
@@ -76,7 +76,7 @@ async function loadDashboard() {
       ${kats.map((k, i) => { const r = pjToday.reduce((s, d) => s + (d.detail[k.id]?.resep || 0), 0); const n = pjToday.reduce((s, d) => s + (d.detail[k.id]?.nominal || 0), 0); return r||n?`<div class="rekap-row"><span style="color:${KAT_HEX[i%KAT_HEX.length]}">${k.label}</span><span style="font-size:12px">${fmtN(r)} resep · ${fmt(n)}</span></div>`:'' }).join('')}`
   } else { qs('dash-penjualan').innerHTML = '<div class="empty"><i class="ti ti-cash"></i>Belum ada data hari ini</div>' }
 
-  qs('dash-mutasi').innerHTML = mut.slice(0, 4).map(d => `<div class="rekap-row"><span>${tujuanMap[d.tujuan] || d.tujuan}</span><span style="font-size:12px;color:var(--tx2)">${d.tgl} · ${fmtN(d.jml)} item</span></div>`).join('') || '<div class="empty"><i class="ti ti-transfer"></i>Belum ada data</div>'
+  qs('dash-mutasi').innerHTML = mut.slice(0, 4).map(d => `<div class="rekap-row"><span>${tujuanMap[d.tujuan] || d.tujuan}</span><span style="font-size:12px;color:var(--tx2)">${d.tgl} · ${fmt(d.jml)}</span></div>`).join('') || '<div class="empty"><i class="ti ti-transfer"></i>Belum ada data</div>'
   qs('dash-pembelian').innerHTML = beli.slice(0, 4).map(d => `<div class="rekap-row"><span>${d.supplier||'-'}</span><span style="font-weight:600">${fmt(d.total)}</span></div>`).join('') || '<div class="empty"><i class="ti ti-shopping-cart"></i>Belum ada data</div>'
 
   const countMap = {}
@@ -231,13 +231,13 @@ function buildMutasiTabs(tujuan, mutasi) {
     const total = items.reduce((s, d) => s + (d.total || 0), 0)
     const rows = items.length ? items.map(d => `<tr>
       <td style="font-size:12px">${d.tgl}</td><td style="font-size:12px">${d.no||'-'}</td>
-      <td style="text-align:right">${fmtN(d.jml)}</td>
+      <td style="text-align:right;font-weight:600">${fmt(d.jml)}</td>
       <td style="font-size:12px">${d.petugas||'-'}</td>
       <td style="font-size:11px;color:var(--tx2);max-width:120px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${d.ket||'-'}</td>
       <td><button class="btn sm danger" data-id="${d.id}" data-action="del-mut"><i class="ti ti-trash"></i></button></td></tr>`).join('')
       : `<tr><td colspan="6"><div class="empty">Belum ada mutasi ke ${t.label}</div></td></tr>`
     return `<div class="tab-panel${t.id === STATE.activeMutTab ? ' active' : ''}" id="mut-panel-${t.id}">
-      <div class="table-wrap"><table><thead><tr><th>Tanggal</th><th>No.</th><th>Jml</th><th>Petugas</th><th>Ket.</th><th></th></tr></thead><tbody>${rows}</tbody></table></div>
+      <div class="table-wrap"><table><thead><tr><th>Tanggal</th><th>No.</th><th>Nominal</th><th>Petugas</th><th>Ket.</th><th></th></tr></thead><tbody>${rows}</tbody></table></div>
       ${items.length ? `<div style="text-align:right;font-size:12px;margin-top:8px;color:var(--tx2)">${items.length} item</div>` : ''}</div>`
   }).join('')
 
@@ -528,7 +528,15 @@ document.addEventListener('click', e => {
   if (btn && btn.classList.contains('chip-del')) { pendingFiles.splice(+btn.dataset.fi, 1); renderFilePreview() }
 })
 
+async function loadKatArsip() {
+  const list = await API.getKatArsip()
+  const opts = list.map(k => `<option value="${k.label}">${k.label}</option>`).join('')
+  qs('arsip-kategori').innerHTML = opts
+  qs('arsip-filter-kat').innerHTML = '<option value="">Semua Kategori</option>' + opts
+}
+
 async function loadArsip() {
+  await loadKatArsip()
   const kat = qs('arsip-filter-kat').value
   const data = await API.getArsip(kat ? { kat } : {})
   renderArsipList(data)
@@ -574,6 +582,44 @@ document.addEventListener('click', async e => {
     showLoading(true)
     try { await API.delArsip(id); await loadArsip(); toast('Dihapus') }
     catch (err) { toast(err.message, 'error') } finally { showLoading(false) }
+  }
+})
+
+/* ── KATEGORI ARSIP MODAL ── */
+async function renderKatArsipModal() {
+  const list = await API.getKatArsip()
+  qs('kat-arsip-list-modal').innerHTML = list.map(k => `<div class="item-row">
+    <div class="item-row-label"><span>${k.label}</span>${k.is_default ? '<span class="default-badge">bawaan</span>' : ''}</div>
+    ${!k.is_default ? `<button class="btn sm danger" data-id="${k.id}" data-action="del-kat-arsip"><i class="ti ti-trash"></i></button>` : ''}</div>`).join('')
+}
+
+qs('btn-kelola-kat-arsip').addEventListener('click', async () => {
+  await renderKatArsipModal()
+  qs('modal-kat-arsip').classList.add('open')
+})
+
+qs('kat-arsip-close-btn').addEventListener('click', async () => {
+  qs('modal-kat-arsip').classList.remove('open')
+  await loadKatArsip()
+})
+
+qs('modal-kat-arsip').addEventListener('click', async e => {
+  if (e.target === qs('modal-kat-arsip')) { qs('modal-kat-arsip').classList.remove('open'); await loadKatArsip() }
+})
+
+qs('kat-arsip-add-btn').addEventListener('click', async () => {
+  const label = qs('kat-arsip-new-input').value.trim()
+  if (!label) { toast('Nama kategori tidak boleh kosong', 'error'); return }
+  try { await API.saveKatArsip({ label }); qs('kat-arsip-new-input').value = ''; await renderKatArsipModal(); toast('Kategori ditambahkan') }
+  catch (e) { toast(e.message, 'error') }
+})
+
+document.addEventListener('click', async e => {
+  if (e.target.closest('[data-action="del-kat-arsip"]')) {
+    if (!confirm2('Hapus kategori ini?')) return
+    const id = e.target.closest('[data-id]').dataset.id
+    try { await API.delKatArsip(id); await renderKatArsipModal(); toast('Dihapus') }
+    catch (e) { toast(e.message, 'error') }
   }
 })
 
@@ -637,7 +683,7 @@ function renderRekapPembelian(beli, total) {
 function renderRekapMutasi(sum) {
   const el = qs('rekap-mutasi')
   if (!sum.mutByTujuan.length) { el.innerHTML = '<div class="empty">Tidak ada data</div>'; return }
-  el.innerHTML = `<div class="cards-row">${sum.mutByTujuan.map(t => `<div class="metric-card"><div class="metric-label">${t.label}</div><div style="font-size:16px;font-weight:600">${fmt(t.total)}</div><div class="metric-sub">${fmtN(t.count)} item</div></div>`).join('')}</div>`
+  el.innerHTML = `<div class="cards-row">${sum.mutByTujuan.map(t => `<div class="metric-card"><div class="metric-label">${t.label}</div><div style="font-size:16px;font-weight:600">${fmt(t.total)}</div><div class="metric-sub">${fmtN(t.count)} transaksi</div></div>`).join('')}</div>`
 }
 
 /* ── INIT ── */
