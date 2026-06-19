@@ -70,5 +70,10 @@ const API = (() => {
     getSupplier: () => req('GET', '/supplier'),
     saveSupplier: d => req('POST', '/supplier', d),
     delSupplier: id => req('DELETE', `/supplier/${id}`),
+
+    // Stok Opname
+    getStokOpname: (p = {}) => req('GET', '/stok-opname?' + new URLSearchParams(p)),
+    saveStokOpname: d => req('POST', '/stok-opname', d),
+    delStokOpname: id => req('DELETE', `/stok-opname/${id}`),
   }
 })()

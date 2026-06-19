@@ -38,7 +38,7 @@ if (!fs.existsSync(fp('kat_arsip'))) {
     { id: 'lainnya',   label: 'Lainnya',    is_default: true }
   ])
 }
-;['anggaran','pembelian','mutasi','penjualan','arsip','tidak_datang'].forEach(n => {
+;['anggaran','pembelian','mutasi','penjualan','arsip','tidak_datang','stok_opname'].forEach(n => {
   if (!fs.existsSync(fp(n))) write(n, [])
 })
 if (!fs.existsSync(fp('settings'))) {

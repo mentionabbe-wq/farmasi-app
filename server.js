@@ -24,6 +24,7 @@ app.use('/api/settings',  require('./src/routes/settings'))
 app.use('/api/tidak-datang', require('./src/routes/tidakdatang'))
 app.use('/api/kat-arsip',   require('./src/routes/katarsip'))
 app.use('/api/supplier',    require('./src/routes/supplier'))
+app.use('/api/stok-opname', require('./src/routes/stokopname'))
 
 app.use((err, req, res, next) => {
   console.error(err)

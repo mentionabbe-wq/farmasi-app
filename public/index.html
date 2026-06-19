@@ -27,6 +27,7 @@
     <button class="nav-btn" data-page="mutasi"><i class="ti ti-transfer"></i>Mutasi</button>
     <button class="nav-btn" data-page="penjualan"><i class="ti ti-cash"></i>Penjualan</button>
     <button class="nav-btn" data-page="arsip"><i class="ti ti-archive"></i>Arsip</button>
+    <button class="nav-btn" data-page="stokopname"><i class="ti ti-clipboard-list"></i>Stok Opname</button>
     <button class="nav-btn" data-page="rekap"><i class="ti ti-report-analytics"></i>Rekap</button>
   </nav>
 
@@ -124,7 +125,7 @@
         <div class="form-row triple">
           <div class="form-group"><label>Tanggal</label><input type="date" id="td-tgl"></div>
           <div class="form-group"><label>Nama Obat / Alkes</label><input type="text" id="td-nama" placeholder="Nama obat yang tidak datang"></div>
-          <div class="form-group"><label>Supplier</label><input type="text" id="td-supplier" placeholder="Nama supplier"></div>
+          <div class="form-group"><label>Supplier</label><select id="td-supplier"><option value="">-- Pilih Supplier --</option></select></div>
         </div>
         <div class="form-group" style="margin-bottom:12px"><label>Keterangan</label><textarea id="td-ket" placeholder="Catatan tambahan..."></textarea></div>
         <button class="btn primary" id="td-save-btn"><i class="ti ti-device-floppy"></i>Simpan</button>
@@ -229,6 +230,36 @@
           <select id="arsip-filter-kat" class="input-sm"><option value="">Semua Kategori</option></select>
         </div>
         <div id="arsip-list"></div>
+      </div>
+    </section>
+
+    <!-- STOK OPNAME -->
+    <section class="page" id="page-stokopname">
+      <div class="card">
+        <div class="section-title">Input Stok Opname</div>
+        <div class="form-row triple">
+          <div class="form-group"><label>Tanggal</label><input type="date" id="so-tgl"></div>
+          <div class="form-group"><label>Nama Obat / Item</label><input type="text" id="so-nama" placeholder="Nama item"></div>
+          <div class="form-group"><label>Satuan</label><input type="text" id="so-satuan" placeholder="pcs / botol / box"></div>
+        </div>
+        <div class="form-row triple">
+          <div class="form-group"><label>Stok Sistem</label><input type="number" id="so-sistem" placeholder="0" min="0" oninput="calcSoSelisih()"></div>
+          <div class="form-group"><label>Stok Fisik</label><input type="number" id="so-fisik" placeholder="0" min="0" oninput="calcSoSelisih()"></div>
+          <div class="form-group"><label>Selisih (otomatis)</label><input type="text" id="so-selisih-preview" readonly style="background:var(--bg2);font-weight:600"></div>
+        </div>
+        <div class="form-group" style="margin-bottom:12px"><label>Keterangan</label><textarea id="so-ket" placeholder="Catatan..."></textarea></div>
+        <button class="btn primary" id="so-save-btn"><i class="ti ti-device-floppy"></i>Simpan</button>
+      </div>
+      <div class="cards-row" id="so-summary-cards"></div>
+      <div class="card">
+        <div class="section-title">
+          Daftar Stok Opname
+          <input type="month" id="so-filter-bulan" class="input-sm">
+        </div>
+        <div class="table-wrap">
+          <table><thead><tr><th>Tanggal</th><th>Nama Item</th><th>Satuan</th><th style="text-align:right">Stok Sistem</th><th style="text-align:right">Stok Fisik</th><th style="text-align:right">Selisih</th><th>Keterangan</th><th></th></tr></thead>
+          <tbody id="so-tbody"></tbody></table>
+        </div>
       </div>
     </section>
 
