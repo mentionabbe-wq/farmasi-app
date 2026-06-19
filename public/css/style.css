@@ -235,6 +235,39 @@ tfoot td{font-weight:500;background:var(--bg2);border-top:.5px solid var(--bd2)}
 .modal-srch:focus{outline:none;border-color:var(--green)}
 .modal-srch::placeholder{color:var(--tx3)}
 
+/* ── MOBILE ── */
+@media(max-width:640px){
+  /* Prevent iOS Safari auto-zoom when tapping inputs (requires font-size ≥ 16px) */
+  input,select,textarea{font-size:16px!important}
+
+  /* Topbar: tighter padding, hide RS name to save space */
+  .topbar{padding:8px 12px;gap:8px}
+  .topbar-rs{display:none}
+
+  /* Nav: horizontal scroll instead of multi-row wrapping */
+  .nav{flex-wrap:nowrap;overflow-x:auto;padding:4px 8px;-webkit-overflow-scrolling:touch;scrollbar-width:none}
+  .nav::-webkit-scrollbar{display:none}
+  .nav-btn{font-size:12px;padding:5px 8px;gap:4px}
+  .nav-btn i{font-size:14px}
+
+  /* Content: less horizontal padding */
+  .content{padding:10px 12px}
+  .card{padding:12px}
+
+  /* Section-title: wrap right-side controls to their own line */
+  .section-title{flex-wrap:wrap;row-gap:8px}
+  .section-title>div{width:100%;flex-wrap:wrap}
+  .section-title>div input,.section-title>div select{flex:1;width:auto!important;min-width:70px}
+
+  /* Buttons: bigger touch targets */
+  .btn{min-height:38px}
+  .btn.sm{min-height:32px}
+  .btn.full-w{min-height:44px}
+
+  /* Toast: avoid bottom nav overlap on mobile */
+  #toast{bottom:14px;max-width:calc(100vw - 32px);white-space:normal;text-align:center}
+}
+
 /* ── PRINT ── */
 @media print{
   .topbar,.nav,.btn,.action-row,#toast,#loading-overlay,.modal-backdrop{display:none!important}
