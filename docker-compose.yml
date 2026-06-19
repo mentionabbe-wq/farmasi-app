@@ -1,13 +1,14 @@
-version: '3.8'
+name: farmasi-app
 
 services:
-  app:
-    build: .
+  farmasi-app:
+    image: ghcr.io/mentionabbe-wq/farmasi-app:latest
+    container_name: farmasi-app
     ports:
       - "3000:3000"
     volumes:
-      - farmasi_data:/app/data
-      - farmasi_uploads:/app/uploads
+      - farmasi-data:/app/data
+      - farmasi-uploads:/app/uploads
     environment:
       - PORT=3000
       - DATA_DIR=/app/data
@@ -15,5 +16,5 @@ services:
     restart: unless-stopped
 
 volumes:
-  farmasi_data:
-  farmasi_uploads:
+  farmasi-data:
+  farmasi-uploads:
