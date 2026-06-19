@@ -235,6 +235,7 @@ document.addEventListener('click', async e => {
 
 /* ── TUJUAN MODAL ── */
 qs('btn-kelola-tujuan').addEventListener('click', () => openModal('tujuan'))
+qs('btn-kelola-farmasi').addEventListener('click', () => openModal('tujuan'))
 qs('tujuan-close-btn').addEventListener('click', () => closeModal('tujuan'))
 qs('modal-tujuan').addEventListener('click', e => { if (e.target === qs('modal-tujuan')) closeModal('tujuan') })
 
