@@ -25,6 +25,7 @@
     <button class="nav-btn" data-page="anggaran"><i class="ti ti-wallet"></i>Anggaran</button>
     <button class="nav-btn" data-page="po"><i class="ti ti-file-invoice"></i>Pembelian</button>
     <button class="nav-btn" data-page="pembelian"><i class="ti ti-shopping-cart"></i>Penerimaan</button>
+    <button class="nav-btn" data-page="pinjaman"><i class="ti ti-arrows-exchange"></i>Pinjaman</button>
     <button class="nav-btn" data-page="mutasi"><i class="ti ti-transfer"></i>Mutasi</button>
     <button class="nav-btn" data-page="penjualan"><i class="ti ti-cash"></i>Penjualan</button>
     <button class="nav-btn" data-page="arsip"><i class="ti ti-archive"></i>Arsip</button>
@@ -145,10 +146,8 @@
           <div class="form-group"><label>Tanggal</label><input type="date" id="beli-tgl"></div>
           <div class="form-group">
             <label style="display:flex;align-items:center;justify-content:space-between">Supplier<button class="btn sm" id="btn-kelola-supplier" type="button"><i class="ti ti-settings-2"></i>Kelola</button></label>
-            <div class="srch-wrap">
-              <input type="text" class="srch-inp" id="beli-supplier-srch" placeholder="Cari supplier...">
-              <select id="beli-supplier"><option value="">-- Pilih Supplier --</option></select>
-            </div>
+            <input type="text" id="beli-supplier" list="beli-supplier-list" placeholder="Pilih atau ketik nama supplier..." autocomplete="off">
+            <datalist id="beli-supplier-list"></datalist>
           </div>
         </div>
         <div class="form-row triple">
@@ -166,9 +165,9 @@
       <div class="card">
         <div class="section-title">
           Daftar Penerimaan
-          <div style="display:flex;gap:6px;align-items:center">
-            <input type="text" id="beli-sup-filter-srch" class="input-sm" placeholder="Cari supplier..." style="width:120px">
-            <select id="beli-filter-supplier" class="input-sm"><option value="">Semua Supplier</option></select>
+          <div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap">
+            <input type="text" id="beli-filter-supplier" list="beli-filter-list" class="input-sm" placeholder="Semua supplier..." style="width:150px" autocomplete="off">
+            <datalist id="beli-filter-list"></datalist>
           </div>
         </div>
         <div class="table-wrap">
@@ -182,10 +181,8 @@
           <div class="form-group"><label>Tanggal</label><input type="date" id="td-tgl"></div>
           <div class="form-group"><label>Nama Obat / Alkes</label><input type="text" id="td-nama" placeholder="Nama obat yang tidak datang"></div>
           <div class="form-group"><label>Supplier</label>
-            <div class="srch-wrap">
-              <input type="text" class="srch-inp" id="td-supplier-srch" placeholder="Cari supplier...">
-              <select id="td-supplier"><option value="">-- Pilih Supplier --</option></select>
-            </div>
+            <input type="text" id="td-supplier" list="td-supplier-list" placeholder="Pilih atau ketik nama supplier..." autocomplete="off">
+            <datalist id="td-supplier-list"></datalist>
           </div>
         </div>
         <div class="form-group" style="margin-bottom:12px"><label>Keterangan</label><textarea id="td-ket" placeholder="Catatan tambahan..."></textarea></div>
@@ -268,10 +265,8 @@
           <div class="form-group"><label>Judul Dokumen</label><input type="text" id="arsip-judul" placeholder="Nama dokumen"></div>
           <div class="form-group">
             <label style="display:flex;align-items:center;justify-content:space-between">Kategori<button class="btn sm" id="btn-kelola-kat-arsip" type="button"><i class="ti ti-settings-2"></i>Kelola</button></label>
-            <div class="srch-wrap">
-              <input type="text" class="srch-inp" id="arsip-kat-srch" placeholder="Cari kategori...">
-              <select id="arsip-kategori"></select>
-            </div>
+            <input type="text" id="arsip-kategori" list="arsip-kategori-list" placeholder="Pilih atau ketik kategori..." autocomplete="off">
+            <datalist id="arsip-kategori-list"></datalist>
           </div>
         </div>
         <div class="form-row">
@@ -297,6 +292,43 @@
           </div>
         </div>
         <div id="arsip-list"></div>
+      </div>
+    </section>
+
+    <!-- PINJAMAN -->
+    <section class="page" id="page-pinjaman">
+      <div class="card">
+        <div class="section-title">Input Pinjaman</div>
+        <div class="form-row triple">
+          <div class="form-group"><label>Tanggal</label><input type="date" id="pin-tgl"></div>
+          <div class="form-group"><label>Jenis</label>
+            <select id="pin-jenis">
+              <option value="pinjam">Pinjam (kita meminjam dari RS lain)</option>
+              <option value="meminjamkan">Meminjamkan (kita pinjamkan ke RS lain)</option>
+            </select>
+          </div>
+          <div class="form-group"><label>Nama RS</label><input type="text" id="pin-rs" placeholder="Nama rumah sakit"></div>
+        </div>
+        <div class="form-row triple">
+          <div class="form-group"><label>Nama Barang</label><input type="text" id="pin-barang" placeholder="Nama obat / alkes"></div>
+          <div class="form-group"><label>Jumlah</label><input type="text" id="pin-jumlah" placeholder="mis. 10 box / 5 vial"></div>
+          <div class="form-group"><label>Keterangan</label><input type="text" id="pin-ket" placeholder="Catatan (opsional)"></div>
+        </div>
+        <button class="btn primary" id="pin-save-btn"><i class="ti ti-device-floppy"></i>Simpan Pinjaman</button>
+      </div>
+      <div class="card">
+        <div class="section-title">
+          Riwayat Pinjaman
+          <select id="pin-filter-jenis" class="input-sm">
+            <option value="">Semua Jenis</option>
+            <option value="pinjam">Pinjam</option>
+            <option value="meminjamkan">Meminjamkan</option>
+          </select>
+        </div>
+        <div class="table-wrap">
+          <table><thead><tr><th>Tanggal</th><th>Jenis</th><th>Nama RS</th><th>Nama Barang</th><th>Jumlah</th><th>Keterangan</th><th></th></tr></thead>
+          <tbody id="pin-tbody"></tbody></table>
+        </div>
       </div>
     </section>
 

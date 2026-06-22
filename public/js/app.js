@@ -1,11 +1,6 @@
 /* ── UTILS ── */
 const fmt = n => 'Rp ' + Math.round(n || 0).toLocaleString('id-ID')
 
-function filterSel(srchId, selId) {
-  const q = qs(srchId).value.toLowerCase()
-  Array.from(qs(selId).options).forEach(o => { o.hidden = !!o.value && !o.text.toLowerCase().includes(q) })
-}
-
 function filterModalItems(srchId, listId) {
   const q = qs(srchId).value.toLowerCase()
   qs(listId).querySelectorAll('.item-row').forEach(row => {
@@ -44,7 +39,7 @@ async function showPage(p) {
   document.querySelectorAll('.nav-btn').forEach(e => e.classList.remove('active'))
   qs('page-' + p).classList.add('active')
   document.querySelector(`.nav-btn[data-page="${p}"]`).classList.add('active')
-  const loaders = { dashboard: loadDashboard, anggaran: loadAnggaran, po: loadPO, pembelian: loadPembelian, mutasi: loadMutasi, penjualan: loadPenjualan, arsip: loadArsip, stokopname: loadStokOpname, rekap: loadRekap }
+  const loaders = { dashboard: loadDashboard, anggaran: loadAnggaran, po: loadPO, pembelian: loadPembelian, pinjaman: loadPinjaman, mutasi: loadMutasi, penjualan: loadPenjualan, arsip: loadArsip, stokopname: loadStokOpname, rekap: loadRekap }
   if (loaders[p]) { showLoading(true); try { await loaders[p]() } catch (e) { toast(e.message, 'error') } finally { showLoading(false) } }
 }
 
@@ -175,17 +170,10 @@ async function populateAnggaranSelect() {
 /* ── SUPPLIER ── */
 async function loadSupplierSelects() {
   const list = await API.getSupplier()
-  const opts = list.map(s => `<option value="${s.nama}">${s.nama}</option>`).join('')
-  qs('beli-supplier').innerHTML = '<option value="">-- Pilih Supplier --</option>' + opts
-  qs('beli-filter-supplier').innerHTML = '<option value="">Semua Supplier</option>' + opts
-  qs('td-supplier').innerHTML = '<option value="">-- Pilih Supplier --</option>' + opts
   const datalistOpts = list.map(s => `<option value="${s.nama}">`).join('')
-  qs('po-supplier-list').innerHTML = datalistOpts
-  qs('po-filter-list').innerHTML = datalistOpts
+  ;['beli-supplier-list', 'beli-filter-list', 'td-supplier-list', 'po-supplier-list', 'po-filter-list']
+    .forEach(id => { const el = qs(id); if (el) el.innerHTML = datalistOpts })
   _supplierNames = list.map(s => s.nama)
-  if (qs('beli-supplier-srch').value) filterSel('beli-supplier-srch', 'beli-supplier')
-  if (qs('td-supplier-srch').value) filterSel('td-supplier-srch', 'td-supplier')
-  if (qs('beli-sup-filter-srch').value) filterSel('beli-sup-filter-srch', 'beli-filter-supplier')
 }
 
 async function renderSupplierModal() {
@@ -230,9 +218,9 @@ async function loadPembelian() {
 
 function renderPembelianTable(data) {
   const tbody = qs('beli-tbody')
-  const filterSup = qs('beli-filter-supplier').value
-  const rows = filterSup ? data.filter(d => d.supplier === filterSup) : data
-  if (!rows.length) { tbody.innerHTML = `<tr><td colspan="8"><div class="empty">${filterSup ? 'Tidak ada pembelian dari supplier ini' : 'Belum ada data pembelian'}</div></td></tr>`; return }
+  const filterSup = qs('beli-filter-supplier').value.trim().toLowerCase()
+  const rows = filterSup ? data.filter(d => (d.supplier || '').toLowerCase().includes(filterSup)) : data
+  if (!rows.length) { tbody.innerHTML = `<tr><td colspan="8"><div class="empty">${filterSup ? 'Tidak ada penerimaan dari supplier ini' : 'Belum ada data penerimaan'}</div></td></tr>`; return }
   const today = new Date().toISOString().slice(0, 10)
   tbody.innerHTML = rows.map(d => {
     const jt = d.tgl_jatuh_tempo
@@ -250,7 +238,7 @@ function renderPembelianTable(data) {
 }
 
 let _beliData = []
-qs('beli-filter-supplier').addEventListener('change', () => renderPembelianTable(_beliData))
+qs('beli-filter-supplier').addEventListener('input', () => renderPembelianTable(_beliData))
 
 qs('beli-save-btn').addEventListener('click', async () => {
   const jml = qs('beli-jml').value
@@ -349,6 +337,60 @@ document.addEventListener('click', async e => {
     const id = e.target.closest('[data-id]').dataset.id
     showLoading(true)
     try { await API.delPO(id); _poData = await API.getPO(); renderPOTable(_poData); toast('Dihapus') }
+    catch (err) { toast(err.message, 'error') } finally { showLoading(false) }
+  }
+})
+
+/* ── PINJAMAN ── */
+let _pinData = []
+
+async function loadPinjaman() {
+  _pinData = await API.getPinjaman()
+  renderPinjamanTable(_pinData)
+}
+
+function renderPinjamanTable(data) {
+  const tbody = qs('pin-tbody')
+  const fj = qs('pin-filter-jenis').value
+  const rows = fj ? data.filter(d => d.jenis === fj) : data
+  if (!rows.length) { tbody.innerHTML = '<tr><td colspan="7"><div class="empty"><i class="ti ti-arrows-exchange"></i>Belum ada data pinjaman</div></td></tr>'; return }
+  tbody.innerHTML = rows.map(d => {
+    const badge = d.jenis === 'meminjamkan'
+      ? '<span class="badge amber">Meminjamkan</span>'
+      : '<span class="badge blue">Pinjam</span>'
+    return `<tr>
+      <td>${d.tgl}</td>
+      <td>${badge}</td>
+      <td>${d.rs||'-'}</td>
+      <td>${d.barang||'-'}</td>
+      <td style="font-weight:600">${d.jumlah||'-'}</td>
+      <td style="font-size:12px;color:var(--tx2)">${d.ket||'-'}</td>
+      <td><button class="btn sm danger" data-id="${d.id}" data-action="del-pin"><i class="ti ti-trash"></i></button></td>
+    </tr>`
+  }).join('')
+}
+
+qs('pin-filter-jenis').addEventListener('change', () => renderPinjamanTable(_pinData))
+
+qs('pin-save-btn').addEventListener('click', async () => {
+  const rs = qs('pin-rs').value.trim(), barang = qs('pin-barang').value.trim()
+  if (!rs) { toast('Nama RS wajib diisi', 'error'); return }
+  if (!barang) { toast('Nama barang wajib diisi', 'error'); return }
+  showLoading(true)
+  try {
+    await API.savePinjaman({ tgl: qs('pin-tgl').value || today(), jenis: qs('pin-jenis').value, rs, barang, jumlah: qs('pin-jumlah').value, ket: qs('pin-ket').value })
+    ;['pin-rs','pin-barang','pin-jumlah','pin-ket'].forEach(id => qs(id).value = '')
+    _pinData = await API.getPinjaman(); renderPinjamanTable(_pinData)
+    toast('Pinjaman disimpan')
+  } catch (e) { toast(e.message, 'error') } finally { showLoading(false) }
+})
+
+document.addEventListener('click', async e => {
+  if (e.target.closest('[data-action="del-pin"]')) {
+    if (!confirm2('Hapus data pinjaman ini?')) return
+    const id = e.target.closest('[data-id]').dataset.id
+    showLoading(true)
+    try { await API.delPinjaman(id); _pinData = await API.getPinjaman(); renderPinjamanTable(_pinData); toast('Dihapus') }
     catch (err) { toast(err.message, 'error') } finally { showLoading(false) }
   }
 })
@@ -708,9 +750,8 @@ document.addEventListener('click', e => {
 async function loadKatArsip() {
   const list = await API.getKatArsip()
   const opts = list.map(k => `<option value="${k.label}">${k.label}</option>`).join('')
-  qs('arsip-kategori').innerHTML = opts
+  qs('arsip-kategori-list').innerHTML = list.map(k => `<option value="${k.label}">`).join('')
   qs('arsip-filter-kat').innerHTML = '<option value="">Semua Kategori</option>' + opts
-  if (qs('arsip-kat-srch').value) filterSel('arsip-kat-srch', 'arsip-kategori')
 }
 
 let _arsipData = []
@@ -997,18 +1038,12 @@ async function init() {
   qs('topbar-date').textContent = new Date().toLocaleDateString('id-ID', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })
   try { const s = await API.getSettings(); qs('topbar-rs').textContent = s.rs_name || 'RS Medika' } catch {}
   const defDate = today()
-  ;['beli-tgl','po-tgl','mut-tgl','arsip-tgl','pj-tgl','td-tgl','so-tgl'].forEach(id => { const el = qs(id); if (el) el.value = defDate })
+  ;['beli-tgl','po-tgl','pin-tgl','mut-tgl','arsip-tgl','pj-tgl','td-tgl','so-tgl'].forEach(id => { const el = qs(id); if (el) el.value = defDate })
   qs('rekap-sampai').value = defDate
   qs('rekap-dari').value = defDate.slice(0, 7) + '-01'
   qs('pj-filter-bulan').value = defDate.slice(0, 7)
   updateExcelLink()
   setupFileUpload()
-
-  // Searchable selects
-  qs('beli-supplier-srch').addEventListener('input', () => filterSel('beli-supplier-srch', 'beli-supplier'))
-  qs('td-supplier-srch').addEventListener('input', () => filterSel('td-supplier-srch', 'td-supplier'))
-  qs('arsip-kat-srch').addEventListener('input', () => filterSel('arsip-kat-srch', 'arsip-kategori'))
-  qs('beli-sup-filter-srch').addEventListener('input', () => filterSel('beli-sup-filter-srch', 'beli-filter-supplier'))
 
   // Modal search
   qs('supplier-modal-srch').addEventListener('input', () => filterModalItems('supplier-modal-srch', 'supplier-list-modal'))

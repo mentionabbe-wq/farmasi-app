@@ -28,6 +28,11 @@ const API = (() => {
     savePO: d => req('POST', '/po', d),
     delPO: id => req('DELETE', `/po/${id}`),
 
+    // Pinjaman
+    getPinjaman: (p = {}) => req('GET', '/pinjaman?' + new URLSearchParams(p)),
+    savePinjaman: d => req('POST', '/pinjaman', d),
+    delPinjaman: id => req('DELETE', `/pinjaman/${id}`),
+
     // Mutasi
     getMutasi: (p = {}) => req('GET', '/mutasi?' + new URLSearchParams(p)),
     saveMutasi: d => req('POST', '/mutasi', d),
