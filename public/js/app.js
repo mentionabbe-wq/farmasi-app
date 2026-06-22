@@ -754,51 +754,21 @@ function renderStokOpnameTable(data) {
   const tbody = qs('so-tbody')
   const filterR = qs('so-filter-ruangan').value
   const rows = filterR ? data.filter(d => d.ruangan === filterR) : data
-  if (!rows.length) { tbody.innerHTML = '<tr><td colspan="7"><div class="empty"><i class="ti ti-clipboard-list"></i>Belum ada data stok opname</div></td></tr>'; return }
+  if (!rows.length) { tbody.innerHTML = '<tr><td colspan="8"><div class="empty"><i class="ti ti-clipboard-list"></i>Belum ada data stok opname</div></td></tr>'; return }
   tbody.innerHTML = rows.map(d => {
-    const selColor = d.selisih > 0 ? 'color:var(--green)' : d.selisih < 0 ? 'color:#E24B4A' : ''
-    const selText = (d.selisih > 0 ? '+' : '') + fmt(d.selisih)
+    const lebih = d.selisih > 0 ? d.selisih : 0
+    const kurang = d.selisih < 0 ? -d.selisih : 0
     return `<tr>
       <td>${d.tgl}</td>
       <td><span class="badge gray">${d.ruangan||'-'}</span></td>
       <td style="text-align:right">${fmt(d.nilai_sebelum)}</td>
       <td style="text-align:right;font-weight:600">${fmt(d.nilai_sesudah)}</td>
-      <td style="text-align:right;font-weight:600;${selColor}">${selText}</td>
+      <td style="text-align:right;font-weight:600;color:var(--green)">${lebih ? '+' + fmt(lebih) : '-'}</td>
+      <td style="text-align:right;font-weight:600;color:#E24B4A">${kurang ? '-' + fmt(kurang) : '-'}</td>
       <td style="font-size:12px;color:var(--tx2)">${d.ket||'-'}</td>
       <td><button class="btn sm danger" data-id="${d.id}" data-action="del-so"><i class="ti ti-trash"></i></button></td>
     </tr>`
   }).join('')
-}
-
-async function loadSoRekap() {
-  const dari = qs('so-dari').value, sampai = qs('so-sampai').value
-  showLoading(true)
-  try {
-    const [sum, beli] = await Promise.all([
-      API.getRekapSummary({ dari, sampai }),
-      API.getPembelian({ dari, sampai })
-    ])
-    qs('so-rekap-cards').innerHTML = `
-      <div class="metric-card"><div class="metric-label">Total Resep</div><div class="metric-val">${fmtN(sum.totalPjR)}</div></div>
-      <div class="metric-card"><div class="metric-label">Total Penjualan</div><div class="metric-val purple">${fmt(sum.totalPjN)}</div></div>
-      <div class="metric-card"><div class="metric-label">Total Pembelian</div><div class="metric-val amber">${fmt(sum.totalBeli)}</div></div>`
-
-    qs('so-rekap-penjualan').innerHTML = sum.pjByKat.length
-      ? sum.pjByKat.map((k, i) => `<div class="rekap-row">
-          <div><div style="font-size:13px;font-weight:600;color:${KAT_HEX[i%KAT_HEX.length]}">${k.label}</div>
-          <div style="font-size:11px;color:var(--tx2)">${fmtN(k.resep)} resep</div></div>
-          <div style="font-weight:600">${fmt(k.nominal)}</div></div>`).join('')
-        + `<div style="text-align:right;font-size:12px;margin-top:8px;color:var(--tx2)">Total: ${fmt(sum.totalPjN)}</div>`
-      : '<div class="empty" style="padding:8px">Tidak ada data</div>'
-
-    const supMap = {}
-    beli.forEach(d => { if (d.supplier) supMap[d.supplier] = (supMap[d.supplier] || 0) + (d.total || 0) })
-    const supList = Object.entries(supMap).sort((a, b) => b[1] - a[1])
-    qs('so-rekap-pembelian').innerHTML = supList.length
-      ? supList.map(([nama, total]) => `<div class="rekap-row"><span>${nama}</span><span style="font-weight:600">${fmt(total)}</span></div>`).join('')
-        + `<div style="text-align:right;font-size:12px;margin-top:8px;color:var(--tx2)">Total: ${fmt(sum.totalBeli)}</div>`
-      : '<div class="empty" style="padding:8px">Tidak ada data</div>'
-  } catch (e) { toast(e.message, 'error') } finally { showLoading(false) }
 }
 
 qs('so-save-btn').addEventListener('click', async () => {
@@ -815,7 +785,6 @@ qs('so-save-btn').addEventListener('click', async () => {
 })
 
 qs('so-filter-ruangan').addEventListener('change', () => renderStokOpnameTable(_soData))
-qs('so-rekap-btn').addEventListener('click', loadSoRekap)
 
 document.addEventListener('click', async e => {
   if (e.target.closest('[data-action="del-so"]')) {
@@ -922,8 +891,6 @@ async function init() {
   ;['beli-tgl','mut-tgl','arsip-tgl','pj-tgl','td-tgl','so-tgl'].forEach(id => { const el = qs(id); if (el) el.value = defDate })
   qs('rekap-sampai').value = defDate
   qs('rekap-dari').value = defDate.slice(0, 7) + '-01'
-  qs('so-dari').value = defDate.slice(0, 7) + '-01'
-  qs('so-sampai').value = defDate
   qs('pj-filter-bulan').value = defDate.slice(0, 7)
   updateExcelLink()
   setupFileUpload()
