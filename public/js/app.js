@@ -740,26 +740,43 @@ function calcSoSelisih() {
 }
 
 let _soData = []
+const KATEGORI_SO = ['BMHP', 'Alkes', 'Obat', 'Laboratorium', 'Gas Medis']
 
 async function loadStokOpname() {
   const [data, tujuan] = await Promise.all([API.getStokOpname(), API.getTujuan()])
   const opts = tujuan.map(t => `<option value="${t.label}">${t.label}</option>`).join('')
   qs('so-ruangan').innerHTML = opts
   qs('so-filter-ruangan').innerHTML = '<option value="">Semua Ruangan</option>' + opts
+  const katOpts = KATEGORI_SO.map(k => `<option value="${k}">${k}</option>`).join('')
+  qs('so-kategori').innerHTML = katOpts
+  qs('so-filter-kategori').innerHTML = '<option value="">Semua Kategori</option>' + katOpts
   _soData = data
   renderStokOpnameTable(data)
 }
 
 function renderStokOpnameTable(data) {
-  const tbody = qs('so-tbody')
+  const tbody = qs('so-tbody'), tfoot = qs('so-tfoot')
   const filterR = qs('so-filter-ruangan').value
-  const rows = filterR ? data.filter(d => d.ruangan === filterR) : data
-  if (!rows.length) { tbody.innerHTML = '<tr><td colspan="8"><div class="empty"><i class="ti ti-clipboard-list"></i>Belum ada data stok opname</div></td></tr>'; return }
+  const filterK = qs('so-filter-kategori').value
+  const filterB = qs('so-filter-bulan').value
+  let rows = data
+  if (filterB) rows = rows.filter(d => (d.tgl || '').slice(0, 7) === filterB)
+  if (filterK) rows = rows.filter(d => d.kategori === filterK)
+  if (filterR) rows = rows.filter(d => d.ruangan === filterR)
+  if (!rows.length) {
+    tbody.innerHTML = '<tr><td colspan="9"><div class="empty"><i class="ti ti-clipboard-list"></i>Belum ada data stok opname</div></td></tr>'
+    tfoot.innerHTML = ''
+    return
+  }
+  let totLebih = 0, totKurang = 0, totSebelum = 0, totSesudah = 0
   tbody.innerHTML = rows.map(d => {
     const lebih = d.selisih > 0 ? d.selisih : 0
     const kurang = d.selisih < 0 ? -d.selisih : 0
+    totLebih += lebih; totKurang += kurang
+    totSebelum += d.nilai_sebelum || 0; totSesudah += d.nilai_sesudah || 0
     return `<tr>
       <td>${d.tgl}</td>
+      <td>${d.kategori ? `<span class="badge blue">${d.kategori}</span>` : '-'}</td>
       <td><span class="badge gray">${d.ruangan||'-'}</span></td>
       <td style="text-align:right">${fmt(d.nilai_sebelum)}</td>
       <td style="text-align:right;font-weight:600">${fmt(d.nilai_sesudah)}</td>
@@ -769,6 +786,14 @@ function renderStokOpnameTable(data) {
       <td><button class="btn sm danger" data-id="${d.id}" data-action="del-so"><i class="ti ti-trash"></i></button></td>
     </tr>`
   }).join('')
+  tfoot.innerHTML = `<tr style="font-weight:700;border-top:2px solid var(--bd)">
+    <td colspan="3">Total (${rows.length} data)</td>
+    <td style="text-align:right">${fmt(totSebelum)}</td>
+    <td style="text-align:right">${fmt(totSesudah)}</td>
+    <td style="text-align:right;color:var(--green)">${totLebih ? '+' + fmt(totLebih) : '-'}</td>
+    <td style="text-align:right;color:#E24B4A">${totKurang ? '-' + fmt(totKurang) : '-'}</td>
+    <td colspan="2"></td>
+  </tr>`
 }
 
 qs('so-save-btn').addEventListener('click', async () => {
@@ -776,7 +801,7 @@ qs('so-save-btn').addEventListener('click', async () => {
   if (!sebelum && !sesudah) { toast('Nilai stok wajib diisi', 'error'); return }
   showLoading(true)
   try {
-    await API.saveStokOpname({ tgl: qs('so-tgl').value || today(), ruangan: qs('so-ruangan').value, nilai_sebelum: sebelum, nilai_sesudah: sesudah, ket: qs('so-ket').value })
+    await API.saveStokOpname({ tgl: qs('so-tgl').value || today(), kategori: qs('so-kategori').value, ruangan: qs('so-ruangan').value, nilai_sebelum: sebelum, nilai_sesudah: sesudah, ket: qs('so-ket').value })
     ;['so-sebelum','so-sesudah','so-ket'].forEach(id => qs(id).value = '')
     qs('so-selisih-preview').value = ''; qs('so-selisih-preview').style.color = 'inherit'
     _soData = await API.getStokOpname(); renderStokOpnameTable(_soData)
@@ -785,6 +810,8 @@ qs('so-save-btn').addEventListener('click', async () => {
 })
 
 qs('so-filter-ruangan').addEventListener('change', () => renderStokOpnameTable(_soData))
+qs('so-filter-kategori').addEventListener('change', () => renderStokOpnameTable(_soData))
+qs('so-filter-bulan').addEventListener('change', () => renderStokOpnameTable(_soData))
 
 document.addEventListener('click', async e => {
   if (e.target.closest('[data-action="del-so"]')) {

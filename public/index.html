@@ -265,9 +265,10 @@
         <div class="section-title">Input Ringkasan Stok Opname</div>
         <div class="form-row triple">
           <div class="form-group"><label>Tanggal SO</label><input type="date" id="so-tgl"></div>
+          <div class="form-group"><label>Kategori Barang</label><select id="so-kategori"></select></div>
           <div class="form-group"><label>Ruangan / Farmasi</label><select id="so-ruangan"></select></div>
-          <div class="form-group"><label>Keterangan</label><input type="text" id="so-ket" placeholder="Stok opname bulan Juni 2026..."></div>
         </div>
+        <div class="form-group" style="margin-bottom:12px"><label>Keterangan</label><input type="text" id="so-ket" placeholder="Stok opname bulan Juni 2026..."></div>
         <div class="form-row">
           <div class="form-group"><label>Nilai Stok Sebelum SO (Rp)</label><input type="number" id="so-sebelum" placeholder="0" min="0" oninput="calcSoSelisih()"></div>
           <div class="form-group"><label>Nilai Stok Sesudah SO (Rp)</label><input type="number" id="so-sesudah" placeholder="0" min="0" oninput="calcSoSelisih()"></div>
@@ -278,11 +279,16 @@
       <div class="card">
         <div class="section-title">
           Riwayat Stok Opname
-          <select id="so-filter-ruangan" class="input-sm"><option value="">Semua Ruangan</option></select>
+          <span style="display:flex;gap:8px;flex-wrap:wrap">
+            <input type="month" id="so-filter-bulan" class="input-sm">
+            <select id="so-filter-kategori" class="input-sm"><option value="">Semua Kategori</option></select>
+            <select id="so-filter-ruangan" class="input-sm"><option value="">Semua Ruangan</option></select>
+          </span>
         </div>
         <div class="table-wrap">
-          <table><thead><tr><th>Tanggal</th><th>Ruangan</th><th style="text-align:right">Nilai Sebelum</th><th style="text-align:right">Nilai Sesudah</th><th style="text-align:right">Selisih Lebih</th><th style="text-align:right">Selisih Kurang</th><th>Keterangan</th><th></th></tr></thead>
-          <tbody id="so-tbody"></tbody></table>
+          <table><thead><tr><th>Tanggal</th><th>Kategori</th><th>Ruangan</th><th style="text-align:right">Nilai Sebelum</th><th style="text-align:right">Nilai Sesudah</th><th style="text-align:right">Selisih Lebih</th><th style="text-align:right">Selisih Kurang</th><th>Keterangan</th><th></th></tr></thead>
+          <tbody id="so-tbody"></tbody>
+          <tfoot id="so-tfoot"></tfoot></table>
         </div>
       </div>
     </section>
