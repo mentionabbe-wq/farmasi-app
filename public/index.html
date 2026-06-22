@@ -105,10 +105,8 @@
           <div class="form-group"><label>Tanggal PO</label><input type="date" id="po-tgl"></div>
           <div class="form-group">
             <label style="display:flex;align-items:center;justify-content:space-between">Distributor / Supplier<button class="btn sm" id="btn-kelola-supplier-po" type="button"><i class="ti ti-settings-2"></i>Kelola</button></label>
-            <div class="srch-wrap">
-              <input type="text" class="srch-inp" id="po-supplier-srch" placeholder="Cari distributor...">
-              <select id="po-supplier"><option value="">-- Pilih Distributor --</option></select>
-            </div>
+            <input type="text" id="po-supplier" list="po-supplier-list" placeholder="Pilih atau ketik nama distributor..." autocomplete="off">
+            <datalist id="po-supplier-list"></datalist>
           </div>
         </div>
         <div class="form-row">
@@ -120,9 +118,15 @@
       <div class="card">
         <div class="section-title">
           Daftar Pembelian
-          <div style="display:flex;gap:6px;align-items:center">
-            <input type="text" id="po-sup-filter-srch" class="input-sm" placeholder="Cari distributor..." style="width:130px">
-            <select id="po-filter-supplier" class="input-sm"><option value="">Semua Distributor</option></select>
+          <div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap">
+            <select id="po-sort" class="input-sm">
+              <option value="tgl-desc">Tanggal: terbaru</option>
+              <option value="tgl-asc">Tanggal: terlama</option>
+              <option value="thn-desc">Tahun: terbaru</option>
+              <option value="thn-asc">Tahun: terlama</option>
+            </select>
+            <input type="text" id="po-filter-supplier" list="po-filter-list" class="input-sm" placeholder="Semua distributor..." style="width:150px" autocomplete="off">
+            <datalist id="po-filter-list"></datalist>
           </div>
         </div>
         <div class="table-wrap">

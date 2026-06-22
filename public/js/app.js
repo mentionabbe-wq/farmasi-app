@@ -179,13 +179,13 @@ async function loadSupplierSelects() {
   qs('beli-supplier').innerHTML = '<option value="">-- Pilih Supplier --</option>' + opts
   qs('beli-filter-supplier').innerHTML = '<option value="">Semua Supplier</option>' + opts
   qs('td-supplier').innerHTML = '<option value="">-- Pilih Supplier --</option>' + opts
-  qs('po-supplier').innerHTML = '<option value="">-- Pilih Distributor --</option>' + opts
-  qs('po-filter-supplier').innerHTML = '<option value="">Semua Distributor</option>' + opts
+  const datalistOpts = list.map(s => `<option value="${s.nama}">`).join('')
+  qs('po-supplier-list').innerHTML = datalistOpts
+  qs('po-filter-list').innerHTML = datalistOpts
+  _supplierNames = list.map(s => s.nama)
   if (qs('beli-supplier-srch').value) filterSel('beli-supplier-srch', 'beli-supplier')
   if (qs('td-supplier-srch').value) filterSel('td-supplier-srch', 'td-supplier')
   if (qs('beli-sup-filter-srch').value) filterSel('beli-sup-filter-srch', 'beli-filter-supplier')
-  if (qs('po-supplier-srch').value) filterSel('po-supplier-srch', 'po-supplier')
-  if (qs('po-sup-filter-srch').value) filterSel('po-sup-filter-srch', 'po-filter-supplier')
 }
 
 async function renderSupplierModal() {
@@ -277,6 +277,7 @@ document.addEventListener('click', async e => {
 
 /* ── PEMBELIAN (PO KE DISTRIBUTOR) ── */
 let _poData = []
+let _supplierNames = []
 
 async function loadPO() {
   await loadSupplierSelects()
@@ -286,8 +287,16 @@ async function loadPO() {
 
 function renderPOTable(data) {
   const tbody = qs('po-tbody'), tfoot = qs('po-tfoot')
-  const filterSup = qs('po-filter-supplier').value
-  const rows = filterSup ? data.filter(d => d.supplier === filterSup) : data
+  const filterSup = qs('po-filter-supplier').value.trim().toLowerCase()
+  let rows = filterSup ? data.filter(d => (d.supplier || '').toLowerCase().includes(filterSup)) : data.slice()
+  const sort = qs('po-sort').value
+  const yr = d => (d.tgl || '').slice(0, 4)
+  rows.sort((a, b) => {
+    if (sort === 'tgl-asc')  return a.tgl.localeCompare(b.tgl)
+    if (sort === 'thn-desc') return yr(b).localeCompare(yr(a)) || b.tgl.localeCompare(a.tgl)
+    if (sort === 'thn-asc')  return yr(a).localeCompare(yr(b)) || a.tgl.localeCompare(b.tgl)
+    return b.tgl.localeCompare(a.tgl)
+  })
   if (!rows.length) {
     tbody.innerHTML = `<tr><td colspan="5"><div class="empty"><i class="ti ti-file-invoice"></i>${filterSup ? 'Tidak ada pembelian dari distributor ini' : 'Belum ada data pembelian'}</div></td></tr>`
     tfoot.innerHTML = ''
@@ -309,11 +318,15 @@ function renderPOTable(data) {
     <td colspan="2"></td></tr>`
 }
 
-qs('po-filter-supplier').addEventListener('change', () => renderPOTable(_poData))
+qs('po-filter-supplier').addEventListener('input', () => renderPOTable(_poData))
+qs('po-sort').addEventListener('change', () => renderPOTable(_poData))
 
 qs('po-save-btn').addEventListener('click', async () => {
-  const supplier = qs('po-supplier').value, nominal = qs('po-nominal').value
+  const supplier = qs('po-supplier').value.trim(), nominal = qs('po-nominal').value
   if (!supplier) { toast('Distributor wajib dipilih', 'error'); return }
+  if (_supplierNames.length && !_supplierNames.some(n => n.toLowerCase() === supplier.toLowerCase())) {
+    toast('Distributor tidak ada di daftar. Pilih dari daftar atau tambah lewat tombol Kelola.', 'error'); return
+  }
   if (!nominal) { toast('Nominal PO wajib diisi', 'error'); return }
   showLoading(true)
   try {
@@ -996,8 +1009,6 @@ async function init() {
   qs('td-supplier-srch').addEventListener('input', () => filterSel('td-supplier-srch', 'td-supplier'))
   qs('arsip-kat-srch').addEventListener('input', () => filterSel('arsip-kat-srch', 'arsip-kategori'))
   qs('beli-sup-filter-srch').addEventListener('input', () => filterSel('beli-sup-filter-srch', 'beli-filter-supplier'))
-  qs('po-supplier-srch').addEventListener('input', () => filterSel('po-supplier-srch', 'po-supplier'))
-  qs('po-sup-filter-srch').addEventListener('input', () => filterSel('po-sup-filter-srch', 'po-filter-supplier'))
 
   // Modal search
   qs('supplier-modal-srch').addEventListener('input', () => filterModalItems('supplier-modal-srch', 'supplier-list-modal'))
