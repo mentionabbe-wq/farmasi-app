@@ -23,7 +23,8 @@
   <nav class="nav">
     <button class="nav-btn active" data-page="dashboard"><i class="ti ti-layout-dashboard"></i>Dashboard</button>
     <button class="nav-btn" data-page="anggaran"><i class="ti ti-wallet"></i>Anggaran</button>
-    <button class="nav-btn" data-page="pembelian"><i class="ti ti-shopping-cart"></i>Pembelian</button>
+    <button class="nav-btn" data-page="po"><i class="ti ti-file-invoice"></i>Pembelian</button>
+    <button class="nav-btn" data-page="pembelian"><i class="ti ti-shopping-cart"></i>Penerimaan</button>
     <button class="nav-btn" data-page="mutasi"><i class="ti ti-transfer"></i>Mutasi</button>
     <button class="nav-btn" data-page="penjualan"><i class="ti ti-cash"></i>Penjualan</button>
     <button class="nav-btn" data-page="arsip"><i class="ti ti-archive"></i>Arsip</button>
@@ -52,7 +53,7 @@
           <div id="dash-mutasi"></div>
         </div>
         <div class="card">
-          <div class="section-title"><span><i class="ti ti-shopping-cart"></i> Pembelian Terakhir</span></div>
+          <div class="section-title"><span><i class="ti ti-shopping-cart"></i> Penerimaan Terakhir</span></div>
           <div id="dash-pembelian"></div>
         </div>
       </div>
@@ -96,10 +97,46 @@
       </div>
     </section>
 
-    <!-- PEMBELIAN -->
+    <!-- PEMBELIAN (PO KE DISTRIBUTOR) -->
+    <section class="page" id="page-po">
+      <div class="card">
+        <div class="section-title">Input Pembelian (PO ke Distributor)</div>
+        <div class="form-row">
+          <div class="form-group"><label>Tanggal PO</label><input type="date" id="po-tgl"></div>
+          <div class="form-group">
+            <label style="display:flex;align-items:center;justify-content:space-between">Distributor / Supplier<button class="btn sm" id="btn-kelola-supplier-po" type="button"><i class="ti ti-settings-2"></i>Kelola</button></label>
+            <div class="srch-wrap">
+              <input type="text" class="srch-inp" id="po-supplier-srch" placeholder="Cari distributor...">
+              <select id="po-supplier"><option value="">-- Pilih Distributor --</option></select>
+            </div>
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group"><label>Nominal yang di-PO-kan (Rp)</label><input type="number" id="po-nominal" placeholder="0" min="0"></div>
+          <div class="form-group"><label>Principle / Pabrik</label><input type="text" id="po-principle" placeholder="Nama principle / pabrik"></div>
+        </div>
+        <button class="btn primary" id="po-save-btn"><i class="ti ti-device-floppy"></i>Simpan Pembelian</button>
+      </div>
+      <div class="card">
+        <div class="section-title">
+          Daftar Pembelian
+          <div style="display:flex;gap:6px;align-items:center">
+            <input type="text" id="po-sup-filter-srch" class="input-sm" placeholder="Cari distributor..." style="width:130px">
+            <select id="po-filter-supplier" class="input-sm"><option value="">Semua Distributor</option></select>
+          </div>
+        </div>
+        <div class="table-wrap">
+          <table><thead><tr><th>Tanggal</th><th>Distributor / Supplier</th><th style="text-align:right">Nominal PO</th><th>Principle / Pabrik</th><th></th></tr></thead>
+          <tbody id="po-tbody"></tbody>
+          <tfoot id="po-tfoot"></tfoot></table>
+        </div>
+      </div>
+    </section>
+
+    <!-- PENERIMAAN -->
     <section class="page" id="page-pembelian">
       <div class="card">
-        <div class="section-title">Input Pembelian</div>
+        <div class="section-title">Input Penerimaan</div>
         <div class="form-row">
           <div class="form-group"><label>Tanggal</label><input type="date" id="beli-tgl"></div>
           <div class="form-group">
@@ -120,11 +157,11 @@
           <div class="form-group"><label>Periode Anggaran</label><select id="beli-anggaran"><option value="">-- Pilih --</option></select></div>
         </div>
         <div class="form-group" style="margin-bottom:12px"><label>Keterangan</label><textarea id="beli-ket" placeholder="Catatan..."></textarea></div>
-        <button class="btn primary" id="beli-save-btn"><i class="ti ti-device-floppy"></i>Simpan Pembelian</button>
+        <button class="btn primary" id="beli-save-btn"><i class="ti ti-device-floppy"></i>Simpan Penerimaan</button>
       </div>
       <div class="card">
         <div class="section-title">
-          Daftar Pembelian
+          Daftar Penerimaan
           <div style="display:flex;gap:6px;align-items:center">
             <input type="text" id="beli-sup-filter-srch" class="input-sm" placeholder="Cari supplier..." style="width:120px">
             <select id="beli-filter-supplier" class="input-sm"><option value="">Semua Supplier</option></select>
@@ -306,7 +343,7 @@
       <div class="cards-row" id="rekap-summary"></div>
       <div class="grid-2">
         <div class="card"><div class="section-title"><span><i class="ti ti-cash"></i> Rekap Penjualan</span></div><div id="rekap-penjualan"></div></div>
-        <div class="card"><div class="section-title"><span><i class="ti ti-shopping-cart"></i> Rekap Pembelian</span></div><div id="rekap-pembelian"></div></div>
+        <div class="card"><div class="section-title"><span><i class="ti ti-shopping-cart"></i> Rekap Penerimaan</span></div><div id="rekap-pembelian"></div></div>
       </div>
       <div class="card" style="margin-top:12px">
         <div class="section-title"><span><i class="ti ti-transfer"></i> Rekap Mutasi per Tujuan</span></div>

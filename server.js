@@ -14,6 +14,7 @@ app.use('/uploads', express.static(process.env.UPLOAD_DIR || path.join(__dirname
 
 app.use('/api/anggaran',  require('./src/routes/anggaran'))
 app.use('/api/pembelian', require('./src/routes/pembelian'))
+app.use('/api/po',        require('./src/routes/po'))
 app.use('/api/mutasi',    require('./src/routes/mutasi'))
 app.use('/api/penjualan', require('./src/routes/penjualan'))
 app.use('/api/arsip',     require('./src/routes/arsip'))

@@ -18,10 +18,15 @@ const API = (() => {
     saveAnggaran: d => req('POST', '/anggaran', d),
     delAnggaran: id => req('DELETE', `/anggaran/${id}`),
 
-    // Pembelian
+    // Penerimaan (internal: pembelian)
     getPembelian: (p = {}) => req('GET', '/pembelian?' + new URLSearchParams(p)),
     savePembelian: d => req('POST', '/pembelian', d),
     delPembelian: id => req('DELETE', `/pembelian/${id}`),
+
+    // Pembelian (PO ke distributor)
+    getPO: (p = {}) => req('GET', '/po?' + new URLSearchParams(p)),
+    savePO: d => req('POST', '/po', d),
+    delPO: id => req('DELETE', `/po/${id}`),
 
     // Mutasi
     getMutasi: (p = {}) => req('GET', '/mutasi?' + new URLSearchParams(p)),
