@@ -388,6 +388,18 @@ qs('barang-add-btn').addEventListener('click', async () => {
   try { await API.saveBarang({ nama }); qs('barang-new-input').value = ''; await renderBarangModal(); toast('Barang ditambahkan') }
   catch (e) { toast(e.message, 'error') }
 })
+qs('barang-import-btn').addEventListener('click', async () => {
+  const f = qs('barang-import-file').files[0]
+  if (!f) { toast('Pilih file Excel/CSV dulu', 'error'); return }
+  const fd = new FormData(); fd.append('file', f)
+  showLoading(true)
+  try {
+    const r = await API.importBarang(fd)
+    qs('barang-import-file').value = ''
+    await renderBarangModal(); await loadBarangSelects()
+    toast(`${r.added} barang ditambahkan${r.skipped ? `, ${r.skipped} dilewati (duplikat)` : ''}`)
+  } catch (e) { toast(e.message, 'error') } finally { showLoading(false) }
+})
 document.addEventListener('click', async e => {
   if (e.target.closest('[data-action="del-barang"]')) {
     if (!confirm2('Hapus barang ini?')) return

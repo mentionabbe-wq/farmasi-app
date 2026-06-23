@@ -491,6 +491,11 @@
       <input type="text" id="barang-new-input" placeholder="Nama barang baru...">
       <button class="btn primary" id="barang-add-btn"><i class="ti ti-plus"></i>Tambah</button>
     </div>
+    <div class="modal-input-row">
+      <input type="file" id="barang-import-file" accept=".xlsx,.xls,.csv" style="flex:1">
+      <button class="btn" id="barang-import-btn"><i class="ti ti-upload"></i>Import</button>
+    </div>
+    <div style="font-size:11px;color:var(--tx2);margin:2px 0 8px">Import dari Excel/CSV: kolom pertama berisi nama barang (1 nama per baris). Mendukung .xlsx / .xls / .csv.</div>
     <button class="btn full-w" id="barang-close-btn">Tutup</button>
   </div>
 </div>

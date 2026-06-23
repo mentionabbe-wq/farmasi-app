@@ -42,6 +42,7 @@ const API = (() => {
     getBarang: () => req('GET', '/barang'),
     saveBarang: d => req('POST', '/barang', d),
     delBarang: id => req('DELETE', `/barang/${id}`),
+    importBarang: fd => req('POST', '/barang/import', fd, true),
 
     // Pinjaman
     getPinjaman: (p = {}) => req('GET', '/pinjaman?' + new URLSearchParams(p)),
