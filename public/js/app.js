@@ -271,13 +271,10 @@ function recalcTerima() {
     harga += terima * (+it.harga_satuan || 0)
   })
   _terimaHarga = harga
+  const pajak = Math.round(harga * 0.11)
   qs('terima-harga').value = fmt(harga)
-  recalcTerimaTotal()
-}
-
-function recalcTerimaTotal() {
-  const p = +(qs('terima-pajak').value || 0)
-  qs('terima-total').value = fmt(_terimaHarga + p)
+  qs('terima-pajak').value = fmt(pajak)
+  qs('terima-total').value = fmt(harga + pajak)
 }
 
 async function renderPenerimaanHistory() {
@@ -334,10 +331,10 @@ qs('terima-save-btn').addEventListener('click', async () => {
     await API.savePenerimaan({
       tgl: qs('terima-tgl').value || today(), no_po: noPo,
       no_faktur: qs('terima-faktur').value.trim(), supplier: qs('terima-supplier').value.trim(),
-      anggaran: qs('terima-anggaran').value, harga: _terimaHarga, pajak: +(qs('terima-pajak').value || 0),
+      anggaran: qs('terima-anggaran').value, harga: _terimaHarga, pajak: Math.round(_terimaHarga * 0.11),
       items
     })
-    ;['terima-nopo', 'terima-faktur', 'terima-supplier', 'terima-pajak'].forEach(id => qs(id).value = '')
+    ;['terima-nopo', 'terima-faktur', 'terima-supplier'].forEach(id => qs(id).value = '')
     qs('terima-anggaran').value = ''
     renderTerimaItems()
     await renderPenerimaanHistory()
