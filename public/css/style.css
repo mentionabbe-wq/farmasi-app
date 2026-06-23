@@ -1,4 +1,5 @@
-*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+html{-webkit-text-size-adjust:100%;text-size-adjust:100%}
 
 :root{
   --bg:       #ffffff;
@@ -38,7 +39,7 @@
 body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;font-size:14px;color:var(--tx);background:var(--bg3);line-height:1.55}
 
 /* ── TOPBAR ── */
-.topbar{display:flex;align-items:center;gap:12px;padding:10px 20px;background:var(--bg);border-bottom:.5px solid var(--bd2);position:sticky;top:0;z-index:100}
+.topbar{display:flex;align-items:center;gap:12px;padding:calc(10px + env(safe-area-inset-top)) max(20px,env(safe-area-inset-right)) 10px max(20px,env(safe-area-inset-left));background:var(--bg);border-bottom:.5px solid var(--bd2);position:sticky;top:0;z-index:100}
 .topbar-icon{width:32px;height:32px;background:var(--green-bg);border-radius:var(--r);display:flex;align-items:center;justify-content:center;flex-shrink:0}
 .topbar-icon i{color:var(--green-dk);font-size:18px}
 .topbar-title{font-size:15px;font-weight:500;color:var(--tx)}
@@ -49,14 +50,14 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;font-siz
 .arsip-title{display:flex;align-items:center;gap:8px;flex-wrap:wrap;font-weight:500;font-size:13px}
 
 /* ── NAV ── */
-.nav{display:flex;gap:2px;padding:6px 20px;background:var(--bg2);border-bottom:.5px solid var(--bd);flex-wrap:wrap}
+.nav{display:flex;gap:2px;padding:6px max(20px,env(safe-area-inset-right)) 6px max(20px,env(safe-area-inset-left));background:var(--bg2);border-bottom:.5px solid var(--bd);flex-wrap:wrap}
 .nav-btn{padding:6px 12px;border-radius:var(--r);border:none;background:transparent;color:var(--tx2);font-size:13px;cursor:pointer;display:flex;align-items:center;gap:5px;white-space:nowrap;font-family:inherit;transition:background .12s,color .12s}
 .nav-btn i{font-size:15px}
 .nav-btn:hover{background:var(--bg);color:var(--tx)}
 .nav-btn.active{background:var(--bg);color:var(--tx);font-weight:500;border:.5px solid var(--bd2)}
 
 /* ── LAYOUT ── */
-.content{flex:1;padding:16px 20px;max-width:1200px;width:100%;margin:0 auto}
+.content{flex:1;padding:16px max(20px,env(safe-area-inset-right)) calc(16px + env(safe-area-inset-bottom)) max(20px,env(safe-area-inset-left));max-width:1200px;width:100%;margin:0 auto}
 #app{display:flex;flex-direction:column;min-height:100vh}
 .page{display:none}
 .page.active{display:block;animation:fadeIn .18s ease}
@@ -64,6 +65,11 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;font-siz
 
 /* ── CARD ── */
 .card{background:var(--bg);border:.5px solid var(--bd2);border-radius:var(--rl);padding:14px;margin-bottom:12px}
+
+/* ── PEMBELIAN TAB BAR ── */
+.potab-bar{display:flex;gap:6px;overflow-x:auto;-webkit-overflow-scrolling:touch;scrollbar-width:none}
+.potab-bar::-webkit-scrollbar{display:none}
+.potab-bar .btn{flex:0 0 auto}
 
 /* ── METRIC CARDS ── */
 .cards-row{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:10px;margin-bottom:14px}
@@ -123,7 +129,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;font-siz
 .action-row{display:flex;gap:8px;flex-wrap:wrap;margin-top:4px}
 
 /* ── TABLE ── */
-.table-wrap{overflow-x:auto}
+.table-wrap{overflow-x:auto;-webkit-overflow-scrolling:touch}
 table{width:100%;border-collapse:collapse;font-size:13px}
 th{text-align:left;padding:8px 10px;border-bottom:.5px solid var(--bd2);font-weight:500;color:var(--tx2);font-size:12px;white-space:nowrap}
 td{padding:8px 10px;border-bottom:.5px solid var(--bd);color:var(--tx);vertical-align:middle}
@@ -210,7 +216,7 @@ tfoot td{font-weight:500;background:var(--bg2);border-top:.5px solid var(--bd2)}
 .dash-empty i{font-size:28px;display:block;margin-bottom:6px;color:var(--tx3)}
 
 /* ── TOAST ── */
-#toast{position:fixed;bottom:22px;left:50%;transform:translateX(-50%);background:#1c1b18;color:#fff;padding:9px 18px;border-radius:var(--r);font-size:13px;z-index:999;opacity:0;pointer-events:none;transition:opacity .2s;white-space:nowrap}
+#toast{position:fixed;bottom:calc(22px + env(safe-area-inset-bottom));left:50%;transform:translateX(-50%);background:#1c1b18;color:#fff;padding:9px 18px;border-radius:var(--r);font-size:13px;z-index:999;opacity:0;pointer-events:none;transition:opacity .2s;white-space:nowrap}
 #toast.show{opacity:1}
 #toast.error{background:#A32D2D}
 #toast.success{background:var(--green-dk)}
@@ -241,17 +247,17 @@ tfoot td{font-weight:500;background:var(--bg2);border-top:.5px solid var(--bd2)}
   input,select,textarea{font-size:16px!important}
 
   /* Topbar: tighter padding, hide RS name to save space */
-  .topbar{padding:8px 12px;gap:8px}
+  .topbar{padding:calc(8px + env(safe-area-inset-top)) max(12px,env(safe-area-inset-right)) 8px max(12px,env(safe-area-inset-left));gap:8px}
   .topbar-rs{display:none}
 
   /* Nav: horizontal scroll instead of multi-row wrapping */
-  .nav{flex-wrap:nowrap;overflow-x:auto;padding:4px 8px;-webkit-overflow-scrolling:touch;scrollbar-width:none}
+  .nav{flex-wrap:nowrap;overflow-x:auto;padding:4px max(8px,env(safe-area-inset-right)) 4px max(8px,env(safe-area-inset-left));-webkit-overflow-scrolling:touch;scrollbar-width:none}
   .nav::-webkit-scrollbar{display:none}
   .nav-btn{font-size:12px;padding:5px 8px;gap:4px}
   .nav-btn i{font-size:14px}
 
   /* Content: less horizontal padding */
-  .content{padding:10px 12px}
+  .content{padding:10px max(12px,env(safe-area-inset-right)) calc(10px + env(safe-area-inset-bottom)) max(12px,env(safe-area-inset-left))}
   .card{padding:12px}
 
   /* Section-title: wrap right-side controls to their own line */
@@ -265,7 +271,7 @@ tfoot td{font-weight:500;background:var(--bg2);border-top:.5px solid var(--bd2)}
   .btn.full-w{min-height:44px}
 
   /* Toast: avoid bottom nav overlap on mobile */
-  #toast{bottom:14px;max-width:calc(100vw - 32px);white-space:normal;text-align:center}
+  #toast{bottom:calc(14px + env(safe-area-inset-bottom));max-width:calc(100vw - 32px);white-space:normal;text-align:center}
 }
 
 /* ── PRINT ── */

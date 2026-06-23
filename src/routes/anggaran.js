@@ -2,11 +2,14 @@ const router = require('express').Router()
 const { read, write } = require('../db')
 
 router.get('/', (req, res) => {
-  const pembelian = read('pembelian')
+  const pembelian = read('pembelian')   // legacy faktur lama
+  const penerimaan = read('penerimaan') // sumber utama sekarang
   const result = read('anggaran')
     .sort((a, b) => b.bulan.localeCompare(a.bulan))
     .map(a => {
-      const terpakai = pembelian.filter(p => p.anggaran === a.bulan).reduce((s, p) => s + p.total, 0)
+      const dariLegacy = pembelian.filter(p => p.anggaran === a.bulan).reduce((s, p) => s + (p.total || 0), 0)
+      const dariPenerimaan = penerimaan.filter(p => p.anggaran === a.bulan).reduce((s, p) => s + ((p.harga || 0) + (p.pajak || 0)), 0)
+      const terpakai = dariLegacy + dariPenerimaan
       return { ...a, terpakai, sisa: a.total - terpakai }
     })
   res.json(result)

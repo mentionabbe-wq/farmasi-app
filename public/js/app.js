@@ -23,6 +23,7 @@ let _poData = []
 let _realData = []
 let _realisasiAll = []
 let _terimaItems = []
+let _terimaHarga = 0
 
 function showLoading(v) { document.getElementById('loading-overlay').classList.toggle('show', v) }
 
@@ -180,7 +181,7 @@ async function populateAnggaranSelect() {
 async function loadSupplierSelects() {
   const list = await API.getSupplier()
   const datalistOpts = list.map(s => `<option value="${s.nama}">`).join('')
-  ;['beli-supplier-list', 'beli-filter-list', 'td-supplier-list', 'po-supplier-list', 'po-filter-list', 'real-supplier-list']
+  ;['beli-supplier-list', 'beli-filter-list', 'td-supplier-list', 'po-supplier-list', 'po-filter-list', 'real-supplier-list', 'terima-supplier-list']
     .forEach(id => { const el = qs(id); if (el) el.innerHTML = datalistOpts })
   _supplierNames = list.map(s => s.nama)
 }
@@ -216,10 +217,11 @@ document.addEventListener('click', async e => {
 /* ── PENERIMAAN (berdasarkan No PO) ── */
 async function loadPembelian() {
   await loadSupplierSelects()
-  const [real, td] = await Promise.all([API.getRealisasi(), API.getTidakDatang()])
+  const [real, td, ang] = await Promise.all([API.getRealisasi(), API.getTidakDatang(), API.getAnggaran()])
   _realisasiAll = real
   const poNos = [...new Set(real.map(d => d.no_po).filter(Boolean))]
   qs('terima-nopo-list').innerHTML = poNos.map(n => `<option value="${n}">`).join('')
+  qs('terima-anggaran').innerHTML = '<option value="">-- Pilih Periode --</option>' + ang.map(a => `<option value="${a.bulan}">${a.bulan}</option>`).join('')
   renderTerimaItems()
   renderTidakDatangTable(td)
   await renderPenerimaanHistory()
@@ -228,20 +230,54 @@ async function loadPembelian() {
 function renderTerimaItems() {
   const box = qs('terima-items')
   const noPo = qs('terima-nopo').value.trim()
-  if (!noPo) { box.innerHTML = '<div class="empty" style="padding:8px">Pilih No PO untuk menampilkan barang</div>'; _terimaItems = []; return }
+  if (!noPo) { box.innerHTML = '<div class="empty" style="padding:8px">Pilih No PO untuk menampilkan barang</div>'; _terimaItems = []; recalcTerima(); return }
   const items = _realisasiAll.filter(d => d.no_po === noPo)
-  if (!items.length) { box.innerHTML = `<div class="empty" style="padding:8px">Tidak ada barang untuk PO "${noPo}". Tambahkan dulu di tab Realisasi Pembelian.</div>`; _terimaItems = []; return }
+  if (!items.length) { box.innerHTML = `<div class="empty" style="padding:8px">Tidak ada barang untuk PO "${noPo}". Tambahkan dulu di tab Realisasi Pembelian.</div>`; _terimaItems = []; recalcTerima(); return }
   _terimaItems = items
   box.innerHTML = `<div class="table-wrap"><table>
-    <thead><tr><th>Nama Barang</th><th style="text-align:right">Jumlah</th><th>Status</th></tr></thead>
+    <thead><tr><th>Nama Barang</th><th style="text-align:right">Harga Satuan</th><th style="text-align:right">Jml Diterima</th><th>Status</th></tr></thead>
     <tbody>${items.map((it, i) => `<tr>
       <td>${it.barang}</td>
-      <td style="text-align:right">${it.jumlah}</td>
-      <td><select class="input-sm terima-status" data-i="${i}">
+      <td style="text-align:right">${fmt(it.harga_satuan)}</td>
+      <td style="text-align:right"><input type="number" class="input-sm terima-qty" data-i="${i}" value="${it.jumlah}" min="0" max="${it.jumlah}" disabled style="width:74px;text-align:right" oninput="recalcTerima()"></td>
+      <td><select class="input-sm terima-status" data-i="${i}" onchange="onTerimaStatus(this)">
         <option value="datang">Datang</option>
+        <option value="sebagian">Datang Sebagian</option>
         <option value="tidak">Tidak Datang</option>
       </select></td>
     </tr>`).join('')}</tbody></table></div>`
+  recalcTerima()
+}
+
+function onTerimaStatus(sel) {
+  const i = sel.dataset.i
+  const qty = document.querySelector(`.terima-qty[data-i="${i}"]`)
+  const max = +(_terimaItems[i]?.jumlah || 0)
+  if (sel.value === 'sebagian') { qty.disabled = false; if (!+qty.value || +qty.value >= max) qty.value = max }
+  else if (sel.value === 'tidak') { qty.disabled = true; qty.value = 0 }
+  else { qty.disabled = true; qty.value = max }
+  recalcTerima()
+}
+
+function recalcTerima() {
+  let harga = 0
+  _terimaItems.forEach((it, i) => {
+    const sel = document.querySelector(`.terima-status[data-i="${i}"]`)
+    const qtyEl = document.querySelector(`.terima-qty[data-i="${i}"]`)
+    const status = sel ? sel.value : 'datang'
+    let terima = status === 'datang' ? +it.jumlah : status === 'tidak' ? 0 : +(qtyEl?.value || 0)
+    if (terima > +it.jumlah) terima = +it.jumlah
+    if (terima < 0) terima = 0
+    harga += terima * (+it.harga_satuan || 0)
+  })
+  _terimaHarga = harga
+  qs('terima-harga').value = fmt(harga)
+  recalcTerimaTotal()
+}
+
+function recalcTerimaTotal() {
+  const p = +(qs('terima-pajak').value || 0)
+  qs('terima-total').value = fmt(_terimaHarga + p)
 }
 
 async function renderPenerimaanHistory() {
@@ -249,18 +285,35 @@ async function renderPenerimaanHistory() {
   const tbody = qs('terima-tbody')
   const f = qs('terima-filter-nopo').value.trim().toLowerCase()
   const rows = f ? data.filter(d => (d.no_po || '').toLowerCase().includes(f)) : data
-  if (!rows.length) { tbody.innerHTML = '<tr><td colspan="6"><div class="empty"><i class="ti ti-package"></i>Belum ada penerimaan</div></td></tr>'; return }
-  tbody.innerHTML = rows.map(d => `<tr>
-    <td>${d.tgl}</td>
-    <td><span class="badge gray">${d.no_po}</span></td>
-    <td>${d.barang||'-'}</td>
-    <td style="text-align:right">${d.jumlah}</td>
-    <td>${d.status === 'tidak' ? '<span class="badge red">Tidak Datang</span>' : '<span class="badge green">Datang</span>'}</td>
-    <td><button class="btn sm danger" data-id="${d.id}" data-action="del-terima"><i class="ti ti-trash"></i></button></td>
-  </tr>`).join('')
+  if (!rows.length) { tbody.innerHTML = '<tr><td colspan="10"><div class="empty"><i class="ti ti-package"></i>Belum ada penerimaan</div></td></tr>'; return }
+  tbody.innerHTML = rows.map(d => {
+    const items = d.items || []
+    const dC = items.filter(x => x.status === 'datang').length
+    const sC = items.filter(x => x.status === 'sebagian').length
+    const tC = items.filter(x => x.status === 'tidak').length
+    const summ = [dC ? `${dC} datang` : '', sC ? `${sC} sebagian` : '', tC ? `${tC} tdk` : ''].filter(Boolean).join(', ')
+    const total = d.total != null ? d.total : (d.harga || 0) + (d.pajak || 0)
+    return `<tr>
+      <td>${d.tgl}</td>
+      <td><span class="badge gray">${d.no_po}</span></td>
+      <td style="font-size:12px">${d.no_faktur || '-'}</td>
+      <td>${d.supplier || '-'}</td>
+      <td>${items.length} item${summ ? `<div style="font-size:11px;color:var(--tx2)">${summ}</div>` : ''}</td>
+      <td style="text-align:right">${fmt(d.harga)}</td>
+      <td style="text-align:right">${fmt(d.pajak)}</td>
+      <td style="text-align:right;font-weight:600">${fmt(total)}</td>
+      <td>${d.anggaran ? `<span class="badge gray">${d.anggaran}</span>` : '-'}</td>
+      <td><button class="btn sm danger" data-id="${d.id}" data-action="del-terima"><i class="ti ti-trash"></i></button></td>
+    </tr>`
+  }).join('')
 }
 
-qs('terima-nopo').addEventListener('input', renderTerimaItems)
+qs('terima-nopo').addEventListener('input', () => {
+  renderTerimaItems()
+  const no = qs('terima-nopo').value.trim()
+  const match = _realisasiAll.find(d => d.no_po === no && d.supplier)
+  if (match && !qs('terima-supplier').value.trim()) qs('terima-supplier').value = match.supplier
+})
 qs('terima-filter-nopo').addEventListener('input', renderPenerimaanHistory)
 
 qs('terima-save-btn').addEventListener('click', async () => {
@@ -269,12 +322,22 @@ qs('terima-save-btn').addEventListener('click', async () => {
   if (!_terimaItems.length) { toast('Tidak ada barang pada PO ini', 'error'); return }
   const items = _terimaItems.map((it, i) => {
     const sel = document.querySelector(`.terima-status[data-i="${i}"]`)
-    return { barang: it.barang, jumlah: it.jumlah, status: sel ? sel.value : 'datang' }
+    const qtyEl = document.querySelector(`.terima-qty[data-i="${i}"]`)
+    const status = sel ? sel.value : 'datang'
+    const jumlah_terima = status === 'datang' ? +it.jumlah : status === 'tidak' ? 0 : +(qtyEl?.value || 0)
+    return { barang: it.barang, jumlah: +it.jumlah, jumlah_terima, status }
   })
   showLoading(true)
   try {
-    await API.savePenerimaan({ tgl: qs('terima-tgl').value || today(), no_po: noPo, items })
-    qs('terima-nopo').value = ''; renderTerimaItems()
+    await API.savePenerimaan({
+      tgl: qs('terima-tgl').value || today(), no_po: noPo,
+      no_faktur: qs('terima-faktur').value.trim(), supplier: qs('terima-supplier').value.trim(),
+      anggaran: qs('terima-anggaran').value, harga: _terimaHarga, pajak: +(qs('terima-pajak').value || 0),
+      items
+    })
+    ;['terima-nopo', 'terima-faktur', 'terima-supplier', 'terima-pajak'].forEach(id => qs(id).value = '')
+    qs('terima-anggaran').value = ''
+    renderTerimaItems()
     await renderPenerimaanHistory()
     renderTidakDatangTable(await API.getTidakDatang())
     toast('Penerimaan disimpan')
@@ -283,7 +346,7 @@ qs('terima-save-btn').addEventListener('click', async () => {
 
 document.addEventListener('click', async e => {
   if (e.target.closest('[data-action="del-terima"]')) {
-    if (!confirm2('Hapus baris penerimaan ini?')) return
+    if (!confirm2('Hapus penerimaan ini?')) return
     const id = e.target.closest('[data-id]').dataset.id
     showLoading(true)
     try { await API.delPenerimaan(id); await renderPenerimaanHistory(); toast('Dihapus') }
