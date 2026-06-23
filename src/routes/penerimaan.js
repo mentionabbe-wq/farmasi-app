@@ -20,7 +20,7 @@ router.post('/', (req, res) => {
     let terima = status === 'datang' ? jumlah : status === 'tidak' ? 0 : +(it.jumlah_terima || 0)
     if (terima > jumlah) terima = jumlah
     if (terima < 0) terima = 0
-    return { barang: it.barang || '', jumlah, jumlah_terima: terima, status }
+    return { barang: it.barang || '', jumlah, jumlah_terima: terima, harga_terima: +(it.harga_terima || 0), status }
   })
 
   const h = +(harga || 0), p = +(pajak || 0)

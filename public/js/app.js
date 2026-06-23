@@ -235,10 +235,11 @@ function renderTerimaItems() {
   if (!items.length) { box.innerHTML = `<div class="empty" style="padding:8px">Tidak ada barang untuk PO "${noPo}". Tambahkan dulu di tab Realisasi Pembelian.</div>`; _terimaItems = []; recalcTerima(); return }
   _terimaItems = items
   box.innerHTML = `<div class="table-wrap"><table>
-    <thead><tr><th>Nama Barang</th><th style="text-align:right">Harga Satuan</th><th style="text-align:right">Jml Diterima</th><th>Status</th></tr></thead>
+    <thead><tr><th>Nama Barang</th><th style="text-align:right">Harga PO</th><th style="text-align:right">Harga Penerimaan</th><th style="text-align:right">Jml Diterima</th><th>Status</th></tr></thead>
     <tbody>${items.map((it, i) => `<tr>
       <td>${it.barang}</td>
       <td style="text-align:right">${fmt(it.harga_satuan)}</td>
+      <td style="text-align:right"><input type="number" class="input-sm terima-hargaterima" data-i="${i}" value="${+it.harga_satuan || 0}" min="0" style="width:96px;text-align:right" oninput="recalcTerima()"></td>
       <td style="text-align:right"><input type="number" class="input-sm terima-qty" data-i="${i}" value="${it.jumlah}" min="0" max="${it.jumlah}" disabled style="width:74px;text-align:right" oninput="recalcTerima()"></td>
       <td><select class="input-sm terima-status" data-i="${i}" onchange="onTerimaStatus(this)">
         <option value="datang">Datang</option>
@@ -265,10 +266,12 @@ function recalcTerima() {
     const sel = document.querySelector(`.terima-status[data-i="${i}"]`)
     const qtyEl = document.querySelector(`.terima-qty[data-i="${i}"]`)
     const status = sel ? sel.value : 'datang'
+    const priceEl = document.querySelector(`.terima-hargaterima[data-i="${i}"]`)
     let terima = status === 'datang' ? +it.jumlah : status === 'tidak' ? 0 : +(qtyEl?.value || 0)
     if (terima > +it.jumlah) terima = +it.jumlah
     if (terima < 0) terima = 0
-    harga += terima * (+it.harga_satuan || 0)
+    const hpUnit = priceEl ? +(priceEl.value || 0) : (+it.harga_satuan || 0)
+    harga += terima * hpUnit
     hargaPO += (+it.harga_total || (+it.jumlah * (+it.harga_satuan || 0)))
   })
   _terimaHarga = harga
@@ -328,9 +331,11 @@ qs('terima-save-btn').addEventListener('click', async () => {
   const items = _terimaItems.map((it, i) => {
     const sel = document.querySelector(`.terima-status[data-i="${i}"]`)
     const qtyEl = document.querySelector(`.terima-qty[data-i="${i}"]`)
+    const priceEl = document.querySelector(`.terima-hargaterima[data-i="${i}"]`)
     const status = sel ? sel.value : 'datang'
     const jumlah_terima = status === 'datang' ? +it.jumlah : status === 'tidak' ? 0 : +(qtyEl?.value || 0)
-    return { barang: it.barang, jumlah: +it.jumlah, jumlah_terima, status }
+    const harga_terima = priceEl ? +(priceEl.value || 0) : (+it.harga_satuan || 0)
+    return { barang: it.barang, jumlah: +it.jumlah, jumlah_terima, harga_terima, status }
   })
   showLoading(true)
   try {
@@ -362,7 +367,8 @@ document.addEventListener('click', async e => {
 /* ── REALISASI PEMBELIAN + DIRECTORY BARANG ── */
 async function loadBarangSelects() {
   const list = await API.getBarang()
-  qs('real-barang-list').innerHTML = list.map(b => `<option value="${b.nama}">`).join('')
+  const opts = list.map(b => `<option value="${b.nama}">`).join('')
+  ;['real-barang-list', 'hut-item-list', 'blm-obat-list'].forEach(id => { const el = qs(id); if (el) el.innerHTML = opts })
 }
 
 function calcRealTotal() {
@@ -434,6 +440,17 @@ document.addEventListener('click', async e => {
     try { await API.delRealisasi(id); _realData = await API.getRealisasi(); renderRealisasiTable(_realData); toast('Dihapus') }
     catch (err) { toast(err.message, 'error') } finally { showLoading(false) }
   }
+})
+
+// Tab Penjualan: Penjualan / Obat Dihutangkan / Obat Belum Diambil
+document.querySelectorAll('[data-pjtab]').forEach(btn => {
+  btn.addEventListener('click', () => {
+    const tab = btn.dataset.pjtab
+    document.querySelectorAll('[data-pjtab]').forEach(b => b.classList.toggle('primary', b.dataset.pjtab === tab))
+    qs('pjtab-jual').style.display = tab === 'jual' ? '' : 'none'
+    qs('pjtab-hutang').style.display = tab === 'hutang' ? '' : 'none'
+    qs('pjtab-belum').style.display = tab === 'belum' ? '' : 'none'
+  })
 })
 
 // Tab Pembelian: Rencana / Realisasi
@@ -769,8 +786,14 @@ async function loadPenjualan() {
   renderPjTujuanSelect(tujuan)
   await renderPjSummary()
   await renderPenjualanTable()
+  await loadBarangSelects()
   await renderHutangObat()
   await renderObatBelum()
+  // default ke tab Penjualan
+  qs('pjtab-jual').style.display = ''
+  qs('pjtab-hutang').style.display = 'none'
+  qs('pjtab-belum').style.display = 'none'
+  document.querySelectorAll('[data-pjtab]').forEach(b => b.classList.toggle('primary', b.dataset.pjtab === 'jual'))
 }
 
 /* ── OBAT DIHUTANGKAN ── */

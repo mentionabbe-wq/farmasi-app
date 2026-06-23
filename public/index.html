@@ -265,6 +265,12 @@
 
     <!-- PENJUALAN -->
     <section class="page" id="page-penjualan">
+      <div class="card potab-bar" style="padding:8px">
+        <button class="btn sm primary" data-pjtab="jual"><i class="ti ti-cash"></i>Penjualan</button>
+        <button class="btn sm" data-pjtab="hutang"><i class="ti ti-receipt"></i>Obat Dihutangkan</button>
+        <button class="btn sm" data-pjtab="belum"><i class="ti ti-clock-pause"></i>Obat Belum Diambil</button>
+      </div>
+      <div id="pjtab-jual">
       <div class="cards-row" id="pj-summary-cards"></div>
       <div class="card">
         <div class="section-title">
@@ -295,13 +301,18 @@
         <div class="tab-bar" id="pj-tab-bar"></div>
         <div id="pj-tab-panels"></div>
       </div>
+      </div>
 
+      <div id="pjtab-hutang" style="display:none">
       <!-- OBAT DIHUTANGKAN -->
       <div class="card">
         <div class="section-title">Obat Dihutangkan</div>
         <div class="form-row triple">
           <div class="form-group"><label>Tanggal</label><input type="date" id="hut-tgl"></div>
-          <div class="form-group"><label>Nama Item</label><input type="text" id="hut-item" placeholder="Nama obat / item"></div>
+          <div class="form-group"><label>Nama Item</label>
+            <input type="text" id="hut-item" list="hut-item-list" placeholder="Pilih / ketik nama barang..." autocomplete="off">
+            <datalist id="hut-item-list"></datalist>
+          </div>
           <div class="form-group"><label>Jumlah Item</label><input type="number" id="hut-jumlah" placeholder="0" min="0"></div>
         </div>
         <div class="form-row">
@@ -317,14 +328,19 @@
           <tbody id="hut-tbody"></tbody></table>
         </div>
       </div>
+      </div>
 
+      <div id="pjtab-belum" style="display:none">
       <!-- OBAT BELUM DIAMBIL -->
       <div class="card">
         <div class="section-title">Obat Belum Diambil</div>
         <div class="form-row triple">
           <div class="form-group"><label>Tanggal</label><input type="date" id="blm-tgl"></div>
           <div class="form-group"><label>Nama Pasien</label><input type="text" id="blm-pasien" placeholder="Nama pasien"></div>
-          <div class="form-group"><label>Nama Obat</label><input type="text" id="blm-obat" placeholder="Nama obat"></div>
+          <div class="form-group"><label>Nama Obat</label>
+            <input type="text" id="blm-obat" list="blm-obat-list" placeholder="Pilih / ketik nama barang..." autocomplete="off">
+            <datalist id="blm-obat-list"></datalist>
+          </div>
         </div>
         <div class="form-group" style="margin-bottom:12px"><label>Keterangan</label><input type="text" id="blm-ket" placeholder="Catatan (opsional)"></div>
         <div class="form-group" style="margin-bottom:12px"><label>Upload Resep (opsional)</label><input type="file" id="blm-resep" accept=".pdf,.jpg,.jpeg,.png" multiple></div>
@@ -336,6 +352,7 @@
           <table><thead><tr><th>Tanggal</th><th>Nama Pasien</th><th>Nama Obat</th><th>Resep</th><th>Keterangan</th><th></th></tr></thead>
           <tbody id="blm-tbody"></tbody></table>
         </div>
+      </div>
       </div>
     </section>
 
