@@ -64,6 +64,11 @@ const API = (() => {
     saveBpjsAlkes: fd => req('POST', '/bpjs-alkes', fd, true),
     delBpjsAlkes: id => req('DELETE', `/bpjs-alkes/${id}`),
 
+    // BPJS Iterasi
+    getBpjsIterasi: () => req('GET', '/bpjs-iterasi'),
+    saveBpjsIterasi: d => req('POST', '/bpjs-iterasi', d),
+    delBpjsIterasi: id => req('DELETE', `/bpjs-iterasi/${id}`),
+
     // Pinjaman
     getPinjaman: (p = {}) => req('GET', '/pinjaman?' + new URLSearchParams(p)),
     savePinjaman: d => req('POST', '/pinjaman', d),

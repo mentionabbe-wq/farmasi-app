@@ -387,7 +387,7 @@ async function loadRealisasi() {
 function renderRealisasiTable(data) {
   const tbody = qs('real-tbody'), tfoot = qs('real-tfoot')
   const f = qs('real-filter-nopo').value.trim().toLowerCase()
-  const rows = f ? data.filter(d => (d.no_po || '').toLowerCase().includes(f)) : data
+  const rows = f ? data.filter(d => [d.no_po, d.supplier, d.barang, d.anggaran, d.tgl_po].some(v => (v || '').toString().toLowerCase().includes(f))) : data
   if (!rows.length) { tbody.innerHTML = '<tr><td colspan="9"><div class="empty"><i class="ti ti-checklist"></i>Belum ada realisasi</div></td></tr>'; tfoot.innerHTML = ''; return }
   let total = 0
   tbody.innerHTML = rows.map(d => {
@@ -598,9 +598,11 @@ document.addEventListener('click', async e => {
 async function loadBPJS() {
   qs('bptab-prb').style.display = ''
   qs('bptab-alkes').style.display = 'none'
+  qs('bptab-iterasi').style.display = 'none'
   document.querySelectorAll('[data-bptab]').forEach(b => b.classList.toggle('primary', b.dataset.bptab === 'prb'))
   await renderPRB()
   await renderAlkes()
+  await renderIterasi()
 }
 
 document.querySelectorAll('[data-bptab]').forEach(btn => {
@@ -609,6 +611,7 @@ document.querySelectorAll('[data-bptab]').forEach(btn => {
     document.querySelectorAll('[data-bptab]').forEach(b => b.classList.toggle('primary', b.dataset.bptab === tab))
     qs('bptab-prb').style.display = tab === 'prb' ? '' : 'none'
     qs('bptab-alkes').style.display = tab === 'alkes' ? '' : 'none'
+    qs('bptab-iterasi').style.display = tab === 'iterasi' ? '' : 'none'
   })
 })
 
@@ -696,6 +699,41 @@ document.addEventListener('click', async e => {
     const id = e.target.closest('[data-id]').dataset.id
     showLoading(true)
     try { await API.delBpjsAlkes(id); await renderAlkes(); toast('Dihapus') }
+    catch (err) { toast(err.message, 'error') } finally { showLoading(false) }
+  }
+})
+
+let _iterData = []
+async function renderIterasi() { _iterData = await API.getBpjsIterasi(); renderIterasiTable() }
+function renderIterasiTable() {
+  const tbody = qs('iter-tbody')
+  const bln = qs('iter-filter-bulan').value
+  const rows = bln ? _iterData.filter(d => (d.tgl || '').slice(0, 7) === bln) : _iterData
+  if (!rows.length) { tbody.innerHTML = '<tr><td colspan="4"><div class="empty"><i class="ti ti-repeat"></i>Belum ada data iterasi</div></td></tr>'; return }
+  tbody.innerHTML = rows.map(d => `<tr>
+    <td>${d.tgl}</td>
+    <td style="font-weight:500">${d.pasien}</td>
+    <td>${d.no_rm || '-'}</td>
+    <td><button class="btn sm danger" data-id="${d.id}" data-action="del-iter"><i class="ti ti-trash"></i></button></td>
+  </tr>`).join('')
+}
+qs('iter-filter-bulan').addEventListener('change', renderIterasiTable)
+qs('iter-save-btn').addEventListener('click', async () => {
+  const pasien = qs('iter-pasien').value.trim()
+  if (!pasien) { toast('Nama pasien wajib diisi', 'error'); return }
+  showLoading(true)
+  try {
+    await API.saveBpjsIterasi({ tgl: qs('iter-tgl').value || today(), pasien, no_rm: qs('iter-rm').value })
+    ;['iter-pasien', 'iter-rm'].forEach(id => qs(id).value = '')
+    await renderIterasi(); toast('Iterasi disimpan')
+  } catch (e) { toast(e.message, 'error') } finally { showLoading(false) }
+})
+document.addEventListener('click', async e => {
+  if (e.target.closest('[data-action="del-iter"]')) {
+    if (!confirm2('Hapus data iterasi ini?')) return
+    const id = e.target.closest('[data-id]').dataset.id
+    showLoading(true)
+    try { await API.delBpjsIterasi(id); await renderIterasi(); toast('Dihapus') }
     catch (err) { toast(err.message, 'error') } finally { showLoading(false) }
   }
 })
@@ -1475,7 +1513,7 @@ async function init() {
   qs('topbar-date').textContent = new Date().toLocaleDateString('id-ID', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })
   try { const s = await API.getSettings(); qs('topbar-rs').textContent = s.rs_name || 'RS Medika' } catch {}
   const defDate = today()
-  ;['po-tgl','real-tgl','terima-tgl','pin-tgl','mut-tgl','arsip-tgl','pj-tgl','hut-tgl','blm-tgl','prb-tgl','alkes-tgl','so-tgl'].forEach(id => { const el = qs(id); if (el) el.value = defDate })
+  ;['po-tgl','real-tgl','terima-tgl','pin-tgl','mut-tgl','arsip-tgl','pj-tgl','hut-tgl','blm-tgl','prb-tgl','alkes-tgl','iter-tgl','so-tgl'].forEach(id => { const el = qs(id); if (el) el.value = defDate })
   qs('rekap-sampai').value = defDate
   qs('rekap-dari').value = defDate.slice(0, 7) + '-01'
   qs('pj-filter-bulan').value = defDate.slice(0, 7)

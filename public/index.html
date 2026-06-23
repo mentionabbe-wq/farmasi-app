@@ -176,9 +176,9 @@
         <div class="card">
           <div class="section-title">
             Daftar Realisasi Pembelian
-            <input type="text" id="real-filter-nopo" class="input-sm" placeholder="Filter No PO..." style="width:140px">
+            <input type="text" id="real-filter-nopo" class="input-sm" placeholder="Cari kata kunci (No PO / distributor / barang)..." style="width:230px">
           </div>
-          <div class="table-wrap">
+          <div class="table-wrap table-scroll">
             <table><thead><tr><th>Tgl PO</th><th>No PO</th><th>Distributor</th><th>Anggaran</th><th>Nama Barang</th><th style="text-align:right">Jumlah</th><th style="text-align:right">Harga Satuan</th><th style="text-align:right">Harga Total</th><th></th></tr></thead>
             <tbody id="real-tbody"></tbody>
             <tfoot id="real-tfoot"></tfoot></table>
@@ -362,6 +362,7 @@
       <div class="card potab-bar" style="padding:8px">
         <button class="btn sm primary" data-bptab="prb"><i class="ti ti-file-text"></i>PRB</button>
         <button class="btn sm" data-bptab="alkes"><i class="ti ti-wheelchair"></i>Alkes BPJS</button>
+        <button class="btn sm" data-bptab="iterasi"><i class="ti ti-repeat"></i>Iterasi</button>
       </div>
 
       <div id="bptab-prb">
@@ -420,6 +421,28 @@
           <div class="table-wrap">
             <table><thead><tr><th>Tanggal</th><th>Nama Pasien</th><th>No RM</th><th>Jenis</th><th style="text-align:right">Jumlah</th><th>Dokumen</th><th></th></tr></thead>
             <tbody id="alkes-tbody"></tbody></table>
+          </div>
+        </div>
+      </div>
+
+      <div id="bptab-iterasi" style="display:none">
+        <div class="card">
+          <div class="section-title">Input Iterasi</div>
+          <div class="form-row triple">
+            <div class="form-group"><label>Tanggal</label><input type="date" id="iter-tgl"></div>
+            <div class="form-group"><label>Nama Pasien</label><input type="text" id="iter-pasien" placeholder="Nama pasien"></div>
+            <div class="form-group"><label>Nomor RM</label><input type="text" id="iter-rm" placeholder="No. rekam medis"></div>
+          </div>
+          <button class="btn primary" id="iter-save-btn"><i class="ti ti-device-floppy"></i>Simpan Iterasi</button>
+        </div>
+        <div class="card">
+          <div class="section-title">
+            Daftar Iterasi
+            <input type="month" id="iter-filter-bulan" class="input-sm">
+          </div>
+          <div class="table-wrap">
+            <table><thead><tr><th>Tanggal</th><th>Nama Pasien</th><th>No RM</th><th></th></tr></thead>
+            <tbody id="iter-tbody"></tbody></table>
           </div>
         </div>
       </div>
