@@ -290,7 +290,7 @@ async function renderPenerimaanHistory() {
   const tbody = qs('terima-tbody')
   const f = qs('terima-filter-nopo').value.trim().toLowerCase()
   const rows = f ? data.filter(d => (d.no_po || '').toLowerCase().includes(f)) : data
-  if (!rows.length) { tbody.innerHTML = '<tr><td colspan="11"><div class="empty"><i class="ti ti-package"></i>Belum ada penerimaan</div></td></tr>'; return }
+  if (!rows.length) { tbody.innerHTML = '<tr><td colspan="12"><div class="empty"><i class="ti ti-package"></i>Belum ada penerimaan</div></td></tr>'; return }
   const todayStr = new Date().toISOString().slice(0, 10)
   tbody.innerHTML = rows.map(d => {
     const items = d.items || []
@@ -305,6 +305,7 @@ async function renderPenerimaanHistory() {
       <td>${d.tgl}</td>
       <td><span class="badge gray">${d.no_po}</span></td>
       <td style="font-size:12px">${d.no_faktur || '-'}</td>
+      <td style="font-size:12px">${d.tgl_faktur || '-'}</td>
       <td style="font-size:12px;${jtStyle}">${jt || '-'}${jt && jt < todayStr ? ' ⚠' : ''}</td>
       <td>${d.supplier || '-'}</td>
       <td>${items.length} item${summ ? `<div style="font-size:11px;color:var(--tx2)">${summ}</div>` : ''}</td>
