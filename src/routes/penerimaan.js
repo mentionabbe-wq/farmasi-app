@@ -9,7 +9,7 @@ router.get('/', (req, res) => {
 })
 
 router.post('/', (req, res) => {
-  const { tgl, no_po = '', no_faktur = '', supplier = '', anggaran = '', harga, pajak, items = [] } = req.body
+  const { tgl, no_po = '', no_faktur = '', tgl_faktur = '', tgl_jatuh_tempo = '', supplier = '', anggaran = '', harga, pajak, items = [] } = req.body
   if (!no_po) return res.status(400).json({ error: 'No PO wajib dipilih' })
   if (!Array.isArray(items) || !items.length) return res.status(400).json({ error: 'tidak ada item untuk diterima' })
   const t = tgl || new Date().toISOString().slice(0, 10)
@@ -26,7 +26,7 @@ router.post('/', (req, res) => {
   const h = +(harga || 0), p = +(pajak || 0)
   const rec = {
     id: Date.now(),
-    tgl: t, no_po, no_faktur, supplier, anggaran,
+    tgl: t, no_po, no_faktur, tgl_faktur, tgl_jatuh_tempo, supplier, anggaran,
     harga: h, pajak: p, total: h + p,
     items: cleanItems,
     created_at: new Date().toISOString()

@@ -197,12 +197,13 @@
           </div>
           <div class="form-group"><label>No Faktur</label><input type="text" id="terima-faktur" placeholder="No faktur distributor"></div>
         </div>
-        <div class="form-row">
+        <div class="form-row triple">
           <div class="form-group"><label>Distributor / Supplier</label>
             <input type="text" id="terima-supplier" list="terima-supplier-list" placeholder="Distributor..." autocomplete="off">
             <datalist id="terima-supplier-list"></datalist>
           </div>
-          <div class="form-group"><label>Periode Anggaran</label><select id="terima-anggaran"><option value="">-- Pilih --</option></select></div>
+          <div class="form-group"><label>Tanggal Faktur</label><input type="date" id="terima-tgl-faktur"></div>
+          <div class="form-group"><label>Tanggal Jatuh Tempo</label><input type="date" id="terima-jatuh-tempo"></div>
         </div>
         <div id="terima-items" style="margin-bottom:12px"></div>
         <div class="form-row triple">
@@ -223,7 +224,7 @@
           <input type="text" id="terima-filter-nopo" class="input-sm" placeholder="Filter No PO..." style="width:140px">
         </div>
         <div class="table-wrap">
-          <table><thead><tr><th>Tanggal</th><th>No PO</th><th>No Faktur</th><th>Distributor</th><th>Item</th><th style="text-align:right">Harga</th><th style="text-align:right">Pajak</th><th style="text-align:right">Total</th><th>Anggaran</th><th></th></tr></thead>
+          <table><thead><tr><th>Tanggal</th><th>No PO</th><th>No Faktur</th><th>Jatuh Tempo</th><th>Distributor</th><th>Item</th><th style="text-align:right">Harga</th><th style="text-align:right">Pajak</th><th style="text-align:right">Total</th><th>Anggaran</th><th></th></tr></thead>
           <tbody id="terima-tbody"></tbody></table>
         </div>
       </div>

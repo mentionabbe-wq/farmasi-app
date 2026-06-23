@@ -217,11 +217,10 @@ document.addEventListener('click', async e => {
 /* ── PENERIMAAN (berdasarkan No PO) ── */
 async function loadPembelian() {
   await loadSupplierSelects()
-  const [real, td, ang] = await Promise.all([API.getRealisasi(), API.getTidakDatang(), API.getAnggaran()])
+  const [real, td] = await Promise.all([API.getRealisasi(), API.getTidakDatang()])
   _realisasiAll = real
   const poNos = [...new Set(real.map(d => d.no_po).filter(Boolean))]
   qs('terima-nopo-list').innerHTML = poNos.map(n => `<option value="${n}">`).join('')
-  qs('terima-anggaran').innerHTML = '<option value="">-- Pilih Periode --</option>' + ang.map(a => `<option value="${a.bulan}">${a.bulan}</option>`).join('')
   renderTerimaItems()
   renderTidakDatangTable(td)
   await renderPenerimaanHistory()
@@ -291,7 +290,8 @@ async function renderPenerimaanHistory() {
   const tbody = qs('terima-tbody')
   const f = qs('terima-filter-nopo').value.trim().toLowerCase()
   const rows = f ? data.filter(d => (d.no_po || '').toLowerCase().includes(f)) : data
-  if (!rows.length) { tbody.innerHTML = '<tr><td colspan="10"><div class="empty"><i class="ti ti-package"></i>Belum ada penerimaan</div></td></tr>'; return }
+  if (!rows.length) { tbody.innerHTML = '<tr><td colspan="11"><div class="empty"><i class="ti ti-package"></i>Belum ada penerimaan</div></td></tr>'; return }
+  const todayStr = new Date().toISOString().slice(0, 10)
   tbody.innerHTML = rows.map(d => {
     const items = d.items || []
     const dC = items.filter(x => x.status === 'datang').length
@@ -299,10 +299,13 @@ async function renderPenerimaanHistory() {
     const tC = items.filter(x => x.status === 'tidak').length
     const summ = [dC ? `${dC} datang` : '', sC ? `${sC} sebagian` : '', tC ? `${tC} tdk` : ''].filter(Boolean).join(', ')
     const total = d.total != null ? d.total : (d.harga || 0) + (d.pajak || 0)
+    const jt = d.tgl_jatuh_tempo
+    const jtStyle = jt && jt < todayStr ? 'color:#E24B4A;font-weight:600' : jt && jt === todayStr ? 'color:var(--amb-dk);font-weight:600' : ''
     return `<tr>
       <td>${d.tgl}</td>
       <td><span class="badge gray">${d.no_po}</span></td>
       <td style="font-size:12px">${d.no_faktur || '-'}</td>
+      <td style="font-size:12px;${jtStyle}">${jt || '-'}${jt && jt < todayStr ? ' ⚠' : ''}</td>
       <td>${d.supplier || '-'}</td>
       <td>${items.length} item${summ ? `<div style="font-size:11px;color:var(--tx2)">${summ}</div>` : ''}</td>
       <td style="text-align:right">${fmt(d.harga)}</td>
@@ -320,7 +323,6 @@ qs('terima-nopo').addEventListener('input', () => {
   const match = _realisasiAll.find(d => d.no_po === no)
   if (!match) return
   if (match.supplier && !qs('terima-supplier').value.trim()) qs('terima-supplier').value = match.supplier
-  if (match.anggaran && !qs('terima-anggaran').value) qs('terima-anggaran').value = match.anggaran
 })
 qs('terima-filter-nopo').addEventListener('input', renderPenerimaanHistory)
 
@@ -337,16 +339,19 @@ qs('terima-save-btn').addEventListener('click', async () => {
     const harga_terima = priceEl ? +(priceEl.value || 0) : (+it.harga_satuan || 0)
     return { barang: it.barang, jumlah: +it.jumlah, jumlah_terima, harga_terima, status }
   })
+  const match = _realisasiAll.find(d => d.no_po === noPo)
+  const anggaran = match ? (match.anggaran || '') : ''
   showLoading(true)
   try {
     await API.savePenerimaan({
       tgl: qs('terima-tgl').value || today(), no_po: noPo,
-      no_faktur: qs('terima-faktur').value.trim(), supplier: qs('terima-supplier').value.trim(),
-      anggaran: qs('terima-anggaran').value, harga: _terimaHarga, pajak: Math.round(_terimaHarga * 0.11),
+      no_faktur: qs('terima-faktur').value.trim(),
+      tgl_faktur: qs('terima-tgl-faktur').value, tgl_jatuh_tempo: qs('terima-jatuh-tempo').value,
+      supplier: qs('terima-supplier').value.trim(),
+      anggaran, harga: _terimaHarga, pajak: Math.round(_terimaHarga * 0.11),
       items
     })
-    ;['terima-nopo', 'terima-faktur', 'terima-supplier'].forEach(id => qs(id).value = '')
-    qs('terima-anggaran').value = ''
+    ;['terima-nopo', 'terima-faktur', 'terima-tgl-faktur', 'terima-jatuh-tempo', 'terima-supplier'].forEach(id => qs(id).value = '')
     renderTerimaItems()
     await renderPenerimaanHistory()
     renderTidakDatangTable(await API.getTidakDatang())
