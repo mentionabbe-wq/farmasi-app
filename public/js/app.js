@@ -17,6 +17,13 @@ const KAT_COLORS_ARSIP = { SPO:'blue', Kronologi:'amber', Laporan:'green', SK:'p
 
 let STATE = { tujuan: [], kategori: [], activeMutTab: null, activePjTab: '__all__' }
 
+// State antar-modul (dideklarasikan di atas agar tidak kena TDZ apa pun urutan akses)
+let _supplierNames = []
+let _poData = []
+let _realData = []
+let _realisasiAll = []
+let _terimaItems = []
+
 function showLoading(v) { document.getElementById('loading-overlay').classList.toggle('show', v) }
 
 function toast(msg, type = 'success') {
@@ -211,9 +218,6 @@ document.addEventListener('click', async e => {
 })
 
 /* ── PENERIMAAN (berdasarkan No PO) ── */
-let _realisasiAll = []   // semua realisasi, untuk lookup item per PO
-let _terimaItems = []    // item PO yang sedang diterima
-
 async function loadPembelian() {
   await loadSupplierSelects()
   const [real, td] = await Promise.all([API.getRealisasi(), API.getTidakDatang()])
@@ -292,8 +296,6 @@ document.addEventListener('click', async e => {
 })
 
 /* ── REALISASI PEMBELIAN + DIRECTORY BARANG ── */
-let _realData = []
-
 async function loadBarangSelects() {
   const list = await API.getBarang()
   qs('real-barang-list').innerHTML = list.map(b => `<option value="${b.nama}">`).join('')
@@ -400,9 +402,6 @@ document.addEventListener('click', async e => {
 })
 
 /* ── PEMBELIAN (PO KE DISTRIBUTOR) ── */
-let _poData = []
-let _supplierNames = []
-
 async function loadPO() {
   // default ke tab Rencana Pembelian
   qs('potab-rencana').style.display = ''
