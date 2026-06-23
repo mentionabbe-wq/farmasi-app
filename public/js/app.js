@@ -163,8 +163,10 @@ document.addEventListener('click', async e => {
 })
 
 async function populateAnggaranSelect() {
+  const el = qs('beli-anggaran')
+  if (!el) return
   const data = await API.getAnggaran()
-  qs('beli-anggaran').innerHTML = '<option value="">-- Pilih Periode --</option>' + data.map(d => `<option value="${d.bulan}">${d.bulan}</option>`).join('')
+  el.innerHTML = '<option value="">-- Pilih Periode --</option>' + data.map(d => `<option value="${d.bulan}">${d.bulan}</option>`).join('')
 }
 
 /* ── SUPPLIER ── */
@@ -208,58 +210,192 @@ document.addEventListener('click', async e => {
   }
 })
 
-/* ── PEMBELIAN ── */
+/* ── PENERIMAAN (berdasarkan No PO) ── */
+let _realisasiAll = []   // semua realisasi, untuk lookup item per PO
+let _terimaItems = []    // item PO yang sedang diterima
+
 async function loadPembelian() {
-  await Promise.all([populateAnggaranSelect(), loadSupplierSelects()])
-  const [beli, td] = await Promise.all([API.getPembelian(), API.getTidakDatang()])
-  _beliData = beli; renderPembelianTable(beli)
+  await loadSupplierSelects()
+  const [real, td] = await Promise.all([API.getRealisasi(), API.getTidakDatang()])
+  _realisasiAll = real
+  const poNos = [...new Set(real.map(d => d.no_po).filter(Boolean))]
+  qs('terima-nopo-list').innerHTML = poNos.map(n => `<option value="${n}">`).join('')
+  renderTerimaItems()
   renderTidakDatangTable(td)
+  await renderPenerimaanHistory()
 }
 
-function renderPembelianTable(data) {
-  const tbody = qs('beli-tbody')
-  const filterSup = qs('beli-filter-supplier').value.trim().toLowerCase()
-  const rows = filterSup ? data.filter(d => (d.supplier || '').toLowerCase().includes(filterSup)) : data
-  if (!rows.length) { tbody.innerHTML = `<tr><td colspan="8"><div class="empty">${filterSup ? 'Tidak ada penerimaan dari supplier ini' : 'Belum ada data penerimaan'}</div></td></tr>`; return }
-  const today = new Date().toISOString().slice(0, 10)
-  tbody.innerHTML = rows.map(d => {
-    const jt = d.tgl_jatuh_tempo
-    const jatuhStyle = jt && jt < today ? 'color:#E24B4A;font-weight:600' : jt && jt === today ? 'color:var(--amb-dk);font-weight:600' : ''
-    return `<tr>
-      <td>${d.tgl}</td>
-      <td style="font-size:12px">${d.no_faktur||'-'}</td>
-      <td style="font-size:12px">${d.tgl_faktur||'-'}</td>
-      <td style="font-size:12px;${jatuhStyle}">${jt||'-'}${jt&&jt<today?' ⚠':''}${jt&&jt===today?' (hari ini)':''}</td>
-      <td>${d.supplier||'-'}</td>
-      <td style="text-align:right;font-weight:600">${fmt(d.total)}</td>
-      <td>${d.anggaran?`<span class="badge gray">${d.anggaran}</span>`:'-'}</td>
-      <td><button class="btn sm danger" data-id="${d.id}" data-action="del-beli"><i class="ti ti-trash"></i></button></td></tr>`
-  }).join('')
+function renderTerimaItems() {
+  const box = qs('terima-items')
+  const noPo = qs('terima-nopo').value.trim()
+  if (!noPo) { box.innerHTML = '<div class="empty" style="padding:8px">Pilih No PO untuk menampilkan barang</div>'; _terimaItems = []; return }
+  const items = _realisasiAll.filter(d => d.no_po === noPo)
+  if (!items.length) { box.innerHTML = `<div class="empty" style="padding:8px">Tidak ada barang untuk PO "${noPo}". Tambahkan dulu di tab Realisasi Pembelian.</div>`; _terimaItems = []; return }
+  _terimaItems = items
+  box.innerHTML = `<div class="table-wrap"><table>
+    <thead><tr><th>Nama Barang</th><th style="text-align:right">Jumlah</th><th>Status</th></tr></thead>
+    <tbody>${items.map((it, i) => `<tr>
+      <td>${it.barang}</td>
+      <td style="text-align:right">${it.jumlah}</td>
+      <td><select class="input-sm terima-status" data-i="${i}">
+        <option value="datang">Datang</option>
+        <option value="tidak">Tidak Datang</option>
+      </select></td>
+    </tr>`).join('')}</tbody></table></div>`
 }
 
-let _beliData = []
-qs('beli-filter-supplier').addEventListener('input', () => renderPembelianTable(_beliData))
+async function renderPenerimaanHistory() {
+  const data = await API.getPenerimaan()
+  const tbody = qs('terima-tbody')
+  const f = qs('terima-filter-nopo').value.trim().toLowerCase()
+  const rows = f ? data.filter(d => (d.no_po || '').toLowerCase().includes(f)) : data
+  if (!rows.length) { tbody.innerHTML = '<tr><td colspan="6"><div class="empty"><i class="ti ti-package"></i>Belum ada penerimaan</div></td></tr>'; return }
+  tbody.innerHTML = rows.map(d => `<tr>
+    <td>${d.tgl}</td>
+    <td><span class="badge gray">${d.no_po}</span></td>
+    <td>${d.barang||'-'}</td>
+    <td style="text-align:right">${d.jumlah}</td>
+    <td>${d.status === 'tidak' ? '<span class="badge red">Tidak Datang</span>' : '<span class="badge green">Datang</span>'}</td>
+    <td><button class="btn sm danger" data-id="${d.id}" data-action="del-terima"><i class="ti ti-trash"></i></button></td>
+  </tr>`).join('')
+}
 
-qs('beli-save-btn').addEventListener('click', async () => {
-  const jml = qs('beli-jml').value
-  if (!jml) { toast('Total belanja wajib diisi', 'error'); return }
+qs('terima-nopo').addEventListener('input', renderTerimaItems)
+qs('terima-filter-nopo').addEventListener('input', renderPenerimaanHistory)
+
+qs('terima-save-btn').addEventListener('click', async () => {
+  const noPo = qs('terima-nopo').value.trim()
+  if (!noPo) { toast('Pilih No PO dulu', 'error'); return }
+  if (!_terimaItems.length) { toast('Tidak ada barang pada PO ini', 'error'); return }
+  const items = _terimaItems.map((it, i) => {
+    const sel = document.querySelector(`.terima-status[data-i="${i}"]`)
+    return { barang: it.barang, jumlah: it.jumlah, status: sel ? sel.value : 'datang' }
+  })
   showLoading(true)
   try {
-    await API.savePembelian({ tgl: qs('beli-tgl').value||today(), no_faktur: qs('beli-no-faktur').value, tgl_faktur: qs('beli-tgl-faktur').value, tgl_jatuh_tempo: qs('beli-tgl-jatuh-tempo').value, supplier: qs('beli-supplier').value, jml: +jml, anggaran: qs('beli-anggaran').value, ket: qs('beli-ket').value })
-    ;['beli-tgl','beli-jml','beli-ket','beli-no-faktur','beli-tgl-faktur','beli-tgl-jatuh-tempo'].forEach(id => qs(id).value = '')
-    qs('beli-anggaran').value = ''; qs('beli-supplier').value = ''
-    _beliData = await API.getPembelian(); renderPembelianTable(_beliData)
+    await API.savePenerimaan({ tgl: qs('terima-tgl').value || today(), no_po: noPo, items })
+    qs('terima-nopo').value = ''; renderTerimaItems()
+    await renderPenerimaanHistory()
+    renderTidakDatangTable(await API.getTidakDatang())
     toast('Penerimaan disimpan')
   } catch (e) { toast(e.message, 'error') } finally { showLoading(false) }
 })
 
 document.addEventListener('click', async e => {
-  if (e.target.closest('[data-action="del-beli"]')) {
-    if (!confirm2('Hapus data penerimaan ini?')) return
+  if (e.target.closest('[data-action="del-terima"]')) {
+    if (!confirm2('Hapus baris penerimaan ini?')) return
     const id = e.target.closest('[data-id]').dataset.id
     showLoading(true)
-    try { await API.delPembelian(id); _beliData = await API.getPembelian(); renderPembelianTable(_beliData); toast('Dihapus') }
+    try { await API.delPenerimaan(id); await renderPenerimaanHistory(); toast('Dihapus') }
     catch (err) { toast(err.message, 'error') } finally { showLoading(false) }
+  }
+})
+
+/* ── REALISASI PEMBELIAN + DIRECTORY BARANG ── */
+let _realData = []
+
+async function loadBarangSelects() {
+  const list = await API.getBarang()
+  qs('real-barang-list').innerHTML = list.map(b => `<option value="${b.nama}">`).join('')
+}
+
+function calcRealTotal() {
+  const j = +(qs('real-jumlah').value || 0), h = +(qs('real-harga').value || 0)
+  qs('real-total').value = fmt(j * h)
+}
+
+async function loadRealisasi() {
+  await loadBarangSelects()
+  _realData = await API.getRealisasi()
+  renderRealisasiTable(_realData)
+}
+
+function renderRealisasiTable(data) {
+  const tbody = qs('real-tbody'), tfoot = qs('real-tfoot')
+  const f = qs('real-filter-nopo').value.trim().toLowerCase()
+  const rows = f ? data.filter(d => (d.no_po || '').toLowerCase().includes(f)) : data
+  if (!rows.length) { tbody.innerHTML = '<tr><td colspan="7"><div class="empty"><i class="ti ti-checklist"></i>Belum ada realisasi</div></td></tr>'; tfoot.innerHTML = ''; return }
+  let total = 0
+  tbody.innerHTML = rows.map(d => {
+    total += d.harga_total || 0
+    return `<tr>
+      <td>${d.tgl_po}</td>
+      <td><span class="badge gray">${d.no_po}</span></td>
+      <td>${d.barang}</td>
+      <td style="text-align:right">${d.jumlah}</td>
+      <td style="text-align:right">${fmt(d.harga_satuan)}</td>
+      <td style="text-align:right;font-weight:600">${fmt(d.harga_total)}</td>
+      <td><button class="btn sm danger" data-id="${d.id}" data-action="del-real"><i class="ti ti-trash"></i></button></td>
+    </tr>`
+  }).join('')
+  tfoot.innerHTML = `<tr style="font-weight:700;border-top:2px solid var(--bd)"><td colspan="5">Total (${rows.length} item)</td><td style="text-align:right">${fmt(total)}</td><td></td></tr>`
+}
+
+qs('real-filter-nopo').addEventListener('input', () => renderRealisasiTable(_realData))
+
+qs('real-save-btn').addEventListener('click', async () => {
+  const no_po = qs('real-nopo').value.trim(), barang = qs('real-barang').value.trim()
+  if (!no_po) { toast('No PO wajib diisi', 'error'); return }
+  if (!barang) { toast('Nama barang wajib diisi', 'error'); return }
+  showLoading(true)
+  try {
+    await API.saveRealisasi({ no_po, tgl_po: qs('real-tgl').value || today(), barang, jumlah: qs('real-jumlah').value, harga_satuan: qs('real-harga').value })
+    ;['real-barang', 'real-jumlah', 'real-harga', 'real-total'].forEach(id => qs(id).value = '')
+    _realData = await API.getRealisasi(); renderRealisasiTable(_realData)
+    toast('Realisasi disimpan')
+  } catch (e) { toast(e.message, 'error') } finally { showLoading(false) }
+})
+
+document.addEventListener('click', async e => {
+  if (e.target.closest('[data-action="del-real"]')) {
+    if (!confirm2('Hapus realisasi ini?')) return
+    const id = e.target.closest('[data-id]').dataset.id
+    showLoading(true)
+    try { await API.delRealisasi(id); _realData = await API.getRealisasi(); renderRealisasiTable(_realData); toast('Dihapus') }
+    catch (err) { toast(err.message, 'error') } finally { showLoading(false) }
+  }
+})
+
+// Tab Pembelian: Rencana / Realisasi
+document.querySelectorAll('[data-potab]').forEach(btn => {
+  btn.addEventListener('click', () => {
+    const tab = btn.dataset.potab
+    document.querySelectorAll('[data-potab]').forEach(b => b.classList.toggle('primary', b.dataset.potab === tab))
+    qs('potab-rencana').style.display = tab === 'rencana' ? '' : 'none'
+    qs('potab-realisasi').style.display = tab === 'realisasi' ? '' : 'none'
+    if (tab === 'realisasi') loadRealisasi()
+  })
+})
+
+/* Modal Kelola Barang */
+async function renderBarangModal() {
+  const list = await API.getBarang()
+  qs('barang-list-modal').innerHTML = list.length
+    ? list.map(b => `<div class="item-row"><div class="item-row-label"><span>${b.nama}</span></div><button class="btn sm danger" data-id="${b.id}" data-action="del-barang"><i class="ti ti-trash"></i></button></div>`).join('')
+    : '<div class="empty" style="padding:8px">Belum ada barang</div>'
+}
+qs('btn-kelola-barang').addEventListener('click', async () => {
+  qs('barang-modal-srch').value = ''
+  await renderBarangModal(); qs('modal-barang').classList.add('open')
+})
+qs('barang-close-btn').addEventListener('click', async () => {
+  qs('modal-barang').classList.remove('open'); await loadBarangSelects()
+})
+qs('modal-barang').addEventListener('click', async e => {
+  if (e.target === qs('modal-barang')) { qs('modal-barang').classList.remove('open'); await loadBarangSelects() }
+})
+qs('barang-add-btn').addEventListener('click', async () => {
+  const nama = qs('barang-new-input').value.trim()
+  if (!nama) { toast('Nama barang tidak boleh kosong', 'error'); return }
+  try { await API.saveBarang({ nama }); qs('barang-new-input').value = ''; await renderBarangModal(); toast('Barang ditambahkan') }
+  catch (e) { toast(e.message, 'error') }
+})
+document.addEventListener('click', async e => {
+  if (e.target.closest('[data-action="del-barang"]')) {
+    if (!confirm2('Hapus barang ini?')) return
+    const id = e.target.closest('[data-id]').dataset.id
+    try { await API.delBarang(id); await renderBarangModal(); toast('Dihapus') }
+    catch (e) { toast(e.message, 'error') }
   }
 })
 
@@ -268,6 +404,10 @@ let _poData = []
 let _supplierNames = []
 
 async function loadPO() {
+  // default ke tab Rencana Pembelian
+  qs('potab-rencana').style.display = ''
+  qs('potab-realisasi').style.display = 'none'
+  document.querySelectorAll('[data-potab]').forEach(b => b.classList.toggle('primary', b.dataset.potab === 'rencana'))
   await loadSupplierSelects()
   _poData = await API.getPO()
   renderPOTable(_poData)
@@ -1038,7 +1178,7 @@ async function init() {
   qs('topbar-date').textContent = new Date().toLocaleDateString('id-ID', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })
   try { const s = await API.getSettings(); qs('topbar-rs').textContent = s.rs_name || 'RS Medika' } catch {}
   const defDate = today()
-  ;['beli-tgl','po-tgl','pin-tgl','mut-tgl','arsip-tgl','pj-tgl','td-tgl','so-tgl'].forEach(id => { const el = qs(id); if (el) el.value = defDate })
+  ;['po-tgl','real-tgl','terima-tgl','pin-tgl','mut-tgl','arsip-tgl','pj-tgl','td-tgl','so-tgl'].forEach(id => { const el = qs(id); if (el) el.value = defDate })
   qs('rekap-sampai').value = defDate
   qs('rekap-dari').value = defDate.slice(0, 7) + '-01'
   qs('pj-filter-bulan').value = defDate.slice(0, 7)
@@ -1047,6 +1187,7 @@ async function init() {
 
   // Modal search
   qs('supplier-modal-srch').addEventListener('input', () => filterModalItems('supplier-modal-srch', 'supplier-list-modal'))
+  qs('barang-modal-srch').addEventListener('input', () => filterModalItems('barang-modal-srch', 'barang-list-modal'))
   qs('kat-arsip-modal-srch').addEventListener('input', () => filterModalItems('kat-arsip-modal-srch', 'kat-arsip-list-modal'))
   qs('tujuan-modal-srch').addEventListener('input', () => filterModalItems('tujuan-modal-srch', 'tujuan-list-modal'))
   qs('kategori-modal-srch').addEventListener('input', () => filterModalItems('kategori-modal-srch', 'kategori-list-modal'))

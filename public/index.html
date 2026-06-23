@@ -98,42 +98,81 @@
       </div>
     </section>
 
-    <!-- PEMBELIAN (PO KE DISTRIBUTOR) -->
+    <!-- PEMBELIAN (RENCANA + REALISASI) -->
     <section class="page" id="page-po">
-      <div class="card">
-        <div class="section-title">Input Pembelian (PO ke Distributor)</div>
-        <div class="form-row">
-          <div class="form-group"><label>Tanggal PO</label><input type="date" id="po-tgl"></div>
-          <div class="form-group">
-            <label style="display:flex;align-items:center;justify-content:space-between">Distributor / Supplier<button class="btn sm" id="btn-kelola-supplier-po" type="button"><i class="ti ti-settings-2"></i>Kelola</button></label>
-            <input type="text" id="po-supplier" list="po-supplier-list" placeholder="Pilih atau ketik nama distributor..." autocomplete="off">
-            <datalist id="po-supplier-list"></datalist>
-          </div>
-        </div>
-        <div class="form-row">
-          <div class="form-group"><label>Nominal yang di-PO-kan (Rp)</label><input type="number" id="po-nominal" placeholder="0" min="0"></div>
-          <div class="form-group"><label>Principle / Pabrik</label><input type="text" id="po-principle" placeholder="Nama principle / pabrik"></div>
-        </div>
-        <button class="btn primary" id="po-save-btn"><i class="ti ti-device-floppy"></i>Simpan Pembelian</button>
+      <div class="card" style="display:flex;gap:6px;padding:8px">
+        <button class="btn sm primary" data-potab="rencana"><i class="ti ti-clipboard-text"></i>Rencana Pembelian</button>
+        <button class="btn sm" data-potab="realisasi"><i class="ti ti-checklist"></i>Realisasi Pembelian</button>
       </div>
-      <div class="card">
-        <div class="section-title">
-          Daftar Pembelian
-          <div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap">
-            <select id="po-sort" class="input-sm">
-              <option value="tgl-desc">Tanggal: terbaru</option>
-              <option value="tgl-asc">Tanggal: terlama</option>
-              <option value="thn-desc">Tahun: terbaru</option>
-              <option value="thn-asc">Tahun: terlama</option>
-            </select>
-            <input type="text" id="po-filter-supplier" list="po-filter-list" class="input-sm" placeholder="Semua distributor..." style="width:150px" autocomplete="off">
-            <datalist id="po-filter-list"></datalist>
+
+      <div id="potab-rencana">
+        <div class="card">
+          <div class="section-title">Input Rencana Pembelian</div>
+          <div class="form-row">
+            <div class="form-group"><label>Tanggal PO</label><input type="date" id="po-tgl"></div>
+            <div class="form-group">
+              <label style="display:flex;align-items:center;justify-content:space-between">Distributor / Supplier<button class="btn sm" id="btn-kelola-supplier-po" type="button"><i class="ti ti-settings-2"></i>Kelola</button></label>
+              <input type="text" id="po-supplier" list="po-supplier-list" placeholder="Pilih atau ketik nama distributor..." autocomplete="off">
+              <datalist id="po-supplier-list"></datalist>
+            </div>
+          </div>
+          <div class="form-row">
+            <div class="form-group"><label>Nominal yang di-PO-kan (Rp)</label><input type="number" id="po-nominal" placeholder="0" min="0"></div>
+            <div class="form-group"><label>Principle / Pabrik</label><input type="text" id="po-principle" placeholder="Nama principle / pabrik"></div>
+          </div>
+          <button class="btn primary" id="po-save-btn"><i class="ti ti-device-floppy"></i>Simpan Rencana</button>
+        </div>
+        <div class="card">
+          <div class="section-title">
+            Daftar Rencana Pembelian
+            <div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap">
+              <select id="po-sort" class="input-sm">
+                <option value="tgl-desc">Tanggal: terbaru</option>
+                <option value="tgl-asc">Tanggal: terlama</option>
+                <option value="thn-desc">Tahun: terbaru</option>
+                <option value="thn-asc">Tahun: terlama</option>
+              </select>
+              <input type="text" id="po-filter-supplier" list="po-filter-list" class="input-sm" placeholder="Semua distributor..." style="width:150px" autocomplete="off">
+              <datalist id="po-filter-list"></datalist>
+            </div>
+          </div>
+          <div class="table-wrap">
+            <table><thead><tr><th>Tanggal</th><th>Distributor / Supplier</th><th style="text-align:right">Nominal PO</th><th>Principle / Pabrik</th><th></th></tr></thead>
+            <tbody id="po-tbody"></tbody>
+            <tfoot id="po-tfoot"></tfoot></table>
           </div>
         </div>
-        <div class="table-wrap">
-          <table><thead><tr><th>Tanggal</th><th>Distributor / Supplier</th><th style="text-align:right">Nominal PO</th><th>Principle / Pabrik</th><th></th></tr></thead>
-          <tbody id="po-tbody"></tbody>
-          <tfoot id="po-tfoot"></tfoot></table>
+      </div>
+
+      <div id="potab-realisasi" style="display:none">
+        <div class="card">
+          <div class="section-title">Input Realisasi Pembelian</div>
+          <div class="form-row triple">
+            <div class="form-group"><label>No PO</label><input type="text" id="real-nopo" placeholder="No PO"></div>
+            <div class="form-group"><label>Tanggal PO</label><input type="date" id="real-tgl"></div>
+            <div class="form-group">
+              <label style="display:flex;align-items:center;justify-content:space-between">Nama Barang<button class="btn sm" id="btn-kelola-barang" type="button"><i class="ti ti-settings-2"></i>Kelola</button></label>
+              <input type="text" id="real-barang" list="real-barang-list" placeholder="Pilih atau ketik nama barang..." autocomplete="off">
+              <datalist id="real-barang-list"></datalist>
+            </div>
+          </div>
+          <div class="form-row triple">
+            <div class="form-group"><label>Jumlah</label><input type="number" id="real-jumlah" placeholder="0" min="0" oninput="calcRealTotal()"></div>
+            <div class="form-group"><label>Harga Satuan (Rp)</label><input type="number" id="real-harga" placeholder="0" min="0" oninput="calcRealTotal()"></div>
+            <div class="form-group"><label>Harga Total (Rp)</label><input type="text" id="real-total" readonly style="background:var(--bg2);font-weight:600"></div>
+          </div>
+          <button class="btn primary" id="real-save-btn"><i class="ti ti-device-floppy"></i>Simpan Realisasi</button>
+        </div>
+        <div class="card">
+          <div class="section-title">
+            Daftar Realisasi Pembelian
+            <input type="text" id="real-filter-nopo" class="input-sm" placeholder="Filter No PO..." style="width:140px">
+          </div>
+          <div class="table-wrap">
+            <table><thead><tr><th>Tgl PO</th><th>No PO</th><th>Nama Barang</th><th style="text-align:right">Jumlah</th><th style="text-align:right">Harga Satuan</th><th style="text-align:right">Harga Total</th><th></th></tr></thead>
+            <tbody id="real-tbody"></tbody>
+            <tfoot id="real-tfoot"></tfoot></table>
+          </div>
         </div>
       </div>
     </section>
@@ -141,38 +180,25 @@
     <!-- PENERIMAAN -->
     <section class="page" id="page-pembelian">
       <div class="card">
-        <div class="section-title">Input Penerimaan</div>
+        <div class="section-title">Penerimaan Barang (berdasarkan No PO)</div>
         <div class="form-row">
-          <div class="form-group"><label>Tanggal</label><input type="date" id="beli-tgl"></div>
-          <div class="form-group">
-            <label style="display:flex;align-items:center;justify-content:space-between">Supplier<button class="btn sm" id="btn-kelola-supplier" type="button"><i class="ti ti-settings-2"></i>Kelola</button></label>
-            <input type="text" id="beli-supplier" list="beli-supplier-list" placeholder="Pilih atau ketik nama supplier..." autocomplete="off">
-            <datalist id="beli-supplier-list"></datalist>
+          <div class="form-group"><label>Tanggal Penerimaan</label><input type="date" id="terima-tgl"></div>
+          <div class="form-group"><label>No PO</label>
+            <input type="text" id="terima-nopo" list="terima-nopo-list" placeholder="Pilih No PO dari realisasi..." autocomplete="off">
+            <datalist id="terima-nopo-list"></datalist>
           </div>
         </div>
-        <div class="form-row triple">
-          <div class="form-group"><label>No. Faktur</label><input type="text" id="beli-no-faktur" placeholder="INV-001"></div>
-          <div class="form-group"><label>Tanggal Faktur</label><input type="date" id="beli-tgl-faktur"></div>
-          <div class="form-group"><label>Tanggal Jatuh Tempo</label><input type="date" id="beli-tgl-jatuh-tempo"></div>
-        </div>
-        <div class="form-row">
-          <div class="form-group"><label>Total Belanja (Rp)</label><input type="number" id="beli-jml" placeholder="0"></div>
-          <div class="form-group"><label>Periode Anggaran</label><select id="beli-anggaran"><option value="">-- Pilih --</option></select></div>
-        </div>
-        <div class="form-group" style="margin-bottom:12px"><label>Keterangan</label><textarea id="beli-ket" placeholder="Catatan..."></textarea></div>
-        <button class="btn primary" id="beli-save-btn"><i class="ti ti-device-floppy"></i>Simpan Penerimaan</button>
+        <div id="terima-items" style="margin-bottom:12px"></div>
+        <button class="btn primary" id="terima-save-btn"><i class="ti ti-device-floppy"></i>Simpan Penerimaan</button>
       </div>
       <div class="card">
         <div class="section-title">
-          Daftar Penerimaan
-          <div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap">
-            <input type="text" id="beli-filter-supplier" list="beli-filter-list" class="input-sm" placeholder="Semua supplier..." style="width:150px" autocomplete="off">
-            <datalist id="beli-filter-list"></datalist>
-          </div>
+          Riwayat Penerimaan
+          <input type="text" id="terima-filter-nopo" class="input-sm" placeholder="Filter No PO..." style="width:140px">
         </div>
         <div class="table-wrap">
-          <table><thead><tr><th>Tanggal</th><th>No. Faktur</th><th>Tgl. Faktur</th><th>Jatuh Tempo</th><th>Supplier</th><th>Total Belanja</th><th>Anggaran</th><th></th></tr></thead>
-          <tbody id="beli-tbody"></tbody></table>
+          <table><thead><tr><th>Tanggal</th><th>No PO</th><th>Nama Barang</th><th style="text-align:right">Jumlah</th><th>Status</th><th></th></tr></thead>
+          <tbody id="terima-tbody"></tbody></table>
         </div>
       </div>
       <div class="card">
@@ -452,6 +478,20 @@
       <button class="btn primary" id="supplier-add-btn"><i class="ti ti-plus"></i>Tambah</button>
     </div>
     <button class="btn full-w" id="supplier-close-btn">Tutup</button>
+  </div>
+</div>
+
+<!-- MODAL BARANG -->
+<div class="modal-backdrop" id="modal-barang">
+  <div class="modal">
+    <div class="modal-title"><i class="ti ti-package"></i>Kelola Barang</div>
+    <input type="text" id="barang-modal-srch" class="modal-srch" placeholder="Cari barang...">
+    <div id="barang-list-modal"></div>
+    <div class="modal-input-row">
+      <input type="text" id="barang-new-input" placeholder="Nama barang baru...">
+      <button class="btn primary" id="barang-add-btn"><i class="ti ti-plus"></i>Tambah</button>
+    </div>
+    <button class="btn full-w" id="barang-close-btn">Tutup</button>
   </div>
 </div>
 

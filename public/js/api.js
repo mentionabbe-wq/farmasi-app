@@ -28,6 +28,21 @@ const API = (() => {
     savePO: d => req('POST', '/po', d),
     delPO: id => req('DELETE', `/po/${id}`),
 
+    // Realisasi Pembelian
+    getRealisasi: (p = {}) => req('GET', '/realisasi?' + new URLSearchParams(p)),
+    saveRealisasi: d => req('POST', '/realisasi', d),
+    delRealisasi: id => req('DELETE', `/realisasi/${id}`),
+
+    // Penerimaan (berdasarkan PO)
+    getPenerimaan: (p = {}) => req('GET', '/penerimaan?' + new URLSearchParams(p)),
+    savePenerimaan: d => req('POST', '/penerimaan', d),
+    delPenerimaan: id => req('DELETE', `/penerimaan/${id}`),
+
+    // Barang (directory)
+    getBarang: () => req('GET', '/barang'),
+    saveBarang: d => req('POST', '/barang', d),
+    delBarang: id => req('DELETE', `/barang/${id}`),
+
     // Pinjaman
     getPinjaman: (p = {}) => req('GET', '/pinjaman?' + new URLSearchParams(p)),
     savePinjaman: d => req('POST', '/pinjaman', d),
