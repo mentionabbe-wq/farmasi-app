@@ -222,20 +222,8 @@
         </div>
       </div>
       <div class="card">
-        <div class="section-title">Input Obat Tidak Datang</div>
-        <div class="form-row triple">
-          <div class="form-group"><label>Tanggal</label><input type="date" id="td-tgl"></div>
-          <div class="form-group"><label>Nama Obat / Alkes</label><input type="text" id="td-nama" placeholder="Nama obat yang tidak datang"></div>
-          <div class="form-group"><label>Supplier</label>
-            <input type="text" id="td-supplier" list="td-supplier-list" placeholder="Pilih atau ketik nama supplier..." autocomplete="off">
-            <datalist id="td-supplier-list"></datalist>
-          </div>
-        </div>
-        <div class="form-group" style="margin-bottom:12px"><label>Keterangan</label><textarea id="td-ket" placeholder="Catatan tambahan..."></textarea></div>
-        <button class="btn primary" id="td-save-btn"><i class="ti ti-device-floppy"></i>Simpan</button>
-      </div>
-      <div class="card">
-        <div class="section-title">Daftar Obat Tidak Datang</div>
+        <div class="section-title">Obat Tidak Datang</div>
+        <div style="font-size:11px;color:var(--tx2);margin:-4px 0 10px">Terisi otomatis dari Penerimaan: barang berstatus "Tidak Datang" atau kekurangan "Datang Sebagian" akan masuk ke sini.</div>
         <div class="table-wrap">
           <table><thead><tr><th>Tanggal</th><th>Nama Obat</th><th>Supplier</th><th>Keterangan</th><th></th></tr></thead>
           <tbody id="td-tbody"></tbody></table>

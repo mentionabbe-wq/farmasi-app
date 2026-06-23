@@ -181,7 +181,7 @@ async function populateAnggaranSelect() {
 async function loadSupplierSelects() {
   const list = await API.getSupplier()
   const datalistOpts = list.map(s => `<option value="${s.nama}">`).join('')
-  ;['beli-supplier-list', 'beli-filter-list', 'td-supplier-list', 'po-supplier-list', 'po-filter-list', 'real-supplier-list', 'terima-supplier-list']
+  ;['beli-supplier-list', 'beli-filter-list', 'po-supplier-list', 'po-filter-list', 'real-supplier-list', 'terima-supplier-list']
     .forEach(id => { const el = qs(id); if (el) el.innerHTML = datalistOpts })
   _supplierNames = list.map(s => s.nama)
 }
@@ -637,18 +637,6 @@ function renderTidakDatangTable(data) {
     <td><button class="btn sm danger" data-id="${d.id}" data-action="del-td"><i class="ti ti-trash"></i></button></td>
   </tr>`).join('')
 }
-
-qs('td-save-btn').addEventListener('click', async () => {
-  const nama = qs('td-nama').value.trim()
-  if (!nama) { toast('Nama obat wajib diisi', 'error'); return }
-  showLoading(true)
-  try {
-    await API.saveTidakDatang({ tgl: qs('td-tgl').value || today(), nama, supplier: qs('td-supplier').value, ket: qs('td-ket').value })
-    ;['td-tgl', 'td-nama', 'td-supplier', 'td-ket'].forEach(id => qs(id).value = '')
-    renderTidakDatangTable(await API.getTidakDatang())
-    toast('Data disimpan')
-  } catch (e) { toast(e.message, 'error') } finally { showLoading(false) }
-})
 
 document.addEventListener('click', async e => {
   if (e.target.closest('[data-action="del-td"]')) {
@@ -1268,7 +1256,7 @@ async function init() {
   qs('topbar-date').textContent = new Date().toLocaleDateString('id-ID', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })
   try { const s = await API.getSettings(); qs('topbar-rs').textContent = s.rs_name || 'RS Medika' } catch {}
   const defDate = today()
-  ;['po-tgl','real-tgl','terima-tgl','pin-tgl','mut-tgl','arsip-tgl','pj-tgl','td-tgl','so-tgl'].forEach(id => { const el = qs(id); if (el) el.value = defDate })
+  ;['po-tgl','real-tgl','terima-tgl','pin-tgl','mut-tgl','arsip-tgl','pj-tgl','so-tgl'].forEach(id => { const el = qs(id); if (el) el.value = defDate })
   qs('rekap-sampai').value = defDate
   qs('rekap-dari').value = defDate.slice(0, 7) + '-01'
   qs('pj-filter-bulan').value = defDate.slice(0, 7)
