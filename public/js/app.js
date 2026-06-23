@@ -180,7 +180,7 @@ async function populateAnggaranSelect() {
 async function loadSupplierSelects() {
   const list = await API.getSupplier()
   const datalistOpts = list.map(s => `<option value="${s.nama}">`).join('')
-  ;['beli-supplier-list', 'beli-filter-list', 'td-supplier-list', 'po-supplier-list', 'po-filter-list']
+  ;['beli-supplier-list', 'beli-filter-list', 'td-supplier-list', 'po-supplier-list', 'po-filter-list', 'real-supplier-list']
     .forEach(id => { const el = qs(id); if (el) el.innerHTML = datalistOpts })
   _supplierNames = list.map(s => s.nama)
 }
@@ -303,7 +303,7 @@ function calcRealTotal() {
 }
 
 async function loadRealisasi() {
-  await loadBarangSelects()
+  await Promise.all([loadBarangSelects(), loadSupplierSelects()])
   _realData = await API.getRealisasi()
   renderRealisasiTable(_realData)
 }
@@ -312,13 +312,14 @@ function renderRealisasiTable(data) {
   const tbody = qs('real-tbody'), tfoot = qs('real-tfoot')
   const f = qs('real-filter-nopo').value.trim().toLowerCase()
   const rows = f ? data.filter(d => (d.no_po || '').toLowerCase().includes(f)) : data
-  if (!rows.length) { tbody.innerHTML = '<tr><td colspan="7"><div class="empty"><i class="ti ti-checklist"></i>Belum ada realisasi</div></td></tr>'; tfoot.innerHTML = ''; return }
+  if (!rows.length) { tbody.innerHTML = '<tr><td colspan="8"><div class="empty"><i class="ti ti-checklist"></i>Belum ada realisasi</div></td></tr>'; tfoot.innerHTML = ''; return }
   let total = 0
   tbody.innerHTML = rows.map(d => {
     total += d.harga_total || 0
     return `<tr>
       <td>${d.tgl_po}</td>
       <td><span class="badge gray">${d.no_po}</span></td>
+      <td>${d.supplier||'-'}</td>
       <td>${d.barang}</td>
       <td style="text-align:right">${d.jumlah}</td>
       <td style="text-align:right">${fmt(d.harga_satuan)}</td>
@@ -326,8 +327,16 @@ function renderRealisasiTable(data) {
       <td><button class="btn sm danger" data-id="${d.id}" data-action="del-real"><i class="ti ti-trash"></i></button></td>
     </tr>`
   }).join('')
-  tfoot.innerHTML = `<tr style="font-weight:700;border-top:2px solid var(--bd)"><td colspan="5">Total (${rows.length} item)</td><td style="text-align:right">${fmt(total)}</td><td></td></tr>`
+  tfoot.innerHTML = `<tr style="font-weight:700;border-top:2px solid var(--bd)"><td colspan="6">Total (${rows.length} item)</td><td style="text-align:right">${fmt(total)}</td><td></td></tr>`
 }
+
+// Saat No PO diketik & sudah ada di data, isi otomatis distributornya
+qs('real-nopo').addEventListener('input', () => {
+  const no = qs('real-nopo').value.trim()
+  if (!no) return
+  const match = _realData.find(d => d.no_po === no && d.supplier)
+  if (match && !qs('real-supplier').value.trim()) qs('real-supplier').value = match.supplier
+})
 
 qs('real-filter-nopo').addEventListener('input', () => renderRealisasiTable(_realData))
 
@@ -337,7 +346,7 @@ qs('real-save-btn').addEventListener('click', async () => {
   if (!barang) { toast('Nama barang wajib diisi', 'error'); return }
   showLoading(true)
   try {
-    await API.saveRealisasi({ no_po, tgl_po: qs('real-tgl').value || today(), barang, jumlah: qs('real-jumlah').value, harga_satuan: qs('real-harga').value })
+    await API.saveRealisasi({ no_po, tgl_po: qs('real-tgl').value || today(), supplier: qs('real-supplier').value.trim(), barang, jumlah: qs('real-jumlah').value, harga_satuan: qs('real-harga').value })
     ;['real-barang', 'real-jumlah', 'real-harga', 'real-total'].forEach(id => qs(id).value = '')
     _realData = await API.getRealisasi(); renderRealisasiTable(_realData)
     toast('Realisasi disimpan')
@@ -375,6 +384,10 @@ async function renderBarangModal() {
 qs('btn-kelola-barang').addEventListener('click', async () => {
   qs('barang-modal-srch').value = ''
   await renderBarangModal(); qs('modal-barang').classList.add('open')
+})
+qs('btn-kelola-supplier-real').addEventListener('click', async () => {
+  qs('supplier-modal-srch').value = ''
+  await renderSupplierModal(); qs('modal-supplier').classList.add('open')
 })
 qs('barang-close-btn').addEventListener('click', async () => {
   qs('modal-barang').classList.remove('open'); await loadBarangSelects()

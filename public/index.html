@@ -148,19 +148,25 @@
         <div class="card">
           <div class="section-title">Input Realisasi Pembelian</div>
           <div class="form-row triple">
-            <div class="form-group"><label>No PO</label><input type="text" id="real-nopo" placeholder="No PO"></div>
+            <div class="form-group"><label>No PO</label><input type="text" id="real-nopo" placeholder="No PO" autocomplete="off"></div>
             <div class="form-group"><label>Tanggal PO</label><input type="date" id="real-tgl"></div>
+            <div class="form-group">
+              <label style="display:flex;align-items:center;justify-content:space-between">Distributor / Supplier<button class="btn sm" id="btn-kelola-supplier-real" type="button"><i class="ti ti-settings-2"></i>Kelola</button></label>
+              <input type="text" id="real-supplier" list="real-supplier-list" placeholder="Pilih atau ketik distributor..." autocomplete="off">
+              <datalist id="real-supplier-list"></datalist>
+            </div>
+          </div>
+          <div class="form-row triple">
             <div class="form-group">
               <label style="display:flex;align-items:center;justify-content:space-between">Nama Barang<button class="btn sm" id="btn-kelola-barang" type="button"><i class="ti ti-settings-2"></i>Kelola</button></label>
               <input type="text" id="real-barang" list="real-barang-list" placeholder="Pilih atau ketik nama barang..." autocomplete="off">
               <datalist id="real-barang-list"></datalist>
             </div>
-          </div>
-          <div class="form-row triple">
             <div class="form-group"><label>Jumlah</label><input type="number" id="real-jumlah" placeholder="0" min="0" oninput="calcRealTotal()"></div>
             <div class="form-group"><label>Harga Satuan (Rp)</label><input type="number" id="real-harga" placeholder="0" min="0" oninput="calcRealTotal()"></div>
-            <div class="form-group"><label>Harga Total (Rp)</label><input type="text" id="real-total" readonly style="background:var(--bg2);font-weight:600"></div>
           </div>
+          <div class="form-group" style="margin-bottom:12px"><label>Harga Total (Rp)</label><input type="text" id="real-total" readonly style="background:var(--bg2);font-weight:600"></div>
+          <p style="font-size:11px;color:var(--tx2);margin:0 0 10px">Tip: untuk 1 distributor dengan banyak barang, isi No PO & Distributor yang sama lalu simpan tiap barang satu per satu (distributor terisi otomatis saat No PO sama).</p>
           <button class="btn primary" id="real-save-btn"><i class="ti ti-device-floppy"></i>Simpan Realisasi</button>
         </div>
         <div class="card">
@@ -169,7 +175,7 @@
             <input type="text" id="real-filter-nopo" class="input-sm" placeholder="Filter No PO..." style="width:140px">
           </div>
           <div class="table-wrap">
-            <table><thead><tr><th>Tgl PO</th><th>No PO</th><th>Nama Barang</th><th style="text-align:right">Jumlah</th><th style="text-align:right">Harga Satuan</th><th style="text-align:right">Harga Total</th><th></th></tr></thead>
+            <table><thead><tr><th>Tgl PO</th><th>No PO</th><th>Distributor</th><th>Nama Barang</th><th style="text-align:right">Jumlah</th><th style="text-align:right">Harga Satuan</th><th style="text-align:right">Harga Total</th><th></th></tr></thead>
             <tbody id="real-tbody"></tbody>
             <tfoot id="real-tfoot"></tfoot></table>
           </div>
@@ -495,7 +501,7 @@
       <input type="file" id="barang-import-file" accept=".xlsx,.xls,.csv" style="flex:1">
       <button class="btn" id="barang-import-btn"><i class="ti ti-upload"></i>Import</button>
     </div>
-    <div style="font-size:11px;color:var(--tx2);margin:2px 0 8px">Import dari Excel/CSV: kolom pertama berisi nama barang (1 nama per baris). Mendukung .xlsx / .xls / .csv.</div>
+    <div style="font-size:11px;color:var(--tx2);margin:2px 0 8px">Import dari Excel/CSV: kolom pertama berisi nama barang (1 nama per baris). Mendukung .xlsx / .xls / .csv. <a href="/contoh-import-barang.csv" download style="color:var(--green)">Download contoh file</a></div>
     <button class="btn full-w" id="barang-close-btn">Tutup</button>
   </div>
 </div>

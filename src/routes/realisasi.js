@@ -9,7 +9,7 @@ router.get('/', (req, res) => {
 })
 
 router.post('/', (req, res) => {
-  const { no_po = '', tgl_po, barang = '', jumlah, harga_satuan } = req.body
+  const { no_po = '', tgl_po, supplier = '', barang = '', jumlah, harga_satuan } = req.body
   if (!no_po) return res.status(400).json({ error: 'No PO wajib diisi' })
   if (!barang) return res.status(400).json({ error: 'nama barang wajib diisi' })
   const j = +(jumlah || 0), h = +(harga_satuan || 0)
@@ -17,6 +17,7 @@ router.post('/', (req, res) => {
     id: Date.now(),
     no_po,
     tgl_po: tgl_po || new Date().toISOString().slice(0, 10),
+    supplier,
     barang,
     jumlah: j,
     harga_satuan: h,
