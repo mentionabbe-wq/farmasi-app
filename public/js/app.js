@@ -260,7 +260,7 @@ function onTerimaStatus(sel) {
 }
 
 function recalcTerima() {
-  let harga = 0
+  let harga = 0, hargaPO = 0
   _terimaItems.forEach((it, i) => {
     const sel = document.querySelector(`.terima-status[data-i="${i}"]`)
     const qtyEl = document.querySelector(`.terima-qty[data-i="${i}"]`)
@@ -269,10 +269,16 @@ function recalcTerima() {
     if (terima > +it.jumlah) terima = +it.jumlah
     if (terima < 0) terima = 0
     harga += terima * (+it.harga_satuan || 0)
+    hargaPO += (+it.harga_total || (+it.jumlah * (+it.harga_satuan || 0)))
   })
   _terimaHarga = harga
   const pajak = Math.round(harga * 0.11)
+  const selisih = hargaPO - harga
+  qs('terima-hargapo').value = fmt(hargaPO)
   qs('terima-harga').value = fmt(harga)
+  const selEl = qs('terima-selisih')
+  selEl.value = fmt(selisih)
+  selEl.style.color = selisih > 0 ? '#E24B4A' : 'inherit'
   qs('terima-pajak').value = fmt(pajak)
   qs('terima-total').value = fmt(harga + pajak)
 }
