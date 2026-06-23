@@ -311,8 +311,10 @@ async function renderPenerimaanHistory() {
 qs('terima-nopo').addEventListener('input', () => {
   renderTerimaItems()
   const no = qs('terima-nopo').value.trim()
-  const match = _realisasiAll.find(d => d.no_po === no && d.supplier)
-  if (match && !qs('terima-supplier').value.trim()) qs('terima-supplier').value = match.supplier
+  const match = _realisasiAll.find(d => d.no_po === no)
+  if (!match) return
+  if (match.supplier && !qs('terima-supplier').value.trim()) qs('terima-supplier').value = match.supplier
+  if (match.anggaran && !qs('terima-anggaran').value) qs('terima-anggaran').value = match.anggaran
 })
 qs('terima-filter-nopo').addEventListener('input', renderPenerimaanHistory)
 
@@ -367,6 +369,8 @@ function calcRealTotal() {
 
 async function loadRealisasi() {
   await Promise.all([loadBarangSelects(), loadSupplierSelects()])
+  const ang = await API.getAnggaran()
+  qs('real-anggaran').innerHTML = '<option value="">-- Pilih --</option>' + ang.map(a => `<option value="${a.bulan}">${a.bulan}</option>`).join('')
   _realData = await API.getRealisasi()
   renderRealisasiTable(_realData)
 }
@@ -375,7 +379,7 @@ function renderRealisasiTable(data) {
   const tbody = qs('real-tbody'), tfoot = qs('real-tfoot')
   const f = qs('real-filter-nopo').value.trim().toLowerCase()
   const rows = f ? data.filter(d => (d.no_po || '').toLowerCase().includes(f)) : data
-  if (!rows.length) { tbody.innerHTML = '<tr><td colspan="8"><div class="empty"><i class="ti ti-checklist"></i>Belum ada realisasi</div></td></tr>'; tfoot.innerHTML = ''; return }
+  if (!rows.length) { tbody.innerHTML = '<tr><td colspan="9"><div class="empty"><i class="ti ti-checklist"></i>Belum ada realisasi</div></td></tr>'; tfoot.innerHTML = ''; return }
   let total = 0
   tbody.innerHTML = rows.map(d => {
     total += d.harga_total || 0
@@ -383,6 +387,7 @@ function renderRealisasiTable(data) {
       <td>${d.tgl_po}</td>
       <td><span class="badge gray">${d.no_po}</span></td>
       <td>${d.supplier||'-'}</td>
+      <td>${d.anggaran?`<span class="badge gray">${d.anggaran}</span>`:'-'}</td>
       <td>${d.barang}</td>
       <td style="text-align:right">${d.jumlah}</td>
       <td style="text-align:right">${fmt(d.harga_satuan)}</td>
@@ -390,15 +395,17 @@ function renderRealisasiTable(data) {
       <td><button class="btn sm danger" data-id="${d.id}" data-action="del-real"><i class="ti ti-trash"></i></button></td>
     </tr>`
   }).join('')
-  tfoot.innerHTML = `<tr style="font-weight:700;border-top:2px solid var(--bd)"><td colspan="6">Total (${rows.length} item)</td><td style="text-align:right">${fmt(total)}</td><td></td></tr>`
+  tfoot.innerHTML = `<tr style="font-weight:700;border-top:2px solid var(--bd)"><td colspan="7">Total (${rows.length} item)</td><td style="text-align:right">${fmt(total)}</td><td></td></tr>`
 }
 
-// Saat No PO diketik & sudah ada di data, isi otomatis distributornya
+// Saat No PO diketik & sudah ada di data, isi otomatis distributor & anggarannya
 qs('real-nopo').addEventListener('input', () => {
   const no = qs('real-nopo').value.trim()
   if (!no) return
-  const match = _realData.find(d => d.no_po === no && d.supplier)
-  if (match && !qs('real-supplier').value.trim()) qs('real-supplier').value = match.supplier
+  const match = _realData.find(d => d.no_po === no)
+  if (!match) return
+  if (match.supplier && !qs('real-supplier').value.trim()) qs('real-supplier').value = match.supplier
+  if (match.anggaran && !qs('real-anggaran').value) qs('real-anggaran').value = match.anggaran
 })
 
 qs('real-filter-nopo').addEventListener('input', () => renderRealisasiTable(_realData))
@@ -409,7 +416,7 @@ qs('real-save-btn').addEventListener('click', async () => {
   if (!barang) { toast('Nama barang wajib diisi', 'error'); return }
   showLoading(true)
   try {
-    await API.saveRealisasi({ no_po, tgl_po: qs('real-tgl').value || today(), supplier: qs('real-supplier').value.trim(), barang, jumlah: qs('real-jumlah').value, harga_satuan: qs('real-harga').value })
+    await API.saveRealisasi({ no_po, tgl_po: qs('real-tgl').value || today(), supplier: qs('real-supplier').value.trim(), anggaran: qs('real-anggaran').value, barang, jumlah: qs('real-jumlah').value, harga_satuan: qs('real-harga').value })
     ;['real-barang', 'real-jumlah', 'real-harga', 'real-total'].forEach(id => qs(id).value = '')
     _realData = await API.getRealisasi(); renderRealisasiTable(_realData)
     toast('Realisasi disimpan')
