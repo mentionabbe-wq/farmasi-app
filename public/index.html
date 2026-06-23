@@ -27,6 +27,7 @@
     <button class="nav-btn" data-page="pinjaman"><i class="ti ti-arrows-exchange"></i>Pinjaman</button>
     <button class="nav-btn" data-page="mutasi"><i class="ti ti-transfer"></i>Mutasi</button>
     <button class="nav-btn" data-page="penjualan"><i class="ti ti-cash"></i>Penjualan</button>
+    <button class="nav-btn" data-page="bpjs"><i class="ti ti-shield-check"></i>BPJS</button>
     <button class="nav-btn" data-page="arsip"><i class="ti ti-archive"></i>Arsip</button>
     <button class="nav-btn" data-page="stokopname"><i class="ti ti-clipboard-list"></i>Stok Opname</button>
     <button class="nav-btn" data-page="rekap"><i class="ti ti-report-analytics"></i>Rekap</button>
@@ -353,6 +354,74 @@
           <tbody id="blm-tbody"></tbody></table>
         </div>
       </div>
+      </div>
+    </section>
+
+    <!-- BPJS -->
+    <section class="page" id="page-bpjs">
+      <div class="card potab-bar" style="padding:8px">
+        <button class="btn sm primary" data-bptab="prb"><i class="ti ti-file-text"></i>PRB</button>
+        <button class="btn sm" data-bptab="alkes"><i class="ti ti-wheelchair"></i>Alkes BPJS</button>
+      </div>
+
+      <div id="bptab-prb">
+        <div class="card">
+          <div class="section-title">Input PRB</div>
+          <div class="form-row triple">
+            <div class="form-group"><label>Tanggal</label><input type="date" id="prb-tgl"></div>
+            <div class="form-group"><label>Jumlah Resep</label><input type="number" id="prb-resep" placeholder="0" min="0"></div>
+            <div class="form-group"><label>Total Harga Klaim (Rp)</label><input type="number" id="prb-klaim" placeholder="0" min="0"></div>
+          </div>
+          <div class="form-row">
+            <div class="form-group"><label>Jumlah Resep Gagal Klaim</label><input type="number" id="prb-gagal" placeholder="0" min="0"></div>
+            <div class="form-group"><label>Keterangan</label><input type="text" id="prb-ket" placeholder="Catatan (opsional)"></div>
+          </div>
+          <button class="btn primary" id="prb-save-btn"><i class="ti ti-device-floppy"></i>Simpan PRB</button>
+        </div>
+        <div class="card">
+          <div class="section-title">
+            Daftar PRB
+            <input type="month" id="prb-filter-bulan" class="input-sm">
+          </div>
+          <div class="table-wrap">
+            <table><thead><tr><th>Tanggal</th><th style="text-align:right">Jumlah Resep</th><th style="text-align:right">Total Klaim</th><th style="text-align:right">Gagal Klaim</th><th>Keterangan</th><th></th></tr></thead>
+            <tbody id="prb-tbody"></tbody>
+            <tfoot id="prb-tfoot"></tfoot></table>
+          </div>
+        </div>
+      </div>
+
+      <div id="bptab-alkes" style="display:none">
+        <div class="card">
+          <div class="section-title">Input Alkes BPJS</div>
+          <div class="form-row triple">
+            <div class="form-group"><label>Tanggal</label><input type="date" id="alkes-tgl"></div>
+            <div class="form-group"><label>Nama Pasien</label><input type="text" id="alkes-pasien" placeholder="Nama pasien"></div>
+            <div class="form-group"><label>Nomor RM</label><input type="text" id="alkes-rm" placeholder="No. rekam medis"></div>
+          </div>
+          <div class="form-row triple">
+            <div class="form-group"><label>Jenis Alkes</label>
+              <select id="alkes-jenis">
+                <option value="Corset">Corset</option>
+                <option value="ABD">ABD</option>
+              </select>
+            </div>
+            <div class="form-group"><label>Jumlah</label><input type="number" id="alkes-jumlah" placeholder="0" min="0"></div>
+            <div class="form-group"><label>Keterangan</label><input type="text" id="alkes-ket" placeholder="Catatan (opsional)"></div>
+          </div>
+          <div class="form-group" style="margin-bottom:12px"><label>Dokumen (otomatis masuk ke Arsip)</label><input type="file" id="alkes-dok" accept=".pdf,.jpg,.jpeg,.png,.doc,.docx" multiple></div>
+          <button class="btn primary" id="alkes-save-btn"><i class="ti ti-device-floppy"></i>Simpan Alkes</button>
+        </div>
+        <div class="card">
+          <div class="section-title">
+            Daftar Alkes BPJS
+            <input type="month" id="alkes-filter-bulan" class="input-sm">
+          </div>
+          <div class="table-wrap">
+            <table><thead><tr><th>Tanggal</th><th>Nama Pasien</th><th>No RM</th><th>Jenis</th><th style="text-align:right">Jumlah</th><th>Dokumen</th><th></th></tr></thead>
+            <tbody id="alkes-tbody"></tbody></table>
+          </div>
+        </div>
       </div>
     </section>
 

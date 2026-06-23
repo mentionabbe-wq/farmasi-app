@@ -13,7 +13,7 @@ const today = () => new Date().toISOString().slice(0, 10)
 const qs = id => document.getElementById(id)
 const BADGE = ['blue','green','amber','purple','coral','teal','gray']
 const KAT_HEX = ['#185FA5','#0F6E56','#854F0B','#3C3489','#993C1D','#085041','#444441']
-const KAT_COLORS_ARSIP = { SPO:'blue', Kronologi:'amber', Laporan:'green', SK:'purple', Lainnya:'gray' }
+const KAT_COLORS_ARSIP = { SPO:'blue', Kronologi:'amber', Laporan:'green', SK:'purple', Lainnya:'gray', 'Alkes BPJS':'blue' }
 
 let STATE = { tujuan: [], kategori: [], activeMutTab: null, activePjTab: '__all__' }
 
@@ -47,7 +47,7 @@ async function showPage(p) {
   document.querySelectorAll('.nav-btn').forEach(e => e.classList.remove('active'))
   qs('page-' + p).classList.add('active')
   document.querySelector(`.nav-btn[data-page="${p}"]`).classList.add('active')
-  const loaders = { dashboard: loadDashboard, anggaran: loadAnggaran, po: loadPO, pinjaman: loadPinjaman, mutasi: loadMutasi, penjualan: loadPenjualan, arsip: loadArsip, stokopname: loadStokOpname, rekap: loadRekap }
+  const loaders = { dashboard: loadDashboard, anggaran: loadAnggaran, po: loadPO, pinjaman: loadPinjaman, mutasi: loadMutasi, penjualan: loadPenjualan, bpjs: loadBPJS, arsip: loadArsip, stokopname: loadStokOpname, rekap: loadRekap }
   if (loaders[p]) { showLoading(true); try { await loaders[p]() } catch (e) { toast(e.message, 'error') } finally { showLoading(false) } }
 }
 
@@ -590,6 +590,112 @@ document.addEventListener('click', async e => {
     const id = e.target.closest('[data-id]').dataset.id
     showLoading(true)
     try { await API.delPO(id); _poData = await API.getPO(); renderPOTable(_poData); toast('Dihapus') }
+    catch (err) { toast(err.message, 'error') } finally { showLoading(false) }
+  }
+})
+
+/* ── BPJS ── */
+async function loadBPJS() {
+  qs('bptab-prb').style.display = ''
+  qs('bptab-alkes').style.display = 'none'
+  document.querySelectorAll('[data-bptab]').forEach(b => b.classList.toggle('primary', b.dataset.bptab === 'prb'))
+  await renderPRB()
+  await renderAlkes()
+}
+
+document.querySelectorAll('[data-bptab]').forEach(btn => {
+  btn.addEventListener('click', () => {
+    const tab = btn.dataset.bptab
+    document.querySelectorAll('[data-bptab]').forEach(b => b.classList.toggle('primary', b.dataset.bptab === tab))
+    qs('bptab-prb').style.display = tab === 'prb' ? '' : 'none'
+    qs('bptab-alkes').style.display = tab === 'alkes' ? '' : 'none'
+  })
+})
+
+let _prbData = []
+async function renderPRB() { _prbData = await API.getBpjsPrb(); renderPRBTable() }
+function renderPRBTable() {
+  const tbody = qs('prb-tbody'), tfoot = qs('prb-tfoot')
+  const bln = qs('prb-filter-bulan').value
+  const rows = bln ? _prbData.filter(d => (d.tgl || '').slice(0, 7) === bln) : _prbData
+  if (!rows.length) { tbody.innerHTML = '<tr><td colspan="6"><div class="empty"><i class="ti ti-file-text"></i>Belum ada data PRB</div></td></tr>'; tfoot.innerHTML = ''; return }
+  let tR = 0, tK = 0, tG = 0
+  tbody.innerHTML = rows.map(d => {
+    tR += d.jumlah_resep || 0; tK += d.total_klaim || 0; tG += d.resep_gagal || 0
+    return `<tr>
+      <td>${d.tgl}</td>
+      <td style="text-align:right">${fmtN(d.jumlah_resep)}</td>
+      <td style="text-align:right;font-weight:600">${fmt(d.total_klaim)}</td>
+      <td style="text-align:right">${fmtN(d.resep_gagal)}</td>
+      <td style="font-size:12px;color:var(--tx2)">${d.ket || '-'}</td>
+      <td><button class="btn sm danger" data-id="${d.id}" data-action="del-prb"><i class="ti ti-trash"></i></button></td>
+    </tr>`
+  }).join('')
+  tfoot.innerHTML = `<tr style="font-weight:700;border-top:2px solid var(--bd)"><td>Total (${rows.length})</td><td style="text-align:right">${fmtN(tR)}</td><td style="text-align:right">${fmt(tK)}</td><td style="text-align:right">${fmtN(tG)}</td><td colspan="2"></td></tr>`
+}
+qs('prb-filter-bulan').addEventListener('change', renderPRBTable)
+qs('prb-save-btn').addEventListener('click', async () => {
+  showLoading(true)
+  try {
+    await API.saveBpjsPrb({ tgl: qs('prb-tgl').value || today(), jumlah_resep: qs('prb-resep').value, total_klaim: qs('prb-klaim').value, resep_gagal: qs('prb-gagal').value, ket: qs('prb-ket').value })
+    ;['prb-resep', 'prb-klaim', 'prb-gagal', 'prb-ket'].forEach(id => qs(id).value = '')
+    await renderPRB(); toast('PRB disimpan')
+  } catch (e) { toast(e.message, 'error') } finally { showLoading(false) }
+})
+document.addEventListener('click', async e => {
+  if (e.target.closest('[data-action="del-prb"]')) {
+    if (!confirm2('Hapus data PRB ini?')) return
+    const id = e.target.closest('[data-id]').dataset.id
+    showLoading(true)
+    try { await API.delBpjsPrb(id); await renderPRB(); toast('Dihapus') }
+    catch (err) { toast(err.message, 'error') } finally { showLoading(false) }
+  }
+})
+
+let _alkesData = []
+async function renderAlkes() { _alkesData = await API.getBpjsAlkes(); renderAlkesTable() }
+function renderAlkesTable() {
+  const tbody = qs('alkes-tbody')
+  const bln = qs('alkes-filter-bulan').value
+  const rows = bln ? _alkesData.filter(d => (d.tgl || '').slice(0, 7) === bln) : _alkesData
+  if (!rows.length) { tbody.innerHTML = '<tr><td colspan="7"><div class="empty"><i class="ti ti-wheelchair"></i>Belum ada data</div></td></tr>'; return }
+  tbody.innerHTML = rows.map(d => {
+    const dok = (d.files || []).map(f => `<a href="/uploads/${f.filename}" target="_blank" style="color:var(--green);font-size:12px">${f.originalname}</a>`).join('<br>') || '-'
+    return `<tr>
+      <td>${d.tgl}</td>
+      <td style="font-weight:500">${d.pasien}</td>
+      <td>${d.no_rm || '-'}</td>
+      <td><span class="badge blue">${d.jenis || '-'}</span></td>
+      <td style="text-align:right">${fmtN(d.jumlah)}</td>
+      <td>${dok}</td>
+      <td><button class="btn sm danger" data-id="${d.id}" data-action="del-alkes"><i class="ti ti-trash"></i></button></td>
+    </tr>`
+  }).join('')
+}
+qs('alkes-filter-bulan').addEventListener('change', renderAlkesTable)
+qs('alkes-save-btn').addEventListener('click', async () => {
+  const pasien = qs('alkes-pasien').value.trim()
+  if (!pasien) { toast('Nama pasien wajib diisi', 'error'); return }
+  const fd = new FormData()
+  fd.append('tgl', qs('alkes-tgl').value || today())
+  fd.append('pasien', pasien); fd.append('no_rm', qs('alkes-rm').value); fd.append('jenis', qs('alkes-jenis').value)
+  fd.append('jumlah', qs('alkes-jumlah').value); fd.append('ket', qs('alkes-ket').value)
+  const files = qs('alkes-dok').files
+  for (let i = 0; i < files.length; i++) fd.append('dok', files[i])
+  showLoading(true)
+  try {
+    await API.saveBpjsAlkes(fd)
+    ;['alkes-pasien', 'alkes-rm', 'alkes-jumlah', 'alkes-ket'].forEach(id => qs(id).value = '')
+    qs('alkes-dok').value = ''
+    await renderAlkes(); toast('Alkes disimpan' + (files.length ? ' & dokumen masuk Arsip' : ''))
+  } catch (e) { toast(e.message, 'error') } finally { showLoading(false) }
+})
+document.addEventListener('click', async e => {
+  if (e.target.closest('[data-action="del-alkes"]')) {
+    if (!confirm2('Hapus data alkes ini? (dokumen di Arsip tetap ada)')) return
+    const id = e.target.closest('[data-id]').dataset.id
+    showLoading(true)
+    try { await API.delBpjsAlkes(id); await renderAlkes(); toast('Dihapus') }
     catch (err) { toast(err.message, 'error') } finally { showLoading(false) }
   }
 })
@@ -1369,7 +1475,7 @@ async function init() {
   qs('topbar-date').textContent = new Date().toLocaleDateString('id-ID', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })
   try { const s = await API.getSettings(); qs('topbar-rs').textContent = s.rs_name || 'RS Medika' } catch {}
   const defDate = today()
-  ;['po-tgl','real-tgl','terima-tgl','pin-tgl','mut-tgl','arsip-tgl','pj-tgl','hut-tgl','blm-tgl','so-tgl'].forEach(id => { const el = qs(id); if (el) el.value = defDate })
+  ;['po-tgl','real-tgl','terima-tgl','pin-tgl','mut-tgl','arsip-tgl','pj-tgl','hut-tgl','blm-tgl','prb-tgl','alkes-tgl','so-tgl'].forEach(id => { const el = qs(id); if (el) el.value = defDate })
   qs('rekap-sampai').value = defDate
   qs('rekap-dari').value = defDate.slice(0, 7) + '-01'
   qs('pj-filter-bulan').value = defDate.slice(0, 7)
