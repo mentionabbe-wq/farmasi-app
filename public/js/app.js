@@ -192,10 +192,6 @@ async function renderSupplierModal() {
     : '<div class="empty" style="padding:8px">Belum ada supplier</div>'
 }
 
-qs('btn-kelola-supplier').addEventListener('click', async () => {
-  qs('supplier-modal-srch').value = ''
-  await renderSupplierModal(); qs('modal-supplier').classList.add('open')
-})
 qs('supplier-close-btn').addEventListener('click', async () => {
   qs('modal-supplier').classList.remove('open'); await loadSupplierSelects()
 })
