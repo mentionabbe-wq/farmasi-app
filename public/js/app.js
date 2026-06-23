@@ -46,7 +46,7 @@ async function showPage(p) {
   document.querySelectorAll('.nav-btn').forEach(e => e.classList.remove('active'))
   qs('page-' + p).classList.add('active')
   document.querySelector(`.nav-btn[data-page="${p}"]`).classList.add('active')
-  const loaders = { dashboard: loadDashboard, anggaran: loadAnggaran, po: loadPO, pembelian: loadPembelian, pinjaman: loadPinjaman, mutasi: loadMutasi, penjualan: loadPenjualan, arsip: loadArsip, stokopname: loadStokOpname, rekap: loadRekap }
+  const loaders = { dashboard: loadDashboard, anggaran: loadAnggaran, po: loadPO, pinjaman: loadPinjaman, mutasi: loadMutasi, penjualan: loadPenjualan, arsip: loadArsip, stokopname: loadStokOpname, rekap: loadRekap }
   if (loaders[p]) { showLoading(true); try { await loaders[p]() } catch (e) { toast(e.message, 'error') } finally { showLoading(false) } }
 }
 
@@ -370,7 +370,9 @@ document.querySelectorAll('[data-potab]').forEach(btn => {
     document.querySelectorAll('[data-potab]').forEach(b => b.classList.toggle('primary', b.dataset.potab === tab))
     qs('potab-rencana').style.display = tab === 'rencana' ? '' : 'none'
     qs('potab-realisasi').style.display = tab === 'realisasi' ? '' : 'none'
+    qs('potab-penerimaan').style.display = tab === 'penerimaan' ? '' : 'none'
     if (tab === 'realisasi') loadRealisasi()
+    if (tab === 'penerimaan') loadPembelian()
   })
 })
 
@@ -427,6 +429,7 @@ async function loadPO() {
   // default ke tab Rencana Pembelian
   qs('potab-rencana').style.display = ''
   qs('potab-realisasi').style.display = 'none'
+  qs('potab-penerimaan').style.display = 'none'
   document.querySelectorAll('[data-potab]').forEach(b => b.classList.toggle('primary', b.dataset.potab === 'rencana'))
   await loadSupplierSelects()
   _poData = await API.getPO()

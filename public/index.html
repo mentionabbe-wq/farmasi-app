@@ -24,7 +24,6 @@
     <button class="nav-btn active" data-page="dashboard"><i class="ti ti-layout-dashboard"></i>Dashboard</button>
     <button class="nav-btn" data-page="anggaran"><i class="ti ti-wallet"></i>Anggaran</button>
     <button class="nav-btn" data-page="po"><i class="ti ti-file-invoice"></i>Pembelian</button>
-    <button class="nav-btn" data-page="pembelian"><i class="ti ti-shopping-cart"></i>Penerimaan</button>
     <button class="nav-btn" data-page="pinjaman"><i class="ti ti-arrows-exchange"></i>Pinjaman</button>
     <button class="nav-btn" data-page="mutasi"><i class="ti ti-transfer"></i>Mutasi</button>
     <button class="nav-btn" data-page="penjualan"><i class="ti ti-cash"></i>Penjualan</button>
@@ -103,6 +102,7 @@
       <div class="card" style="display:flex;gap:6px;padding:8px">
         <button class="btn sm primary" data-potab="rencana"><i class="ti ti-clipboard-text"></i>Rencana Pembelian</button>
         <button class="btn sm" data-potab="realisasi"><i class="ti ti-checklist"></i>Realisasi Pembelian</button>
+        <button class="btn sm" data-potab="penerimaan"><i class="ti ti-package"></i>Penerimaan</button>
       </div>
 
       <div id="potab-rencana">
@@ -181,10 +181,8 @@
           </div>
         </div>
       </div>
-    </section>
 
-    <!-- PENERIMAAN -->
-    <section class="page" id="page-pembelian">
+      <div id="potab-penerimaan" style="display:none">
       <div class="card">
         <div class="section-title">Penerimaan Barang (berdasarkan No PO)</div>
         <div class="form-row">
@@ -226,6 +224,7 @@
           <table><thead><tr><th>Tanggal</th><th>Nama Obat</th><th>Supplier</th><th>Keterangan</th><th></th></tr></thead>
           <tbody id="td-tbody"></tbody></table>
         </div>
+      </div>
       </div>
     </section>
 
