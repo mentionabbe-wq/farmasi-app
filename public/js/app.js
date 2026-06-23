@@ -769,7 +769,91 @@ async function loadPenjualan() {
   renderPjTujuanSelect(tujuan)
   await renderPjSummary()
   await renderPenjualanTable()
+  await renderHutangObat()
+  await renderObatBelum()
 }
+
+/* ── OBAT DIHUTANGKAN ── */
+async function renderHutangObat() {
+  const data = await API.getHutangObat()
+  const tbody = qs('hut-tbody')
+  if (!data.length) { tbody.innerHTML = '<tr><td colspan="6"><div class="empty"><i class="ti ti-receipt"></i>Belum ada data</div></td></tr>'; return }
+  tbody.innerHTML = data.map(d => `<tr>
+    <td>${d.tgl}</td>
+    <td style="font-weight:500">${d.item}</td>
+    <td style="text-align:right">${d.jumlah}</td>
+    <td style="text-align:right">${d.jumlah_pasien}</td>
+    <td style="font-size:12px;color:var(--tx2)">${d.ket||'-'}</td>
+    <td><button class="btn sm danger" data-id="${d.id}" data-action="del-hut"><i class="ti ti-trash"></i></button></td>
+  </tr>`).join('')
+}
+
+qs('hut-save-btn').addEventListener('click', async () => {
+  const item = qs('hut-item').value.trim()
+  if (!item) { toast('Nama item wajib diisi', 'error'); return }
+  showLoading(true)
+  try {
+    await API.saveHutangObat({ tgl: qs('hut-tgl').value || today(), item, jumlah: qs('hut-jumlah').value, jumlah_pasien: qs('hut-pasien').value, ket: qs('hut-ket').value })
+    ;['hut-item', 'hut-jumlah', 'hut-pasien', 'hut-ket'].forEach(id => qs(id).value = '')
+    await renderHutangObat(); toast('Disimpan')
+  } catch (e) { toast(e.message, 'error') } finally { showLoading(false) }
+})
+
+document.addEventListener('click', async e => {
+  if (e.target.closest('[data-action="del-hut"]')) {
+    if (!confirm2('Hapus data ini?')) return
+    const id = e.target.closest('[data-id]').dataset.id
+    showLoading(true)
+    try { await API.delHutangObat(id); await renderHutangObat(); toast('Dihapus') }
+    catch (err) { toast(err.message, 'error') } finally { showLoading(false) }
+  }
+})
+
+/* ── OBAT BELUM DIAMBIL ── */
+async function renderObatBelum() {
+  const data = await API.getObatBelum()
+  const tbody = qs('blm-tbody')
+  if (!data.length) { tbody.innerHTML = '<tr><td colspan="6"><div class="empty"><i class="ti ti-clock-pause"></i>Belum ada data</div></td></tr>'; return }
+  tbody.innerHTML = data.map(d => {
+    const resep = (d.files || []).map(f => `<a href="/uploads/${f.filename}" target="_blank" style="color:var(--green);font-size:12px">${f.originalname}</a>`).join('<br>') || '-'
+    return `<tr>
+      <td>${d.tgl}</td>
+      <td style="font-weight:500">${d.pasien}</td>
+      <td>${d.obat}</td>
+      <td>${resep}</td>
+      <td style="font-size:12px;color:var(--tx2)">${d.ket||'-'}</td>
+      <td><button class="btn sm danger" data-id="${d.id}" data-action="del-blm"><i class="ti ti-trash"></i></button></td>
+    </tr>`
+  }).join('')
+}
+
+qs('blm-save-btn').addEventListener('click', async () => {
+  const pasien = qs('blm-pasien').value.trim(), obat = qs('blm-obat').value.trim()
+  if (!pasien) { toast('Nama pasien wajib diisi', 'error'); return }
+  if (!obat) { toast('Nama obat wajib diisi', 'error'); return }
+  const fd = new FormData()
+  fd.append('tgl', qs('blm-tgl').value || today())
+  fd.append('pasien', pasien); fd.append('obat', obat); fd.append('ket', qs('blm-ket').value)
+  const files = qs('blm-resep').files
+  for (let i = 0; i < files.length; i++) fd.append('resep', files[i])
+  showLoading(true)
+  try {
+    await API.saveObatBelum(fd)
+    ;['blm-pasien', 'blm-obat', 'blm-ket'].forEach(id => qs(id).value = '')
+    qs('blm-resep').value = ''
+    await renderObatBelum(); toast('Disimpan')
+  } catch (e) { toast(e.message, 'error') } finally { showLoading(false) }
+})
+
+document.addEventListener('click', async e => {
+  if (e.target.closest('[data-action="del-blm"]')) {
+    if (!confirm2('Hapus data ini?')) return
+    const id = e.target.closest('[data-id]').dataset.id
+    showLoading(true)
+    try { await API.delObatBelum(id); await renderObatBelum(); toast('Dihapus') }
+    catch (err) { toast(err.message, 'error') } finally { showLoading(false) }
+  }
+})
 
 function renderPjTujuanSelect(tujuan) {
   qs('pj-tujuan-select').innerHTML = tujuan.map(t => `<option value="${t.id}">${t.label}</option>`).join('')
@@ -1262,7 +1346,7 @@ async function init() {
   qs('topbar-date').textContent = new Date().toLocaleDateString('id-ID', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })
   try { const s = await API.getSettings(); qs('topbar-rs').textContent = s.rs_name || 'RS Medika' } catch {}
   const defDate = today()
-  ;['po-tgl','real-tgl','terima-tgl','pin-tgl','mut-tgl','arsip-tgl','pj-tgl','so-tgl'].forEach(id => { const el = qs(id); if (el) el.value = defDate })
+  ;['po-tgl','real-tgl','terima-tgl','pin-tgl','mut-tgl','arsip-tgl','pj-tgl','hut-tgl','blm-tgl','so-tgl'].forEach(id => { const el = qs(id); if (el) el.value = defDate })
   qs('rekap-sampai').value = defDate
   qs('rekap-dari').value = defDate.slice(0, 7) + '-01'
   qs('pj-filter-bulan').value = defDate.slice(0, 7)

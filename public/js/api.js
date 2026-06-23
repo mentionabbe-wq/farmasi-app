@@ -44,6 +44,16 @@ const API = (() => {
     delBarang: id => req('DELETE', `/barang/${id}`),
     importBarang: fd => req('POST', '/barang/import', fd, true),
 
+    // Obat Dihutangkan
+    getHutangObat: () => req('GET', '/hutang-obat'),
+    saveHutangObat: d => req('POST', '/hutang-obat', d),
+    delHutangObat: id => req('DELETE', `/hutang-obat/${id}`),
+
+    // Obat Belum Diambil
+    getObatBelum: () => req('GET', '/obat-belum'),
+    saveObatBelum: fd => req('POST', '/obat-belum', fd, true),
+    delObatBelum: id => req('DELETE', `/obat-belum/${id}`),
+
     // Pinjaman
     getPinjaman: (p = {}) => req('GET', '/pinjaman?' + new URLSearchParams(p)),
     savePinjaman: d => req('POST', '/pinjaman', d),

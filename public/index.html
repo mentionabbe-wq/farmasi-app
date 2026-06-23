@@ -295,6 +295,48 @@
         <div class="tab-bar" id="pj-tab-bar"></div>
         <div id="pj-tab-panels"></div>
       </div>
+
+      <!-- OBAT DIHUTANGKAN -->
+      <div class="card">
+        <div class="section-title">Obat Dihutangkan</div>
+        <div class="form-row triple">
+          <div class="form-group"><label>Tanggal</label><input type="date" id="hut-tgl"></div>
+          <div class="form-group"><label>Nama Item</label><input type="text" id="hut-item" placeholder="Nama obat / item"></div>
+          <div class="form-group"><label>Jumlah Item</label><input type="number" id="hut-jumlah" placeholder="0" min="0"></div>
+        </div>
+        <div class="form-row">
+          <div class="form-group"><label>Jumlah Pasien</label><input type="number" id="hut-pasien" placeholder="0" min="0"></div>
+          <div class="form-group"><label>Keterangan</label><input type="text" id="hut-ket" placeholder="Catatan (opsional)"></div>
+        </div>
+        <button class="btn primary" id="hut-save-btn"><i class="ti ti-device-floppy"></i>Simpan</button>
+      </div>
+      <div class="card">
+        <div class="section-title">Daftar Obat Dihutangkan</div>
+        <div class="table-wrap">
+          <table><thead><tr><th>Tanggal</th><th>Nama Item</th><th style="text-align:right">Jumlah Item</th><th style="text-align:right">Jumlah Pasien</th><th>Keterangan</th><th></th></tr></thead>
+          <tbody id="hut-tbody"></tbody></table>
+        </div>
+      </div>
+
+      <!-- OBAT BELUM DIAMBIL -->
+      <div class="card">
+        <div class="section-title">Obat Belum Diambil</div>
+        <div class="form-row triple">
+          <div class="form-group"><label>Tanggal</label><input type="date" id="blm-tgl"></div>
+          <div class="form-group"><label>Nama Pasien</label><input type="text" id="blm-pasien" placeholder="Nama pasien"></div>
+          <div class="form-group"><label>Nama Obat</label><input type="text" id="blm-obat" placeholder="Nama obat"></div>
+        </div>
+        <div class="form-group" style="margin-bottom:12px"><label>Keterangan</label><input type="text" id="blm-ket" placeholder="Catatan (opsional)"></div>
+        <div class="form-group" style="margin-bottom:12px"><label>Upload Resep (opsional)</label><input type="file" id="blm-resep" accept=".pdf,.jpg,.jpeg,.png" multiple></div>
+        <button class="btn primary" id="blm-save-btn"><i class="ti ti-device-floppy"></i>Simpan</button>
+      </div>
+      <div class="card">
+        <div class="section-title">Daftar Obat Belum Diambil</div>
+        <div class="table-wrap">
+          <table><thead><tr><th>Tanggal</th><th>Nama Pasien</th><th>Nama Obat</th><th>Resep</th><th>Keterangan</th><th></th></tr></thead>
+          <tbody id="blm-tbody"></tbody></table>
+        </div>
+      </div>
     </section>
 
     <!-- ARSIP -->
