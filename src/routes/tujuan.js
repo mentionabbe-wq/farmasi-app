@@ -24,4 +24,15 @@ router.delete('/:id', (req, res) => {
   res.json({ ok: true })
 })
 
+router.put('/:id', (req, res) => {
+  const { label } = req.body
+  if (!label) return res.status(400).json({ error: 'label wajib diisi' })
+  const data = read('tujuan')
+  const i = data.findIndex(d => d.id === req.params.id)
+  if (i < 0) return res.status(404).json({ error: 'tidak ditemukan' })
+  data[i].label = label
+  write('tujuan', data)
+  res.json(data[i])
+})
+
 module.exports = router

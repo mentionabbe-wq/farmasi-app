@@ -208,7 +208,7 @@ async function loadSupplierSelects() {
 async function renderSupplierModal() {
   const list = await API.getSupplier()
   qs('supplier-list-modal').innerHTML = list.length
-    ? list.map(s => `<div class="item-row"><div class="item-row-label"><span>${s.nama}</span></div><button class="btn sm danger" data-id="${s.id}" data-action="del-supplier"><i class="ti ti-trash"></i></button></div>`).join('')
+    ? list.map(s => `<div class="item-row"><div class="item-row-label"><span>${s.nama}</span></div><button class="btn sm" data-id="${s.id}" data-action="edit-supplier"><i class="ti ti-pencil"></i></button> <button class="btn sm danger" data-id="${s.id}" data-action="del-supplier"><i class="ti ti-trash"></i></button></div>`).join('')
     : '<div class="empty" style="padding:8px">Belum ada supplier</div>'
 }
 
@@ -224,6 +224,15 @@ qs('supplier-add-btn').addEventListener('click', async () => {
   try { await API.saveSupplier({ nama }); qs('supplier-new-input').value = ''; await renderSupplierModal(); toast('Supplier ditambahkan') }
   catch (e) { toast(e.message, 'error') }
 })
+document.addEventListener('click', async e => {
+  const b = e.target.closest('[data-action="edit-supplier"]'); if (!b) return
+  const cur = b.closest('.item-row').querySelector('.item-row-label span').textContent
+  const v = prompt('Nama supplier baru:', cur); if (v == null) return
+  const t = v.trim(); if (!t || t === cur) return
+  try { await API.updateSupplier(b.dataset.id, { nama: t }); await renderSupplierModal(); await loadSupplierSelects(); toast('Diperbarui') }
+  catch (err) { toast(err.message, 'error') }
+})
+
 document.addEventListener('click', async e => {
   if (e.target.closest('[data-action="del-supplier"]')) {
     if (!confirm2('Hapus supplier ini?')) return
@@ -532,7 +541,7 @@ document.querySelectorAll('[data-potab]').forEach(btn => {
 async function renderBarangModal() {
   const list = await API.getBarang()
   qs('barang-list-modal').innerHTML = list.length
-    ? list.map(b => `<div class="item-row"><div class="item-row-label"><span>${b.nama}</span></div><button class="btn sm danger" data-id="${b.id}" data-action="del-barang"><i class="ti ti-trash"></i></button></div>`).join('')
+    ? list.map(b => `<div class="item-row"><div class="item-row-label"><span>${b.nama}</span></div><button class="btn sm" data-id="${b.id}" data-action="edit-barang"><i class="ti ti-pencil"></i></button> <button class="btn sm danger" data-id="${b.id}" data-action="del-barang"><i class="ti ti-trash"></i></button></div>`).join('')
     : '<div class="empty" style="padding:8px">Belum ada barang</div>'
 }
 qs('btn-kelola-barang').addEventListener('click', async () => {
@@ -567,6 +576,15 @@ qs('barang-import-btn').addEventListener('click', async () => {
     toast(`${r.added} barang ditambahkan${r.skipped ? `, ${r.skipped} dilewati (duplikat)` : ''}`)
   } catch (e) { toast(e.message, 'error') } finally { showLoading(false) }
 })
+document.addEventListener('click', async e => {
+  const b = e.target.closest('[data-action="edit-barang"]'); if (!b) return
+  const cur = b.closest('.item-row').querySelector('.item-row-label span').textContent
+  const v = prompt('Nama barang baru:', cur); if (v == null) return
+  const t = v.trim(); if (!t || t === cur) return
+  try { await API.updateBarang(b.dataset.id, { nama: t }); await renderBarangModal(); await loadBarangSelects(); toast('Diperbarui') }
+  catch (err) { toast(err.message, 'error') }
+})
+
 document.addEventListener('click', async e => {
   if (e.target.closest('[data-action="del-barang"]')) {
     if (!confirm2('Hapus barang ini?')) return
@@ -1038,6 +1056,7 @@ async function renderTujuanModal() {
   const list = await API.getTujuan()
   qs('tujuan-list-modal').innerHTML = list.map(t => `<div class="item-row">
     <div class="item-row-label"><span>${t.label}</span>${t.is_default ? '<span class="default-badge">bawaan</span>' : ''}</div>
+    <button class="btn sm" data-id="${t.id}" data-action="edit-tujuan"><i class="ti ti-pencil"></i></button>
     ${!t.is_default ? `<button class="btn sm danger" data-id="${t.id}" data-action="del-tujuan"><i class="ti ti-trash"></i></button>` : ''}</div>`).join('')
 }
 
@@ -1046,6 +1065,15 @@ qs('tujuan-add-btn').addEventListener('click', async () => {
   if (!label) { toast('Nama tujuan tidak boleh kosong', 'error'); return }
   try { await API.saveTujuan({ label }); qs('tujuan-new-input').value = ''; await renderTujuanModal(); toast('Tujuan ditambahkan') }
   catch (e) { toast(e.message, 'error') }
+})
+
+document.addEventListener('click', async e => {
+  const b = e.target.closest('[data-action="edit-tujuan"]'); if (!b) return
+  const cur = b.closest('.item-row').querySelector('.item-row-label span').textContent
+  const v = prompt('Nama tujuan baru:', cur); if (v == null) return
+  const t = v.trim(); if (!t || t === cur) return
+  try { await API.updateTujuan(b.dataset.id, { label: t }); await renderTujuanModal(); toast('Diperbarui') }
+  catch (err) { toast(err.message, 'error') }
 })
 
 document.addEventListener('click', async e => {
@@ -1310,6 +1338,7 @@ async function renderKategoriModal() {
   const list = await API.getKategori()
   qs('kategori-list-modal').innerHTML = list.map(k => `<div class="item-row">
     <div class="item-row-label"><span>${k.label}</span>${k.is_default ? '<span class="default-badge">bawaan</span>' : ''}</div>
+    <button class="btn sm" data-id="${k.id}" data-action="edit-kat"><i class="ti ti-pencil"></i></button>
     ${!k.is_default ? `<button class="btn sm danger" data-id="${k.id}" data-action="del-kat"><i class="ti ti-trash"></i></button>` : ''}</div>`).join('')
 }
 
@@ -1318,6 +1347,15 @@ qs('kategori-add-btn').addEventListener('click', async () => {
   if (!label) { toast('Nama kategori tidak boleh kosong', 'error'); return }
   try { await API.saveKategori({ label }); qs('kategori-new-input').value = ''; await renderKategoriModal(); toast('Kategori ditambahkan') }
   catch (e) { toast(e.message, 'error') }
+})
+
+document.addEventListener('click', async e => {
+  const b = e.target.closest('[data-action="edit-kat"]'); if (!b) return
+  const cur = b.closest('.item-row').querySelector('.item-row-label span').textContent
+  const v = prompt('Nama kategori baru:', cur); if (v == null) return
+  const t = v.trim(); if (!t || t === cur) return
+  try { await API.updateKategori(b.dataset.id, { label: t }); await renderKategoriModal(); toast('Diperbarui') }
+  catch (err) { toast(err.message, 'error') }
 })
 
 document.addEventListener('click', async e => {
@@ -1450,6 +1488,7 @@ async function renderKatArsipModal() {
   const list = await API.getKatArsip()
   qs('kat-arsip-list-modal').innerHTML = list.map(k => `<div class="item-row">
     <div class="item-row-label"><span>${k.label}</span>${k.is_default ? '<span class="default-badge">bawaan</span>' : ''}</div>
+    <button class="btn sm" data-id="${k.id}" data-action="edit-kat-arsip"><i class="ti ti-pencil"></i></button>
     ${!k.is_default ? `<button class="btn sm danger" data-id="${k.id}" data-action="del-kat-arsip"><i class="ti ti-trash"></i></button>` : ''}</div>`).join('')
 }
 
@@ -1473,6 +1512,15 @@ qs('kat-arsip-add-btn').addEventListener('click', async () => {
   if (!label) { toast('Nama kategori tidak boleh kosong', 'error'); return }
   try { await API.saveKatArsip({ label }); qs('kat-arsip-new-input').value = ''; await renderKatArsipModal(); toast('Kategori ditambahkan') }
   catch (e) { toast(e.message, 'error') }
+})
+
+document.addEventListener('click', async e => {
+  const b = e.target.closest('[data-action="edit-kat-arsip"]'); if (!b) return
+  const cur = b.closest('.item-row').querySelector('.item-row-label span').textContent
+  const v = prompt('Nama kategori arsip baru:', cur); if (v == null) return
+  const t = v.trim(); if (!t || t === cur) return
+  try { await API.updateKatArsip(b.dataset.id, { label: t }); await renderKatArsipModal(); toast('Diperbarui') }
+  catch (err) { toast(err.message, 'error') }
 })
 
 document.addEventListener('click', async e => {

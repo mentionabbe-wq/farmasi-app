@@ -57,4 +57,16 @@ router.delete('/:id', (req, res) => {
   res.json({ ok: true })
 })
 
+router.put('/:id', (req, res) => {
+  const { nama } = req.body
+  if (!nama) return res.status(400).json({ error: 'nama barang wajib diisi' })
+  const data = read('barang')
+  const i = data.findIndex(d => d.id === req.params.id)
+  if (i < 0) return res.status(404).json({ error: 'tidak ditemukan' })
+  if (data.find(b => b.id !== req.params.id && b.nama.toLowerCase() === nama.toLowerCase())) return res.status(400).json({ error: 'Barang sudah ada' })
+  data[i].nama = nama
+  write('barang', data)
+  res.json(data[i])
+})
+
 module.exports = router

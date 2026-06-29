@@ -22,4 +22,16 @@ router.delete('/:id', (req, res) => {
   res.json({ ok: true })
 })
 
+router.put('/:id', (req, res) => {
+  const { label } = req.body
+  if (!label) return res.status(400).json({ error: 'label wajib diisi' })
+  const data = read('kat_arsip')
+  const i = data.findIndex(d => d.id === req.params.id)
+  if (i < 0) return res.status(404).json({ error: 'tidak ditemukan' })
+  if (data.find(k => k.id !== req.params.id && k.label.toLowerCase() === label.toLowerCase())) return res.status(400).json({ error: 'Kategori sudah ada' })
+  data[i].label = label
+  write('kat_arsip', data)
+  res.json(data[i])
+})
+
 module.exports = router

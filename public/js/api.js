@@ -43,6 +43,7 @@ const API = (() => {
     // Barang (directory)
     getBarang: () => req('GET', '/barang'),
     saveBarang: d => req('POST', '/barang', d),
+    updateBarang: (id, d) => req('PUT', `/barang/${id}`, d),
     delBarang: id => req('DELETE', `/barang/${id}`),
     importBarang: fd => req('POST', '/barang/import', fd, true),
 
@@ -99,11 +100,13 @@ const API = (() => {
     // Tujuan
     getTujuan: () => req('GET', '/tujuan'),
     saveTujuan: d => req('POST', '/tujuan', d),
+    updateTujuan: (id, d) => req('PUT', `/tujuan/${id}`, d),
     delTujuan: id => req('DELETE', `/tujuan/${id}`),
 
     // Kategori
     getKategori: () => req('GET', '/kategori'),
     saveKategori: d => req('POST', '/kategori', d),
+    updateKategori: (id, d) => req('PUT', `/kategori/${id}`, d),
     delKategori: id => req('DELETE', `/kategori/${id}`),
 
     // Rekap
@@ -122,11 +125,13 @@ const API = (() => {
     // Kategori Arsip
     getKatArsip: () => req('GET', '/kat-arsip'),
     saveKatArsip: d => req('POST', '/kat-arsip', d),
+    updateKatArsip: (id, d) => req('PUT', `/kat-arsip/${id}`, d),
     delKatArsip: id => req('DELETE', `/kat-arsip/${id}`),
 
     // Supplier
     getSupplier: () => req('GET', '/supplier'),
     saveSupplier: d => req('POST', '/supplier', d),
+    updateSupplier: (id, d) => req('PUT', `/supplier/${id}`, d),
     delSupplier: id => req('DELETE', `/supplier/${id}`),
 
     // Stok Opname
