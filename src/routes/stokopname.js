@@ -30,4 +30,17 @@ router.delete('/:id', (req, res) => {
   res.json({ ok: true })
 })
 
+router.put('/:id', (req, res) => {
+  const data = read('stok_opname')
+  const i = data.findIndex(d => String(d.id) === req.params.id)
+  if (i < 0) return res.status(404).json({ error: 'data tidak ditemukan' })
+  const cur = data[i]
+  const { tgl, kategori, ruangan, nilai_sebelum, nilai_sesudah, ket } = req.body
+  const sb = nilai_sebelum !== undefined ? +nilai_sebelum : cur.nilai_sebelum
+  const ss = nilai_sesudah !== undefined ? +nilai_sesudah : cur.nilai_sesudah
+  data[i] = { ...cur, tgl: tgl ?? cur.tgl, kategori: kategori ?? cur.kategori, ruangan: ruangan ?? cur.ruangan, nilai_sebelum: sb, nilai_sesudah: ss, selisih: ss - sb, ket: ket ?? cur.ket }
+  write('stok_opname', data)
+  res.json(data[i])
+})
+
 module.exports = router

@@ -32,4 +32,15 @@ router.delete('/:id', (req, res) => {
   res.json({ ok: true })
 })
 
+router.put('/:id', (req, res) => {
+  const data = read('mutasi')
+  const i = data.findIndex(d => String(d.id) === req.params.id)
+  if (i < 0) return res.status(404).json({ error: 'data tidak ditemukan' })
+  const cur = data[i]
+  const { tgl, no, tujuan, jml, petugas, ket } = req.body
+  data[i] = { ...cur, tgl: tgl ?? cur.tgl, no: no ?? cur.no, tujuan: tujuan ?? cur.tujuan, jml: jml !== undefined ? +jml : cur.jml, petugas: petugas ?? cur.petugas, ket: ket ?? cur.ket }
+  write('mutasi', data)
+  res.json(data[i])
+})
+
 module.exports = router

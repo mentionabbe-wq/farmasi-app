@@ -83,6 +83,7 @@ const API = (() => {
     // Mutasi
     getMutasi: (p = {}) => req('GET', '/mutasi?' + new URLSearchParams(p)),
     saveMutasi: d => req('POST', '/mutasi', d),
+    updateMutasi: (id, d) => req('PUT', `/mutasi/${id}`, d),
     delMutasi: id => req('DELETE', `/mutasi/${id}`),
 
     // Penjualan
@@ -131,6 +132,7 @@ const API = (() => {
     // Stok Opname
     getStokOpname: (p = {}) => req('GET', '/stok-opname?' + new URLSearchParams(p)),
     saveStokOpname: d => req('POST', '/stok-opname', d),
+    updateStokOpname: (id, d) => req('PUT', `/stok-opname/${id}`, d),
     delStokOpname: id => req('DELETE', `/stok-opname/${id}`),
   }
 })()

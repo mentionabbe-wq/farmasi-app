@@ -25,6 +25,7 @@ let _realisasiAll = []
 let _terimaItems = []
 let _terimaHarga = 0
 let _editPO = null, _editReal = null, _editPin = null, _editHut = null, _editPrb = null, _editIter = null
+let _editMut = null, _editSo = null, _editAng = null
 
 function showLoading(v) { document.getElementById('loading-overlay').classList.toggle('show', v) }
 
@@ -129,12 +130,14 @@ async function loadDashboard() {
 }
 
 /* ── ANGGARAN ── */
+let _angData = []
 async function loadAnggaran() {
   const data = await API.getAnggaran()
   renderAnggaranTable(data)
 }
 
 function renderAnggaranTable(data) {
+  _angData = data
   const tbody = qs('ang-tbody')
   if (!data.length) { tbody.innerHTML = '<tr><td colspan="8"><div class="empty">Belum ada data anggaran</div></td></tr>'; return }
   tbody.innerHTML = data.map(d => {
@@ -144,7 +147,7 @@ function renderAnggaranTable(data) {
       <td>${fmt(d.terpakai)}<div class="progress-bar"><div class="progress-fill" style="width:${pct}%;background:${pct>90?'#E24B4A':pct>70?'#EF9F27':'#1D9E75'}"></div></div></td>
       <td style="color:${d.sisa<0?'#A32D2D':'#0F6E56'}">${fmt(d.sisa)}</td>
       <td style="font-size:12px;color:var(--text-sec)">${d.ket || '-'}</td>
-      <td><button class="btn sm danger" data-id="${d.id}" data-action="del-ang"><i class="ti ti-trash"></i></button></td></tr>`
+      <td><button class="btn sm" data-id="${d.id}" data-action="edit-ang"><i class="ti ti-pencil"></i></button> <button class="btn sm danger" data-id="${d.id}" data-action="del-ang"><i class="ti ti-trash"></i></button></td></tr>`
   }).join('')
 }
 
@@ -155,10 +158,24 @@ qs('ang-save-btn').addEventListener('click', async () => {
   try {
     await API.saveAnggaran({ bulan, total: +total, ranap: +(qs('ang-ranap').value || 0), ralan: +(qs('ang-ralan').value || 0), ket: qs('ang-ket').value })
     ;['ang-bulan','ang-total','ang-ranap','ang-ralan','ang-ket'].forEach(id => qs(id).value = '')
+    _editAng = null; qs('ang-save-btn').innerHTML = '<i class="ti ti-device-floppy"></i>Simpan Anggaran'
     const data = await API.getAnggaran(); renderAnggaranTable(data)
     await populateAnggaranSelect()
-    toast('Anggaran disimpan')
+    toast('Tersimpan')
   } catch (e) { toast(e.message, 'error') } finally { showLoading(false) }
+})
+
+document.addEventListener('click', e => {
+  const b = e.target.closest('[data-action="edit-ang"]'); if (!b) return
+  const d = _angData.find(x => String(x.id) === b.dataset.id); if (!d) return
+  qs('ang-bulan').value = d.bulan || ''
+  qs('ang-total').value = d.total || ''
+  qs('ang-ranap').value = d.ranap || ''
+  qs('ang-ralan').value = d.ralan || ''
+  qs('ang-ket').value = d.ket || ''
+  _editAng = d.id
+  qs('ang-save-btn').innerHTML = '<i class="ti ti-pencil"></i>Update Anggaran'
+  qs('ang-bulan').scrollIntoView({ behavior: 'smooth', block: 'center' })
 })
 
 document.addEventListener('click', async e => {
@@ -899,6 +916,7 @@ document.addEventListener('click', async e => {
 })
 
 /* ── MUTASI ── */
+let _mutData = []
 async function loadMutasi() {
   const [tujuan, mutasi] = await Promise.all([API.getTujuan(), API.getMutasi()])
   STATE.tujuan = tujuan
@@ -912,6 +930,7 @@ function renderMutasiSelect(tujuan) {
 }
 
 function buildMutasiTabs(tujuan, mutasi) {
+  _mutData = mutasi
   qs('mut-tab-bar').innerHTML = tujuan.map((t, i) => `<button class="tab${t.id === STATE.activeMutTab ? ' active' : ''}" data-tab="${t.id}"><span class="badge ${BADGE[i%BADGE.length]}">${t.label.slice(0,2).toUpperCase()}</span>${t.label}</button>`).join('')
   qs('mut-tab-panels').innerHTML = tujuan.map(t => {
     const items = mutasi.filter(d => d.tujuan === t.id)
@@ -921,7 +940,7 @@ function buildMutasiTabs(tujuan, mutasi) {
       <td style="text-align:right;font-weight:600">${fmt(d.jml)}</td>
       <td style="font-size:12px">${d.petugas||'-'}</td>
       <td style="font-size:11px;color:var(--tx2);max-width:120px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${d.ket||'-'}</td>
-      <td><button class="btn sm danger" data-id="${d.id}" data-action="del-mut"><i class="ti ti-trash"></i></button></td></tr>`).join('')
+      <td><button class="btn sm" data-id="${d.id}" data-action="edit-mut"><i class="ti ti-pencil"></i></button> <button class="btn sm danger" data-id="${d.id}" data-action="del-mut"><i class="ti ti-trash"></i></button></td></tr>`).join('')
       : `<tr><td colspan="6"><div class="empty">Belum ada mutasi ke ${t.label}</div></td></tr>`
     return `<div class="tab-panel${t.id === STATE.activeMutTab ? ' active' : ''}" id="mut-panel-${t.id}">
       <div class="table-wrap"><table><thead><tr><th>Tanggal</th><th>No.</th><th>Nominal</th><th>Petugas</th><th>Ket.</th><th></th></tr></thead><tbody>${rows}</tbody></table></div>
@@ -942,12 +961,28 @@ qs('mut-save-btn').addEventListener('click', async () => {
   if (!jml || !tujuan) { toast('Jumlah dan tujuan wajib diisi', 'error'); return }
   showLoading(true)
   try {
-    await API.saveMutasi({ tgl: qs('mut-tgl').value||today(), no: qs('mut-no').value, tujuan, jml: +jml, petugas: qs('mut-petugas').value, ket: qs('mut-ket').value })
+    const payload = { tgl: qs('mut-tgl').value||today(), no: qs('mut-no').value, tujuan, jml: +jml, petugas: qs('mut-petugas').value, ket: qs('mut-ket').value }
+    if (_editMut) { await API.updateMutasi(_editMut, payload); _editMut = null; qs('mut-save-btn').innerHTML = '<i class="ti ti-device-floppy"></i>Simpan Mutasi' }
+    else { await API.saveMutasi(payload) }
     ;['mut-tgl','mut-no','mut-jml','mut-petugas','mut-ket'].forEach(id => qs(id).value = '')
     const [t, m] = await Promise.all([API.getTujuan(), API.getMutasi()])
     buildMutasiTabs(t, m); renderMutasiSelect(t)
-    toast('Mutasi disimpan')
+    toast('Tersimpan')
   } catch (e) { toast(e.message, 'error') } finally { showLoading(false) }
+})
+
+document.addEventListener('click', e => {
+  const b = e.target.closest('[data-action="edit-mut"]'); if (!b) return
+  const d = _mutData.find(x => String(x.id) === b.dataset.id); if (!d) return
+  qs('mut-tgl').value = d.tgl || ''
+  qs('mut-no').value = d.no || ''
+  qs('mut-tujuan-select').value = d.tujuan || ''
+  qs('mut-jml').value = d.jml || ''
+  qs('mut-petugas').value = d.petugas || ''
+  qs('mut-ket').value = d.ket || ''
+  _editMut = d.id
+  qs('mut-save-btn').innerHTML = '<i class="ti ti-pencil"></i>Update Mutasi'
+  qs('mut-tgl').scrollIntoView({ behavior: 'smooth', block: 'center' })
 })
 
 document.addEventListener('click', async e => {
@@ -1481,7 +1516,7 @@ function renderStokOpnameTable(data) {
       <td style="text-align:right;font-weight:600;color:var(--green)">${lebih ? '+' + fmt(lebih) : '-'}</td>
       <td style="text-align:right;font-weight:600;color:#E24B4A">${kurang ? '-' + fmt(kurang) : '-'}</td>
       <td style="font-size:12px;color:var(--tx2)">${d.ket||'-'}</td>
-      <td><button class="btn sm danger" data-id="${d.id}" data-action="del-so"><i class="ti ti-trash"></i></button></td>
+      <td><button class="btn sm" data-id="${d.id}" data-action="edit-so"><i class="ti ti-pencil"></i></button> <button class="btn sm danger" data-id="${d.id}" data-action="del-so"><i class="ti ti-trash"></i></button></td>
     </tr>`
   }).join('')
   tfoot.innerHTML = `<tr style="font-weight:700;border-top:2px solid var(--bd)">
@@ -1499,17 +1534,34 @@ qs('so-save-btn').addEventListener('click', async () => {
   if (!sebelum && !sesudah) { toast('Nilai stok wajib diisi', 'error'); return }
   showLoading(true)
   try {
-    await API.saveStokOpname({ tgl: qs('so-tgl').value || today(), kategori: qs('so-kategori').value, ruangan: qs('so-ruangan').value, nilai_sebelum: sebelum, nilai_sesudah: sesudah, ket: qs('so-ket').value })
+    const payload = { tgl: qs('so-tgl').value || today(), kategori: qs('so-kategori').value, ruangan: qs('so-ruangan').value, nilai_sebelum: sebelum, nilai_sesudah: sesudah, ket: qs('so-ket').value }
+    if (_editSo) { await API.updateStokOpname(_editSo, payload); _editSo = null; qs('so-save-btn').innerHTML = '<i class="ti ti-device-floppy"></i>Simpan' }
+    else { await API.saveStokOpname(payload) }
     ;['so-sebelum','so-sesudah','so-ket'].forEach(id => qs(id).value = '')
     qs('so-selisih-preview').value = ''; qs('so-selisih-preview').style.color = 'inherit'
     _soData = await API.getStokOpname(); renderStokOpnameTable(_soData)
-    toast('Data disimpan')
+    toast('Tersimpan')
   } catch (e) { toast(e.message, 'error') } finally { showLoading(false) }
 })
 
 qs('so-filter-ruangan').addEventListener('change', () => renderStokOpnameTable(_soData))
 qs('so-filter-kategori').addEventListener('change', () => renderStokOpnameTable(_soData))
 qs('so-filter-bulan').addEventListener('change', () => renderStokOpnameTable(_soData))
+
+document.addEventListener('click', e => {
+  const b = e.target.closest('[data-action="edit-so"]'); if (!b) return
+  const d = _soData.find(x => String(x.id) === b.dataset.id); if (!d) return
+  qs('so-tgl').value = d.tgl || ''
+  qs('so-kategori').value = d.kategori || ''
+  qs('so-ruangan').value = d.ruangan || ''
+  qs('so-sebelum').value = d.nilai_sebelum ?? ''
+  qs('so-sesudah').value = d.nilai_sesudah ?? ''
+  qs('so-ket').value = d.ket || ''
+  calcSoSelisih()
+  _editSo = d.id
+  qs('so-save-btn').innerHTML = '<i class="ti ti-pencil"></i>Update'
+  qs('so-tgl').scrollIntoView({ behavior: 'smooth', block: 'center' })
+})
 
 document.addEventListener('click', async e => {
   if (e.target.closest('[data-action="del-so"]')) {
