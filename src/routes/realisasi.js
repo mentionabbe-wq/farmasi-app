@@ -36,4 +36,17 @@ router.delete('/:id', (req, res) => {
   res.json({ ok: true })
 })
 
+router.put('/:id', (req, res) => {
+  const data = read('realisasi')
+  const i = data.findIndex(d => String(d.id) === req.params.id)
+  if (i < 0) return res.status(404).json({ error: 'data tidak ditemukan' })
+  const cur = data[i]
+  const { no_po, tgl_po, supplier, anggaran, barang, jumlah, harga_satuan } = req.body
+  const j = jumlah !== undefined ? +jumlah : cur.jumlah
+  const h = harga_satuan !== undefined ? +harga_satuan : cur.harga_satuan
+  data[i] = { ...cur, no_po: no_po ?? cur.no_po, tgl_po: tgl_po ?? cur.tgl_po, supplier: supplier ?? cur.supplier, anggaran: anggaran ?? cur.anggaran, barang: barang ?? cur.barang, jumlah: j, harga_satuan: h, harga_total: j * h }
+  write('realisasi', data)
+  res.json(data[i])
+})
+
 module.exports = router

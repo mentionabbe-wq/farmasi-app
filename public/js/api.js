@@ -26,11 +26,13 @@ const API = (() => {
     // Pembelian (PO ke distributor)
     getPO: (p = {}) => req('GET', '/po?' + new URLSearchParams(p)),
     savePO: d => req('POST', '/po', d),
+    updatePO: (id, d) => req('PUT', `/po/${id}`, d),
     delPO: id => req('DELETE', `/po/${id}`),
 
     // Realisasi Pembelian
     getRealisasi: (p = {}) => req('GET', '/realisasi?' + new URLSearchParams(p)),
     saveRealisasi: d => req('POST', '/realisasi', d),
+    updateRealisasi: (id, d) => req('PUT', `/realisasi/${id}`, d),
     delRealisasi: id => req('DELETE', `/realisasi/${id}`),
 
     // Penerimaan (berdasarkan PO)
@@ -47,6 +49,7 @@ const API = (() => {
     // Obat Dihutangkan
     getHutangObat: () => req('GET', '/hutang-obat'),
     saveHutangObat: d => req('POST', '/hutang-obat', d),
+    updateHutangObat: (id, d) => req('PUT', `/hutang-obat/${id}`, d),
     delHutangObat: id => req('DELETE', `/hutang-obat/${id}`),
 
     // Obat Belum Diambil
@@ -57,6 +60,7 @@ const API = (() => {
     // BPJS PRB
     getBpjsPrb: () => req('GET', '/bpjs-prb'),
     saveBpjsPrb: d => req('POST', '/bpjs-prb', d),
+    updateBpjsPrb: (id, d) => req('PUT', `/bpjs-prb/${id}`, d),
     delBpjsPrb: id => req('DELETE', `/bpjs-prb/${id}`),
 
     // BPJS Alkes
@@ -67,11 +71,13 @@ const API = (() => {
     // BPJS Iterasi
     getBpjsIterasi: () => req('GET', '/bpjs-iterasi'),
     saveBpjsIterasi: d => req('POST', '/bpjs-iterasi', d),
+    updateBpjsIterasi: (id, d) => req('PUT', `/bpjs-iterasi/${id}`, d),
     delBpjsIterasi: id => req('DELETE', `/bpjs-iterasi/${id}`),
 
     // Pinjaman
     getPinjaman: (p = {}) => req('GET', '/pinjaman?' + new URLSearchParams(p)),
     savePinjaman: d => req('POST', '/pinjaman', d),
+    updatePinjaman: (id, d) => req('PUT', `/pinjaman/${id}`, d),
     delPinjaman: id => req('DELETE', `/pinjaman/${id}`),
 
     // Mutasi

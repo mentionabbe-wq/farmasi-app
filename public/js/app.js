@@ -24,6 +24,7 @@ let _realData = []
 let _realisasiAll = []
 let _terimaItems = []
 let _terimaHarga = 0
+let _editPO = null, _editReal = null, _editPin = null, _editHut = null, _editPrb = null, _editIter = null
 
 function showLoading(v) { document.getElementById('loading-overlay').classList.toggle('show', v) }
 
@@ -407,7 +408,7 @@ function renderRealisasiTable(data) {
       <td style="text-align:right">${d.jumlah}</td>
       <td style="text-align:right">${fmt(d.harga_satuan)}</td>
       <td style="text-align:right;font-weight:600">${fmt(d.harga_total)}</td>
-      <td><button class="btn sm danger" data-id="${d.id}" data-action="del-real"><i class="ti ti-trash"></i></button></td>
+      <td><button class="btn sm" data-id="${d.id}" data-action="edit-real"><i class="ti ti-pencil"></i></button> <button class="btn sm danger" data-id="${d.id}" data-action="del-real"><i class="ti ti-trash"></i></button></td>
     </tr>`
   }).join('')
   tfoot.innerHTML = `<tr style="font-weight:700;border-top:2px solid var(--bd)"><td colspan="7">Total (${rows.length} item)</td><td style="text-align:right">${fmt(total)}</td><td></td></tr>`
@@ -431,11 +432,29 @@ qs('real-save-btn').addEventListener('click', async () => {
   if (!barang) { toast('Nama barang wajib diisi', 'error'); return }
   showLoading(true)
   try {
-    await API.saveRealisasi({ no_po, tgl_po: qs('real-tgl').value || today(), supplier: qs('real-supplier').value.trim(), anggaran: qs('real-anggaran').value, barang, jumlah: qs('real-jumlah').value, harga_satuan: qs('real-harga').value })
+    const payload = { no_po, tgl_po: qs('real-tgl').value || today(), supplier: qs('real-supplier').value.trim(), anggaran: qs('real-anggaran').value, barang, jumlah: qs('real-jumlah').value, harga_satuan: qs('real-harga').value }
+    if (_editReal) { await API.updateRealisasi(_editReal, payload); _editReal = null; qs('real-save-btn').innerHTML = '<i class="ti ti-device-floppy"></i>Simpan Realisasi' }
+    else { await API.saveRealisasi(payload) }
     ;['real-barang', 'real-jumlah', 'real-harga', 'real-total'].forEach(id => qs(id).value = '')
     _realData = await API.getRealisasi(); renderRealisasiTable(_realData)
-    toast('Realisasi disimpan')
+    toast('Tersimpan')
   } catch (e) { toast(e.message, 'error') } finally { showLoading(false) }
+})
+
+document.addEventListener('click', e => {
+  const b = e.target.closest('[data-action="edit-real"]'); if (!b) return
+  const d = _realData.find(x => String(x.id) === b.dataset.id); if (!d) return
+  qs('real-nopo').value = d.no_po || ''
+  qs('real-tgl').value = d.tgl_po || ''
+  qs('real-supplier').value = d.supplier || ''
+  qs('real-anggaran').value = d.anggaran || ''
+  qs('real-barang').value = d.barang || ''
+  qs('real-jumlah').value = d.jumlah || ''
+  qs('real-harga').value = d.harga_satuan || ''
+  calcRealTotal()
+  _editReal = d.id
+  qs('real-save-btn').innerHTML = '<i class="ti ti-pencil"></i>Update Realisasi'
+  qs('real-nopo').scrollIntoView({ behavior: 'smooth', block: 'center' })
 })
 
 document.addEventListener('click', async e => {
@@ -557,7 +576,7 @@ function renderPOTable(data) {
       <td>${d.supplier||'-'}</td>
       <td style="text-align:right;font-weight:600">${fmt(d.nominal)}</td>
       <td style="font-size:12px;color:var(--tx2)">${d.principle||'-'}</td>
-      <td><button class="btn sm danger" data-id="${d.id}" data-action="del-po"><i class="ti ti-trash"></i></button></td></tr>`
+      <td><button class="btn sm" data-id="${d.id}" data-action="edit-po"><i class="ti ti-pencil"></i></button> <button class="btn sm danger" data-id="${d.id}" data-action="del-po"><i class="ti ti-trash"></i></button></td></tr>`
   }).join('')
   tfoot.innerHTML = `<tr style="font-weight:700;border-top:2px solid var(--bd)">
     <td colspan="2">Total (${rows.length} PO)</td>
@@ -577,17 +596,31 @@ qs('po-save-btn').addEventListener('click', async () => {
   if (!nominal) { toast('Nominal PO wajib diisi', 'error'); return }
   showLoading(true)
   try {
-    await API.savePO({ tgl: qs('po-tgl').value || today(), supplier, nominal: +nominal, principle: qs('po-principle').value })
+    const payload = { tgl: qs('po-tgl').value || today(), supplier, nominal: +nominal, principle: qs('po-principle').value }
+    if (_editPO) { await API.updatePO(_editPO, payload); _editPO = null; qs('po-save-btn').innerHTML = '<i class="ti ti-device-floppy"></i>Simpan Rencana' }
+    else { await API.savePO(payload) }
     ;['po-nominal','po-principle'].forEach(id => qs(id).value = '')
     qs('po-supplier').value = ''
     _poData = await API.getPO(); renderPOTable(_poData)
-    toast('Pembelian disimpan')
+    toast('Tersimpan')
   } catch (e) { toast(e.message, 'error') } finally { showLoading(false) }
 })
 
 qs('btn-kelola-supplier-po').addEventListener('click', async () => {
   qs('supplier-modal-srch').value = ''
   await renderSupplierModal(); qs('modal-supplier').classList.add('open')
+})
+
+document.addEventListener('click', e => {
+  const b = e.target.closest('[data-action="edit-po"]'); if (!b) return
+  const d = _poData.find(x => String(x.id) === b.dataset.id); if (!d) return
+  qs('po-tgl').value = d.tgl || ''
+  qs('po-supplier').value = d.supplier || ''
+  qs('po-nominal').value = d.nominal || ''
+  qs('po-principle').value = d.principle || ''
+  _editPO = d.id
+  qs('po-save-btn').innerHTML = '<i class="ti ti-pencil"></i>Update Rencana'
+  qs('po-supplier').scrollIntoView({ behavior: 'smooth', block: 'center' })
 })
 
 document.addEventListener('click', async e => {
@@ -637,7 +670,7 @@ function renderPRBTable() {
       <td style="text-align:right;font-weight:600">${fmt(d.total_klaim)}</td>
       <td style="text-align:right">${fmtN(d.resep_gagal)}</td>
       <td style="font-size:12px;color:var(--tx2)">${d.ket || '-'}</td>
-      <td><button class="btn sm danger" data-id="${d.id}" data-action="del-prb"><i class="ti ti-trash"></i></button></td>
+      <td><button class="btn sm" data-id="${d.id}" data-action="edit-prb"><i class="ti ti-pencil"></i></button> <button class="btn sm danger" data-id="${d.id}" data-action="del-prb"><i class="ti ti-trash"></i></button></td>
     </tr>`
   }).join('')
   tfoot.innerHTML = `<tr style="font-weight:700;border-top:2px solid var(--bd)"><td>Total (${rows.length})</td><td style="text-align:right">${fmtN(tR)}</td><td style="text-align:right">${fmt(tK)}</td><td style="text-align:right">${fmtN(tG)}</td><td colspan="2"></td></tr>`
@@ -646,11 +679,26 @@ qs('prb-filter-bulan').addEventListener('change', renderPRBTable)
 qs('prb-save-btn').addEventListener('click', async () => {
   showLoading(true)
   try {
-    await API.saveBpjsPrb({ tgl: qs('prb-tgl').value || today(), jumlah_resep: qs('prb-resep').value, total_klaim: qs('prb-klaim').value, resep_gagal: qs('prb-gagal').value, ket: qs('prb-ket').value })
+    const payload = { tgl: qs('prb-tgl').value || today(), jumlah_resep: qs('prb-resep').value, total_klaim: qs('prb-klaim').value, resep_gagal: qs('prb-gagal').value, ket: qs('prb-ket').value }
+    if (_editPrb) { await API.updateBpjsPrb(_editPrb, payload); _editPrb = null; qs('prb-save-btn').innerHTML = '<i class="ti ti-device-floppy"></i>Simpan PRB' }
+    else { await API.saveBpjsPrb(payload) }
     ;['prb-resep', 'prb-klaim', 'prb-gagal', 'prb-ket'].forEach(id => qs(id).value = '')
-    await renderPRB(); toast('PRB disimpan')
+    await renderPRB(); toast('Tersimpan')
   } catch (e) { toast(e.message, 'error') } finally { showLoading(false) }
 })
+document.addEventListener('click', e => {
+  const b = e.target.closest('[data-action="edit-prb"]'); if (!b) return
+  const d = _prbData.find(x => String(x.id) === b.dataset.id); if (!d) return
+  qs('prb-tgl').value = d.tgl || ''
+  qs('prb-resep').value = d.jumlah_resep || ''
+  qs('prb-klaim').value = d.total_klaim || ''
+  qs('prb-gagal').value = d.resep_gagal || ''
+  qs('prb-ket').value = d.ket || ''
+  _editPrb = d.id
+  qs('prb-save-btn').innerHTML = '<i class="ti ti-pencil"></i>Update PRB'
+  qs('prb-tgl').scrollIntoView({ behavior: 'smooth', block: 'center' })
+})
+
 document.addEventListener('click', async e => {
   if (e.target.closest('[data-action="del-prb"]')) {
     if (!confirm2('Hapus data PRB ini?')) return
@@ -720,7 +768,7 @@ function renderIterasiTable() {
     <td>${d.tgl}</td>
     <td style="font-weight:500">${d.pasien}</td>
     <td>${d.no_rm || '-'}</td>
-    <td><button class="btn sm danger" data-id="${d.id}" data-action="del-iter"><i class="ti ti-trash"></i></button></td>
+    <td><button class="btn sm" data-id="${d.id}" data-action="edit-iter"><i class="ti ti-pencil"></i></button> <button class="btn sm danger" data-id="${d.id}" data-action="del-iter"><i class="ti ti-trash"></i></button></td>
   </tr>`).join('')
 }
 qs('iter-filter-bulan').addEventListener('change', renderIterasiTable)
@@ -729,11 +777,24 @@ qs('iter-save-btn').addEventListener('click', async () => {
   if (!pasien) { toast('Nama pasien wajib diisi', 'error'); return }
   showLoading(true)
   try {
-    await API.saveBpjsIterasi({ tgl: qs('iter-tgl').value || today(), pasien, no_rm: qs('iter-rm').value })
+    const payload = { tgl: qs('iter-tgl').value || today(), pasien, no_rm: qs('iter-rm').value }
+    if (_editIter) { await API.updateBpjsIterasi(_editIter, payload); _editIter = null; qs('iter-save-btn').innerHTML = '<i class="ti ti-device-floppy"></i>Simpan Iterasi' }
+    else { await API.saveBpjsIterasi(payload) }
     ;['iter-pasien', 'iter-rm'].forEach(id => qs(id).value = '')
-    await renderIterasi(); toast('Iterasi disimpan')
+    await renderIterasi(); toast('Tersimpan')
   } catch (e) { toast(e.message, 'error') } finally { showLoading(false) }
 })
+document.addEventListener('click', e => {
+  const b = e.target.closest('[data-action="edit-iter"]'); if (!b) return
+  const d = _iterData.find(x => String(x.id) === b.dataset.id); if (!d) return
+  qs('iter-tgl').value = d.tgl || ''
+  qs('iter-pasien').value = d.pasien || ''
+  qs('iter-rm').value = d.no_rm || ''
+  _editIter = d.id
+  qs('iter-save-btn').innerHTML = '<i class="ti ti-pencil"></i>Update Iterasi'
+  qs('iter-tgl').scrollIntoView({ behavior: 'smooth', block: 'center' })
+})
+
 document.addEventListener('click', async e => {
   if (e.target.closest('[data-action="del-iter"]')) {
     if (!confirm2('Hapus data iterasi ini?')) return
@@ -768,7 +829,7 @@ function renderPinjamanTable(data) {
       <td>${d.barang||'-'}</td>
       <td style="font-weight:600">${d.jumlah||'-'}</td>
       <td style="font-size:12px;color:var(--tx2)">${d.ket||'-'}</td>
-      <td><button class="btn sm danger" data-id="${d.id}" data-action="del-pin"><i class="ti ti-trash"></i></button></td>
+      <td><button class="btn sm" data-id="${d.id}" data-action="edit-pin"><i class="ti ti-pencil"></i></button> <button class="btn sm danger" data-id="${d.id}" data-action="del-pin"><i class="ti ti-trash"></i></button></td>
     </tr>`
   }).join('')
 }
@@ -781,11 +842,27 @@ qs('pin-save-btn').addEventListener('click', async () => {
   if (!barang) { toast('Nama barang wajib diisi', 'error'); return }
   showLoading(true)
   try {
-    await API.savePinjaman({ tgl: qs('pin-tgl').value || today(), jenis: qs('pin-jenis').value, rs, barang, jumlah: qs('pin-jumlah').value, ket: qs('pin-ket').value })
+    const payload = { tgl: qs('pin-tgl').value || today(), jenis: qs('pin-jenis').value, rs, barang, jumlah: qs('pin-jumlah').value, ket: qs('pin-ket').value }
+    if (_editPin) { await API.updatePinjaman(_editPin, payload); _editPin = null; qs('pin-save-btn').innerHTML = '<i class="ti ti-device-floppy"></i>Simpan Pinjaman' }
+    else { await API.savePinjaman(payload) }
     ;['pin-rs','pin-barang','pin-jumlah','pin-ket'].forEach(id => qs(id).value = '')
     _pinData = await API.getPinjaman(); renderPinjamanTable(_pinData)
-    toast('Pinjaman disimpan')
+    toast('Tersimpan')
   } catch (e) { toast(e.message, 'error') } finally { showLoading(false) }
+})
+
+document.addEventListener('click', e => {
+  const b = e.target.closest('[data-action="edit-pin"]'); if (!b) return
+  const d = _pinData.find(x => String(x.id) === b.dataset.id); if (!d) return
+  qs('pin-tgl').value = d.tgl || ''
+  qs('pin-jenis').value = d.jenis || 'pinjam'
+  qs('pin-rs').value = d.rs || ''
+  qs('pin-barang').value = d.barang || ''
+  qs('pin-jumlah').value = d.jumlah || ''
+  qs('pin-ket').value = d.ket || ''
+  _editPin = d.id
+  qs('pin-save-btn').innerHTML = '<i class="ti ti-pencil"></i>Update Pinjaman'
+  qs('pin-tgl').scrollIntoView({ behavior: 'smooth', block: 'center' })
 })
 
 document.addEventListener('click', async e => {
@@ -947,8 +1024,10 @@ async function loadPenjualan() {
 }
 
 /* ── OBAT DIHUTANGKAN ── */
+let _hutData = []
 async function renderHutangObat() {
-  const data = await API.getHutangObat()
+  _hutData = await API.getHutangObat()
+  const data = _hutData
   const tbody = qs('hut-tbody')
   if (!data.length) { tbody.innerHTML = '<tr><td colspan="6"><div class="empty"><i class="ti ti-receipt"></i>Belum ada data</div></td></tr>'; return }
   tbody.innerHTML = data.map(d => `<tr>
@@ -957,7 +1036,7 @@ async function renderHutangObat() {
     <td style="text-align:right">${d.jumlah}</td>
     <td style="text-align:right">${d.jumlah_pasien}</td>
     <td style="font-size:12px;color:var(--tx2)">${d.ket||'-'}</td>
-    <td><button class="btn sm danger" data-id="${d.id}" data-action="del-hut"><i class="ti ti-trash"></i></button></td>
+    <td><button class="btn sm" data-id="${d.id}" data-action="edit-hut"><i class="ti ti-pencil"></i></button> <button class="btn sm danger" data-id="${d.id}" data-action="del-hut"><i class="ti ti-trash"></i></button></td>
   </tr>`).join('')
 }
 
@@ -966,10 +1045,25 @@ qs('hut-save-btn').addEventListener('click', async () => {
   if (!item) { toast('Nama item wajib diisi', 'error'); return }
   showLoading(true)
   try {
-    await API.saveHutangObat({ tgl: qs('hut-tgl').value || today(), item, jumlah: qs('hut-jumlah').value, jumlah_pasien: qs('hut-pasien').value, ket: qs('hut-ket').value })
+    const payload = { tgl: qs('hut-tgl').value || today(), item, jumlah: qs('hut-jumlah').value, jumlah_pasien: qs('hut-pasien').value, ket: qs('hut-ket').value }
+    if (_editHut) { await API.updateHutangObat(_editHut, payload); _editHut = null; qs('hut-save-btn').innerHTML = '<i class="ti ti-device-floppy"></i>Simpan' }
+    else { await API.saveHutangObat(payload) }
     ;['hut-item', 'hut-jumlah', 'hut-pasien', 'hut-ket'].forEach(id => qs(id).value = '')
-    await renderHutangObat(); toast('Disimpan')
+    await renderHutangObat(); toast('Tersimpan')
   } catch (e) { toast(e.message, 'error') } finally { showLoading(false) }
+})
+
+document.addEventListener('click', e => {
+  const b = e.target.closest('[data-action="edit-hut"]'); if (!b) return
+  const d = _hutData.find(x => String(x.id) === b.dataset.id); if (!d) return
+  qs('hut-tgl').value = d.tgl || ''
+  qs('hut-item').value = d.item || ''
+  qs('hut-jumlah').value = d.jumlah || ''
+  qs('hut-pasien').value = d.jumlah_pasien || ''
+  qs('hut-ket').value = d.ket || ''
+  _editHut = d.id
+  qs('hut-save-btn').innerHTML = '<i class="ti ti-pencil"></i>Update'
+  qs('hut-tgl').scrollIntoView({ behavior: 'smooth', block: 'center' })
 })
 
 document.addEventListener('click', async e => {

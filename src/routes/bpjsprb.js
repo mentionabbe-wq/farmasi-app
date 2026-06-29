@@ -27,4 +27,15 @@ router.delete('/:id', (req, res) => {
   res.json({ ok: true })
 })
 
+router.put('/:id', (req, res) => {
+  const data = read('bpjs_prb')
+  const i = data.findIndex(d => String(d.id) === req.params.id)
+  if (i < 0) return res.status(404).json({ error: 'data tidak ditemukan' })
+  const cur = data[i]
+  const { tgl, jumlah_resep, total_klaim, resep_gagal, ket } = req.body
+  data[i] = { ...cur, tgl: tgl ?? cur.tgl, jumlah_resep: jumlah_resep !== undefined ? +jumlah_resep : cur.jumlah_resep, total_klaim: total_klaim !== undefined ? +total_klaim : cur.total_klaim, resep_gagal: resep_gagal !== undefined ? +resep_gagal : cur.resep_gagal, ket: ket ?? cur.ket }
+  write('bpjs_prb', data)
+  res.json(data[i])
+})
+
 module.exports = router
