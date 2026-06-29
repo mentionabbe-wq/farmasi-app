@@ -22,6 +22,7 @@ let _supplierNames = []
 let _poData = []
 let _realData = []
 let _realisasiAll = []
+let _penerimaanAll = []
 let _terimaItems = []
 let _terimaHarga = 0
 let _editPO = null, _editReal = null, _editPin = null, _editHut = null, _editPrb = null, _editIter = null
@@ -248,16 +249,28 @@ function renderTerimaItems() {
   const box = qs('terima-items')
   const noPo = qs('terima-nopo').value.trim()
   if (!noPo) { box.innerHTML = '<div class="empty" style="padding:8px">Pilih No PO untuk menampilkan barang</div>'; _terimaItems = []; recalcTerima(); return }
-  const items = _realisasiAll.filter(d => d.no_po === noPo)
-  if (!items.length) { box.innerHTML = `<div class="empty" style="padding:8px">Tidak ada barang untuk PO "${noPo}". Tambahkan dulu di tab Realisasi Pembelian.</div>`; _terimaItems = []; recalcTerima(); return }
+  const poLines = _realisasiAll.filter(d => d.no_po === noPo)
+  if (!poLines.length) { box.innerHTML = `<div class="empty" style="padding:8px">Tidak ada barang untuk PO "${noPo}". Tambahkan dulu di tab Realisasi Pembelian.</div>`; _terimaItems = []; recalcTerima(); return }
+  // Hitung jumlah yang sudah diterima sebelumnya per baris PO
+  const received = {}
+  _penerimaanAll.filter(p => p.no_po === noPo).forEach(p => (p.items || []).forEach(it => {
+    if (it.real_id != null) received['id:' + it.real_id] = (received['id:' + it.real_id] || 0) + (+it.jumlah_terima || 0)
+    else received['nm:' + it.barang] = (received['nm:' + it.barang] || 0) + (+it.jumlah_terima || 0)
+  }))
+  const items = poLines.map(line => {
+    const recv = (received['id:' + line.id] || 0) + (received['nm:' + line.barang] || 0)
+    return { ...line, sisa: Math.max(0, (+line.jumlah || 0) - recv) }
+  }).filter(l => l.sisa > 0)
+  if (!items.length) { box.innerHTML = `<div class="empty" style="padding:8px"><i class="ti ti-checks"></i> Semua barang PO "${noPo}" sudah diterima.</div>`; _terimaItems = []; recalcTerima(); return }
   _terimaItems = items
   box.innerHTML = `<div class="table-wrap"><table>
-    <thead><tr><th>Nama Barang</th><th style="text-align:right">Harga PO</th><th style="text-align:right">Harga Penerimaan</th><th style="text-align:right">Jml Diterima</th><th>Status</th></tr></thead>
+    <thead><tr><th>Nama Barang</th><th style="text-align:right">Harga PO</th><th style="text-align:right">Harga Penerimaan</th><th style="text-align:right">Diskon (%)</th><th style="text-align:right">Jml Diterima</th><th>Status</th></tr></thead>
     <tbody>${items.map((it, i) => `<tr>
-      <td>${it.barang}</td>
+      <td>${it.barang}<div style="font-size:11px;color:var(--tx2)">sisa ${it.sisa} dari ${it.jumlah}</div></td>
       <td style="text-align:right">${fmt(it.harga_satuan)}</td>
       <td style="text-align:right"><input type="number" class="input-sm terima-hargaterima" data-i="${i}" value="${+it.harga_satuan || 0}" min="0" style="width:96px;text-align:right" oninput="recalcTerima()"></td>
-      <td style="text-align:right"><input type="number" class="input-sm terima-qty" data-i="${i}" value="${it.jumlah}" min="0" max="${it.jumlah}" disabled style="width:74px;text-align:right" oninput="recalcTerima()"></td>
+      <td style="text-align:right"><input type="number" class="input-sm terima-disk" data-i="${i}" value="0" min="0" max="100" style="width:62px;text-align:right" oninput="recalcTerima()"></td>
+      <td style="text-align:right"><input type="number" class="input-sm terima-qty" data-i="${i}" value="${it.sisa}" min="0" max="${it.sisa}" disabled style="width:74px;text-align:right" oninput="recalcTerima()"></td>
       <td><select class="input-sm terima-status" data-i="${i}" onchange="onTerimaStatus(this)">
         <option value="datang">Datang</option>
         <option value="sebagian">Datang Sebagian</option>
@@ -270,7 +283,7 @@ function renderTerimaItems() {
 function onTerimaStatus(sel) {
   const i = sel.dataset.i
   const qty = document.querySelector(`.terima-qty[data-i="${i}"]`)
-  const max = +(_terimaItems[i]?.jumlah || 0)
+  const max = +(_terimaItems[i]?.sisa || 0)
   if (sel.value === 'sebagian') { qty.disabled = false; if (!+qty.value || +qty.value >= max) qty.value = max }
   else if (sel.value === 'tidak') { qty.disabled = true; qty.value = 0 }
   else { qty.disabled = true; qty.value = max }
@@ -282,29 +295,33 @@ function recalcTerima() {
   _terimaItems.forEach((it, i) => {
     const sel = document.querySelector(`.terima-status[data-i="${i}"]`)
     const qtyEl = document.querySelector(`.terima-qty[data-i="${i}"]`)
-    const status = sel ? sel.value : 'datang'
     const priceEl = document.querySelector(`.terima-hargaterima[data-i="${i}"]`)
-    let terima = status === 'datang' ? +it.jumlah : status === 'tidak' ? 0 : +(qtyEl?.value || 0)
-    if (terima > +it.jumlah) terima = +it.jumlah
+    const diskEl = document.querySelector(`.terima-disk[data-i="${i}"]`)
+    const status = sel ? sel.value : 'datang'
+    const sisa = +(it.sisa || 0)
+    let terima = status === 'datang' ? sisa : status === 'tidak' ? 0 : +(qtyEl?.value || 0)
+    if (terima > sisa) terima = sisa
     if (terima < 0) terima = 0
     const hpUnit = priceEl ? +(priceEl.value || 0) : (+it.harga_satuan || 0)
-    harga += terima * hpUnit
-    hargaPO += (+it.harga_total || (+it.jumlah * (+it.harga_satuan || 0)))
+    const disk = diskEl ? +(diskEl.value || 0) : 0
+    harga += terima * hpUnit * (1 - disk / 100)
+    hargaPO += sisa * (+it.harga_satuan || 0)
   })
-  _terimaHarga = harga
-  const pajak = Math.round(harga * 0.11)
-  const selisih = hargaPO - harga
+  _terimaHarga = Math.round(harga)
+  const pajak = Math.round(_terimaHarga * 0.11)
+  const selisih = hargaPO - _terimaHarga
   qs('terima-hargapo').value = fmt(hargaPO)
-  qs('terima-harga').value = fmt(harga)
+  qs('terima-harga').value = fmt(_terimaHarga)
   const selEl = qs('terima-selisih')
   selEl.value = fmt(selisih)
   selEl.style.color = selisih > 0 ? '#E24B4A' : 'inherit'
   qs('terima-pajak').value = fmt(pajak)
-  qs('terima-total').value = fmt(harga + pajak)
+  qs('terima-total').value = fmt(_terimaHarga + pajak)
 }
 
 async function renderPenerimaanHistory() {
-  const data = await API.getPenerimaan()
+  _penerimaanAll = await API.getPenerimaan()
+  const data = _penerimaanAll
   const tbody = qs('terima-tbody')
   const f = qs('terima-filter-nopo').value.trim().toLowerCase()
   const rows = f ? data.filter(d => (d.no_po || '').toLowerCase().includes(f)) : data
@@ -353,10 +370,13 @@ qs('terima-save-btn').addEventListener('click', async () => {
     const sel = document.querySelector(`.terima-status[data-i="${i}"]`)
     const qtyEl = document.querySelector(`.terima-qty[data-i="${i}"]`)
     const priceEl = document.querySelector(`.terima-hargaterima[data-i="${i}"]`)
+    const diskEl = document.querySelector(`.terima-disk[data-i="${i}"]`)
     const status = sel ? sel.value : 'datang'
-    const jumlah_terima = status === 'datang' ? +it.jumlah : status === 'tidak' ? 0 : +(qtyEl?.value || 0)
+    const sisa = +(it.sisa || 0)
+    const jumlah_terima = status === 'datang' ? sisa : status === 'tidak' ? 0 : +(qtyEl?.value || 0)
     const harga_terima = priceEl ? +(priceEl.value || 0) : (+it.harga_satuan || 0)
-    return { barang: it.barang, jumlah: +it.jumlah, jumlah_terima, harga_terima, status }
+    const diskon = diskEl ? +(diskEl.value || 0) : 0
+    return { real_id: it.id, barang: it.barang, jumlah: sisa, jumlah_terima, harga_terima, diskon, status }
   })
   const match = _realisasiAll.find(d => d.no_po === noPo)
   const anggaran = match ? (match.anggaran || '') : ''
