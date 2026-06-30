@@ -961,6 +961,7 @@ async function loadMutasi() {
   if (!STATE.activeMutTab || !tujuan.find(t => t.id === STATE.activeMutTab)) STATE.activeMutTab = tujuan[0]?.id || null
   buildMutasiTabs(tujuan, mutasi)
   renderMutasiSelect(tujuan)
+  await loadPetugasSelects()
 }
 
 function renderMutasiSelect(tujuan) {
@@ -1005,6 +1006,8 @@ qs('mut-save-btn').addEventListener('click', async () => {
     ;['mut-tgl','mut-no','mut-jml','mut-petugas','mut-ket'].forEach(id => qs(id).value = '')
     const [t, m] = await Promise.all([API.getTujuan(), API.getMutasi()])
     buildMutasiTabs(t, m); renderMutasiSelect(t)
+    const pNama = (payload.petugas || '').trim()
+    if (pNama && !_petugasNames.some(n => n.toLowerCase() === pNama.toLowerCase())) { try { await API.savePetugas({ nama: pNama }) } catch {} await loadPetugasSelects() }
     toast('Tersimpan')
   } catch (e) { toast(e.message, 'error') } finally { showLoading(false) }
 })
@@ -1033,6 +1036,52 @@ document.addEventListener('click', async e => {
       const [t, m] = await Promise.all([API.getTujuan(), API.getMutasi()])
       buildMutasiTabs(t, m); renderMutasiSelect(t); toast('Dihapus')
     } catch (err) { toast(err.message, 'error') } finally { showLoading(false) }
+  }
+})
+
+/* ── PETUGAS (directory) ── */
+let _petugasNames = []
+async function loadPetugasSelects() {
+  const list = await API.getPetugas()
+  _petugasNames = list.map(p => p.nama)
+  const el = qs('mut-petugas-list'); if (el) el.innerHTML = list.map(p => `<option value="${p.nama}">`).join('')
+}
+async function renderPetugasModal() {
+  const list = await API.getPetugas()
+  qs('petugas-list-modal').innerHTML = list.length
+    ? list.map(p => `<div class="item-row"><div class="item-row-label"><span>${p.nama}</span></div><button class="btn sm" data-id="${p.id}" data-action="edit-petugas"><i class="ti ti-pencil"></i></button> <button class="btn sm danger" data-id="${p.id}" data-action="del-petugas"><i class="ti ti-trash"></i></button></div>`).join('')
+    : '<div class="empty" style="padding:8px">Belum ada petugas</div>'
+}
+qs('btn-kelola-petugas').addEventListener('click', async () => {
+  qs('petugas-modal-srch').value = ''
+  await renderPetugasModal(); qs('modal-petugas').classList.add('open')
+})
+qs('petugas-close-btn').addEventListener('click', async () => {
+  qs('modal-petugas').classList.remove('open'); await loadPetugasSelects()
+})
+qs('modal-petugas').addEventListener('click', async e => {
+  if (e.target === qs('modal-petugas')) { qs('modal-petugas').classList.remove('open'); await loadPetugasSelects() }
+})
+qs('petugas-add-btn').addEventListener('click', async () => {
+  const nama = qs('petugas-new-input').value.trim()
+  if (!nama) { toast('Nama petugas tidak boleh kosong', 'error'); return }
+  try { await API.savePetugas({ nama }); qs('petugas-new-input').value = ''; await renderPetugasModal(); toast('Petugas ditambahkan') }
+  catch (e) { toast(e.message, 'error') }
+})
+document.addEventListener('click', async e => {
+  const b = e.target.closest('[data-action="edit-petugas"]'); if (!b) return
+  const cur = b.closest('.item-row').querySelector('.item-row-label span').textContent
+  const v = prompt('Nama petugas baru:', cur); if (v == null) return
+  const t = v.trim(); if (!t || t === cur) return
+  try { await API.updatePetugas(b.dataset.id, { nama: t }); await renderPetugasModal(); await loadPetugasSelects(); toast('Diperbarui') }
+  catch (err) { toast(err.message, 'error') }
+})
+document.addEventListener('click', async e => {
+  if (e.target.closest('[data-action="del-petugas"]')) {
+    if (!confirm2('Hapus petugas ini?')) return
+    const id = e.target.closest('[data-id]').dataset.id
+    try { await API.delPetugas(id); await renderPetugasModal(); toast('Dihapus') }
+    catch (e) { toast(e.message, 'error') }
   }
 })
 
@@ -1743,6 +1792,7 @@ async function init() {
   // Modal search
   qs('supplier-modal-srch').addEventListener('input', () => filterModalItems('supplier-modal-srch', 'supplier-list-modal'))
   qs('barang-modal-srch').addEventListener('input', () => filterModalItems('barang-modal-srch', 'barang-list-modal'))
+  qs('petugas-modal-srch').addEventListener('input', () => filterModalItems('petugas-modal-srch', 'petugas-list-modal'))
   qs('kat-arsip-modal-srch').addEventListener('input', () => filterModalItems('kat-arsip-modal-srch', 'kat-arsip-list-modal'))
   qs('tujuan-modal-srch').addEventListener('input', () => filterModalItems('tujuan-modal-srch', 'tujuan-list-modal'))
   qs('kategori-modal-srch').addEventListener('input', () => filterModalItems('kategori-modal-srch', 'kategori-list-modal'))

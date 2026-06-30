@@ -250,7 +250,11 @@
         </div>
         <div class="form-row">
           <div class="form-group"><label>Jumlah Nominal (Rp)</label><input type="number" id="mut-jml" placeholder="0"></div>
-          <div class="form-group"><label>Petugas</label><input type="text" id="mut-petugas" placeholder="Nama petugas"></div>
+          <div class="form-group">
+            <label style="display:flex;align-items:center;justify-content:space-between">Petugas<button class="btn sm" id="btn-kelola-petugas" type="button"><i class="ti ti-settings-2"></i>Kelola</button></label>
+            <input type="text" id="mut-petugas" list="mut-petugas-list" placeholder="Pilih atau ketik nama petugas..." autocomplete="off">
+            <datalist id="mut-petugas-list"></datalist>
+          </div>
         </div>
         <div class="form-group" style="margin-bottom:12px"><label>Keterangan</label><textarea id="mut-ket" placeholder="Catatan..."></textarea></div>
         <button class="btn primary" id="mut-save-btn"><i class="ti ti-device-floppy"></i>Simpan Mutasi</button>
@@ -663,6 +667,20 @@
     </div>
     <div style="font-size:11px;color:var(--tx2);margin:2px 0 8px">Import dari Excel/CSV: kolom pertama berisi nama barang (1 nama per baris). Mendukung .xlsx / .xls / .csv. <a href="/contoh-import-barang.csv" download style="color:var(--green)">Download contoh file</a></div>
     <button class="btn full-w" id="barang-close-btn">Tutup</button>
+  </div>
+</div>
+
+<!-- MODAL PETUGAS -->
+<div class="modal-backdrop" id="modal-petugas">
+  <div class="modal">
+    <div class="modal-title"><i class="ti ti-user"></i>Kelola Petugas</div>
+    <input type="text" id="petugas-modal-srch" class="modal-srch" placeholder="Cari petugas...">
+    <div id="petugas-list-modal"></div>
+    <div class="modal-input-row">
+      <input type="text" id="petugas-new-input" placeholder="Nama petugas baru...">
+      <button class="btn primary" id="petugas-add-btn"><i class="ti ti-plus"></i>Tambah</button>
+    </div>
+    <button class="btn full-w" id="petugas-close-btn">Tutup</button>
   </div>
 </div>
 

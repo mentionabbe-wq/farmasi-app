@@ -45,6 +45,12 @@ const API = (() => {
     saveBarang: d => req('POST', '/barang', d),
     updateBarang: (id, d) => req('PUT', `/barang/${id}`, d),
     delBarang: id => req('DELETE', `/barang/${id}`),
+
+    // Petugas (directory)
+    getPetugas: () => req('GET', '/petugas'),
+    savePetugas: d => req('POST', '/petugas', d),
+    updatePetugas: (id, d) => req('PUT', `/petugas/${id}`, d),
+    delPetugas: id => req('DELETE', `/petugas/${id}`),
     importBarang: fd => req('POST', '/barang/import', fd, true),
 
     // Obat Dihutangkan
