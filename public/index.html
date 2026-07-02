@@ -8,6 +8,29 @@
   <link rel="stylesheet" href="css/style.css">
 </head>
 <body>
+
+<!-- AUTH OVERLAY -->
+<div id="auth-overlay" style="position:fixed;inset:0;z-index:2000;background:var(--bg3);display:flex;align-items:center;justify-content:center;padding:16px">
+  <div class="card" style="max-width:360px;width:100%;margin:0">
+    <div class="topbar-icon" style="margin:0 auto 10px"><i class="ti ti-pill"></i></div>
+    <div style="text-align:center;font-size:16px;font-weight:600;margin-bottom:2px">Catatan Harian Farmasi</div>
+    <div id="auth-title" style="text-align:center;font-size:13px;color:var(--tx2);margin-bottom:16px">Masuk ke akun Anda</div>
+    <div id="auth-login">
+      <div class="form-group" style="margin-bottom:10px"><label>Username</label><input type="text" id="login-user" autocomplete="username"></div>
+      <div class="form-group" style="margin-bottom:14px"><label>Password</label><input type="password" id="login-pass" autocomplete="current-password"></div>
+      <button class="btn primary full-w" id="login-btn"><i class="ti ti-login"></i>Masuk</button>
+      <div style="text-align:center;font-size:12px;margin-top:12px;color:var(--tx2)">Belum punya akun? <a href="#" id="show-register" style="color:var(--green);font-weight:500">Daftar di sini</a></div>
+    </div>
+    <div id="auth-register" style="display:none">
+      <div class="form-group" style="margin-bottom:10px"><label>Nama Lengkap</label><input type="text" id="reg-nama"></div>
+      <div class="form-group" style="margin-bottom:10px"><label>Username</label><input type="text" id="reg-user" autocomplete="username"></div>
+      <div class="form-group" style="margin-bottom:14px"><label>Password</label><input type="password" id="reg-pass" autocomplete="new-password"></div>
+      <button class="btn primary full-w" id="reg-btn"><i class="ti ti-user-plus"></i>Daftar</button>
+      <div style="text-align:center;font-size:12px;margin-top:12px;color:var(--tx2)">Sudah punya akun? <a href="#" id="show-login" style="color:var(--green);font-weight:500">Masuk</a></div>
+    </div>
+  </div>
+</div>
+
 <div id="app">
 
   <header class="topbar">
@@ -17,7 +40,9 @@
       <div class="topbar-sub" id="topbar-date"></div>
     </div>
     <div class="topbar-rs" id="topbar-rs">RS Medika</div>
+    <span id="topbar-user" style="font-size:12px;color:var(--tx2);display:flex;align-items:center;gap:4px"></span>
     <button class="topbar-gear" id="btn-settings" title="Pengaturan"><i class="ti ti-settings"></i></button>
+    <button class="topbar-gear" id="btn-logout" title="Keluar"><i class="ti ti-logout"></i></button>
   </header>
 
   <nav class="nav">
@@ -598,14 +623,19 @@
 <div class="modal-backdrop" id="modal-settings">
   <div class="modal">
     <div class="modal-title"><i class="ti ti-settings"></i>Pengaturan Aplikasi</div>
-    <div class="form-group" style="margin-bottom:16px">
+    <div class="form-group" style="margin-bottom:12px">
       <label>Nama Rumah Sakit / Klinik</label>
       <input type="text" id="settings-rs-name" placeholder="Contoh: RSUD Dr. Soetomo">
     </div>
-    <div style="display:flex;gap:8px">
+    <div style="display:flex;gap:8px;margin-bottom:16px">
       <button class="btn primary" id="settings-save-btn"><i class="ti ti-device-floppy"></i>Simpan</button>
-      <button class="btn" id="settings-close-btn">Batal</button>
+      <button class="btn" id="settings-close-btn">Tutup</button>
     </div>
+    <div class="divider"></div>
+    <div class="form-section-label">Pengaturan Akun</div>
+    <div class="form-group" style="margin-bottom:10px"><label>Nama Lengkap</label><input type="text" id="acc-nama" placeholder="Nama Anda"></div>
+    <div class="form-group" style="margin-bottom:12px"><label>Password Baru (kosongkan jika tidak ganti)</label><input type="password" id="acc-pass" autocomplete="new-password" placeholder="••••••"></div>
+    <button class="btn primary" id="account-save-btn"><i class="ti ti-user-check"></i>Simpan Akun</button>
   </div>
 </div>
 

@@ -2,6 +2,7 @@ require('dotenv').config()
 const express = require('express')
 const cors = require('cors')
 const path = require('path')
+const { read } = require('./src/db')
 
 const app = express()
 const PORT = process.env.PORT || 3000
@@ -12,6 +13,24 @@ app.use(express.urlencoded({ extended: true, limit: '10mb' }))
 app.use(express.static(path.join(__dirname, 'public')))
 app.use('/uploads', express.static(process.env.UPLOAD_DIR || path.join(__dirname, 'uploads')))
 
+// ── AUTH GATE ── semua /api butuh login, kecuali login/register
+function authFromToken(req) {
+  const token = (req.headers.authorization || '').replace('Bearer ', '').trim()
+  if (!token) return null
+  const s = read('sessions').find(x => x.token === token)
+  if (!s) return null
+  const u = read('users').find(x => x.username === s.username)
+  return u ? { username: u.username, nama: u.nama } : null
+}
+app.use((req, res, next) => {
+  if (!req.path.startsWith('/api/')) return next()
+  req.authUser = authFromToken(req)
+  if (req.path === '/api/auth/login' || req.path === '/api/auth/register') return next()
+  if (!req.authUser) return res.status(401).json({ error: 'Silakan login dulu' })
+  next()
+})
+
+app.use('/api/auth',     require('./src/routes/auth'))
 app.use('/api/anggaran',  require('./src/routes/anggaran'))
 app.use('/api/pembelian', require('./src/routes/pembelian'))
 app.use('/api/po',        require('./src/routes/po'))

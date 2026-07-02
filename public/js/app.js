@@ -27,6 +27,7 @@ let _terimaItems = []
 let _terimaHarga = 0
 let _editPO = null, _editReal = null, _editPin = null, _editHut = null, _editPrb = null, _editIter = null
 let _editMut = null, _editSo = null, _editAng = null
+let _currentUser = null
 
 function showLoading(v) { document.getElementById('loading-overlay').classList.toggle('show', v) }
 
@@ -962,6 +963,7 @@ async function loadMutasi() {
   buildMutasiTabs(tujuan, mutasi)
   renderMutasiSelect(tujuan)
   await loadPetugasSelects()
+  if (!_editMut && _currentUser?.nama) qs('mut-petugas').value = _currentUser.nama
 }
 
 function renderMutasiSelect(tujuan) {
@@ -1420,7 +1422,21 @@ document.addEventListener('click', async e => {
 qs('btn-settings').addEventListener('click', async () => {
   const s = await API.getSettings()
   qs('settings-rs-name').value = s.rs_name || ''
+  qs('acc-nama').value = _currentUser?.nama || ''
+  qs('acc-pass').value = ''
   qs('modal-settings').classList.add('open')
+})
+
+qs('account-save-btn').addEventListener('click', async () => {
+  const nama = qs('acc-nama').value.trim(), password = qs('acc-pass').value
+  if (!nama && !password) { toast('Tidak ada yang diubah', 'error'); return }
+  try {
+    const r = await API.authAccount({ nama: nama || undefined, password: password || undefined })
+    _currentUser = r.user
+    qs('topbar-user').innerHTML = `<i class="ti ti-user"></i>${r.user.nama}`
+    qs('acc-pass').value = ''
+    toast('Akun diperbarui')
+  } catch (e) { toast(e.message, 'error') }
 })
 
 qs('settings-save-btn').addEventListener('click', async () => {
@@ -1800,4 +1816,58 @@ async function init() {
   await showPage('dashboard')
 }
 
-init().catch(console.error)
+/* ── AUTH FLOW ── */
+function showAuth() {
+  qs('auth-overlay').style.display = 'flex'
+}
+function startApp() {
+  qs('auth-overlay').style.display = 'none'
+  qs('topbar-user').innerHTML = `<i class="ti ti-user"></i>${_currentUser?.nama || ''}`
+  init().catch(console.error)
+}
+window.onAuthExpired = () => { _currentUser = null; showAuth() }
+
+async function boot() {
+  if (localStorage.getItem('token')) {
+    try { const r = await API.authMe(); _currentUser = r.user; startApp(); return } catch {}
+  }
+  localStorage.removeItem('token')
+  showAuth()
+}
+
+qs('show-register').addEventListener('click', e => { e.preventDefault(); qs('auth-login').style.display = 'none'; qs('auth-register').style.display = ''; qs('auth-title').textContent = 'Daftar akun baru' })
+qs('show-login').addEventListener('click', e => { e.preventDefault(); qs('auth-register').style.display = 'none'; qs('auth-login').style.display = ''; qs('auth-title').textContent = 'Masuk ke akun Anda' })
+
+qs('login-btn').addEventListener('click', async () => {
+  const username = qs('login-user').value.trim(), password = qs('login-pass').value
+  if (!username || !password) { toast('Isi username & password', 'error'); return }
+  showLoading(true)
+  try {
+    const r = await API.authLogin({ username, password })
+    localStorage.setItem('token', r.token); _currentUser = r.user
+    qs('login-pass').value = ''
+    startApp(); toast('Selamat datang, ' + r.user.nama)
+  } catch (e) { toast(e.message, 'error') } finally { showLoading(false) }
+})
+qs('login-pass').addEventListener('keydown', e => { if (e.key === 'Enter') qs('login-btn').click() })
+
+qs('reg-btn').addEventListener('click', async () => {
+  const nama = qs('reg-nama').value.trim(), username = qs('reg-user').value.trim(), password = qs('reg-pass').value
+  if (!username || !password) { toast('Username & password wajib diisi', 'error'); return }
+  showLoading(true)
+  try {
+    const r = await API.authRegister({ username, nama, password })
+    localStorage.setItem('token', r.token); _currentUser = r.user
+    ;['reg-nama', 'reg-user', 'reg-pass'].forEach(id => qs(id).value = '')
+    startApp(); toast('Akun dibuat. Selamat datang, ' + r.user.nama)
+  } catch (e) { toast(e.message, 'error') } finally { showLoading(false) }
+})
+
+qs('btn-logout').addEventListener('click', async () => {
+  if (!confirm2('Keluar dari akun?')) return
+  try { await API.authLogout() } catch {}
+  localStorage.removeItem('token'); _currentUser = null
+  location.reload()
+})
+
+boot()

@@ -3,9 +3,16 @@ const API = (() => {
 
   async function req(method, path, body, isForm = false) {
     const opts = { method, headers: {} }
+    const token = localStorage.getItem('token')
+    if (token) opts.headers['Authorization'] = 'Bearer ' + token
     if (body && !isForm) { opts.headers['Content-Type'] = 'application/json'; opts.body = JSON.stringify(body) }
     if (isForm) opts.body = body
     const res = await fetch(BASE + path, opts)
+    if (res.status === 401) {
+      localStorage.removeItem('token')
+      if (window.onAuthExpired) window.onAuthExpired()
+      throw new Error('Sesi berakhir, silakan login')
+    }
     if (!res.ok) { const e = await res.json().catch(() => ({})); throw new Error(e.error || `HTTP ${res.status}`) }
     const ct = res.headers.get('content-type') || ''
     if (ct.includes('application/json')) return res.json()
@@ -13,6 +20,13 @@ const API = (() => {
   }
 
   return {
+    // Auth
+    authLogin: d => req('POST', '/auth/login', d),
+    authRegister: d => req('POST', '/auth/register', d),
+    authMe: () => req('GET', '/auth/me'),
+    authLogout: () => req('POST', '/auth/logout'),
+    authAccount: d => req('POST', '/auth/account', d),
+
     // Anggaran
     getAnggaran: () => req('GET', '/anggaran'),
     saveAnggaran: d => req('POST', '/anggaran', d),
