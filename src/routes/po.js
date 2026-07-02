@@ -18,7 +18,7 @@ router.post('/', (req, res) => {
   if (!supplier) return res.status(400).json({ error: 'distributor/supplier wajib dipilih' })
   if (!nominal) return res.status(400).json({ error: 'nominal PO wajib diisi' })
   const item = {
-    id: Date.now(),
+    id: Date.now(), dibuat_oleh: (req.authUser && req.authUser.nama) || '',
     tgl: tgl || new Date().toISOString().slice(0, 10),
     supplier,
     nominal: +nominal,

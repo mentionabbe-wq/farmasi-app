@@ -18,7 +18,7 @@ router.get('/', (req, res) => {
 router.post('/', (req, res) => {
   const { tgl, kategori = '', ruangan = '', nilai_sebelum, nilai_sesudah, ket = '' } = req.body
   const sb = +(nilai_sebelum || 0), ss = +(nilai_sesudah || 0)
-  const item = { id: Date.now(), tgl: tgl || new Date().toISOString().slice(0, 10), kategori, ruangan, nilai_sebelum: sb, nilai_sesudah: ss, selisih: ss - sb, ket, created_at: new Date().toISOString() }
+  const item = { id: Date.now(), dibuat_oleh: (req.authUser && req.authUser.nama) || '', tgl: tgl || new Date().toISOString().slice(0, 10), kategori, ruangan, nilai_sebelum: sb, nilai_sesudah: ss, selisih: ss - sb, ket, created_at: new Date().toISOString() }
   const data = read('stok_opname')
   data.push(item)
   write('stok_opname', data)

@@ -9,7 +9,7 @@ router.post('/', (req, res) => {
   const { tgl, item = '', jumlah, jumlah_pasien, ket = '' } = req.body
   if (!item) return res.status(400).json({ error: 'nama item wajib diisi' })
   const rec = {
-    id: Date.now(),
+    id: Date.now(), dibuat_oleh: (req.authUser && req.authUser.nama) || '',
     tgl: tgl || new Date().toISOString().slice(0, 10),
     item,
     jumlah: +(jumlah || 0),

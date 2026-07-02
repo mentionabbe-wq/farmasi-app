@@ -25,7 +25,7 @@ router.post('/', (req, res) => {
 
   const h = +(harga || 0), p = +(pajak || 0)
   const rec = {
-    id: Date.now(),
+    id: Date.now(), dibuat_oleh: (req.authUser && req.authUser.nama) || '',
     tgl: t, no_po, no_faktur, tgl_faktur, tgl_jatuh_tempo, supplier, anggaran,
     harga: h, pajak: p, total: h + p,
     items: cleanItems,

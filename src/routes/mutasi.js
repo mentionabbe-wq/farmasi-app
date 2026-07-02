@@ -14,7 +14,7 @@ router.post('/', (req, res) => {
   const { tgl, no = '', tujuan, jml, petugas = '', ket = '' } = req.body
   if (!jml || !tujuan) return res.status(400).json({ error: 'jml dan tujuan wajib diisi' })
   const item = {
-    id: Date.now(),
+    id: Date.now(), dibuat_oleh: (req.authUser && req.authUser.nama) || '',
     tgl: tgl || new Date().toISOString().slice(0, 10),
     no, tujuan,
     jml: +jml,

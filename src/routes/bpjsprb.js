@@ -8,7 +8,7 @@ router.get('/', (req, res) => {
 router.post('/', (req, res) => {
   const { tgl, jumlah_resep, total_klaim, resep_gagal, ket = '' } = req.body
   const rec = {
-    id: Date.now(),
+    id: Date.now(), dibuat_oleh: (req.authUser && req.authUser.nama) || '',
     tgl: tgl || new Date().toISOString().slice(0, 10),
     jumlah_resep: +(jumlah_resep || 0),
     total_klaim: +(total_klaim || 0),

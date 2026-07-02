@@ -347,7 +347,7 @@ async function renderPenerimaanHistory() {
     const jt = d.tgl_jatuh_tempo
     const jtStyle = jt && jt < todayStr ? 'color:#E24B4A;font-weight:600' : jt && jt === todayStr ? 'color:var(--amb-dk);font-weight:600' : ''
     return `<tr>
-      <td>${d.tgl}</td>
+      <td>${d.tgl}${d.dibuat_oleh ? `<div style="font-size:11px;color:var(--tx3)">oleh ${d.dibuat_oleh}</div>` : ''}</td>
       <td><span class="badge gray">${d.no_po}</span></td>
       <td style="font-size:12px">${d.no_faktur || '-'}</td>
       <td style="font-size:12px">${d.tgl_faktur || '-'}</td>
@@ -447,7 +447,7 @@ function renderRealisasiTable(data) {
   tbody.innerHTML = rows.map(d => {
     total += d.harga_total || 0
     return `<tr>
-      <td>${d.tgl_po}</td>
+      <td>${d.tgl_po}${d.dibuat_oleh ? `<div style="font-size:11px;color:var(--tx3)">oleh ${d.dibuat_oleh}</div>` : ''}</td>
       <td><span class="badge gray">${d.no_po}</span></td>
       <td>${d.supplier||'-'}</td>
       <td>${d.anggaran?`<span class="badge gray">${d.anggaran}</span>`:'-'}</td>
@@ -628,7 +628,7 @@ function renderPOTable(data) {
   tbody.innerHTML = rows.map(d => {
     total += d.nominal || 0
     return `<tr>
-      <td>${d.tgl}</td>
+      <td>${d.tgl}${d.dibuat_oleh ? `<div style="font-size:11px;color:var(--tx3)">oleh ${d.dibuat_oleh}</div>` : ''}</td>
       <td>${d.supplier||'-'}</td>
       <td style="text-align:right;font-weight:600">${fmt(d.nominal)}</td>
       <td style="font-size:12px;color:var(--tx2)">${d.principle||'-'}</td>
@@ -977,7 +977,7 @@ function buildMutasiTabs(tujuan, mutasi) {
     const items = mutasi.filter(d => d.tujuan === t.id)
     const total = items.reduce((s, d) => s + (d.total || 0), 0)
     const rows = items.length ? items.map(d => `<tr>
-      <td style="font-size:12px">${d.tgl}</td><td style="font-size:12px">${d.no||'-'}</td>
+      <td style="font-size:12px">${d.tgl}${d.dibuat_oleh ? `<div style="color:var(--tx3)">oleh ${d.dibuat_oleh}</div>` : ''}</td><td style="font-size:12px">${d.no||'-'}</td>
       <td style="text-align:right;font-weight:600">${fmt(d.jml)}</td>
       <td style="font-size:12px">${d.petugas||'-'}</td>
       <td style="font-size:11px;color:var(--tx2);max-width:120px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${d.ket||'-'}</td>

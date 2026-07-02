@@ -33,7 +33,7 @@ router.post('/', upload.array('resep', 5), (req, res) => {
   if (!obat) return res.status(400).json({ error: 'nama obat wajib diisi' })
   const files = (req.files || []).map(f => ({ filename: f.filename, originalname: f.originalname, size: f.size }))
   const rec = {
-    id: Date.now(),
+    id: Date.now(), dibuat_oleh: (req.authUser && req.authUser.nama) || '',
     tgl: tgl || new Date().toISOString().slice(0, 10),
     pasien, obat, ket, files,
     created_at: new Date().toISOString()

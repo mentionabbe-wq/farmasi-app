@@ -14,7 +14,7 @@ router.post('/', (req, res) => {
   if (!barang) return res.status(400).json({ error: 'nama barang wajib diisi' })
   const j = +(jumlah || 0), h = +(harga_satuan || 0)
   const item = {
-    id: Date.now(),
+    id: Date.now(), dibuat_oleh: (req.authUser && req.authUser.nama) || '',
     no_po,
     tgl_po: tgl_po || new Date().toISOString().slice(0, 10),
     supplier,

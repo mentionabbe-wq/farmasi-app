@@ -33,7 +33,7 @@ router.post('/', upload.array('dok', 5), (req, res) => {
   const t = tgl || new Date().toISOString().slice(0, 10)
   const files = (req.files || []).map(f => ({ filename: f.filename, originalname: f.originalname, size: f.size }))
   const rec = {
-    id: Date.now(),
+    id: Date.now(), dibuat_oleh: (req.authUser && req.authUser.nama) || '',
     tgl: t, pasien, no_rm, jenis, jumlah: +(jumlah || 0), ket, files,
     created_at: new Date().toISOString()
   }

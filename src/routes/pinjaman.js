@@ -18,7 +18,7 @@ router.post('/', (req, res) => {
   if (!rs) return res.status(400).json({ error: 'nama RS wajib diisi' })
   if (!barang) return res.status(400).json({ error: 'nama barang wajib diisi' })
   const item = {
-    id: Date.now(),
+    id: Date.now(), dibuat_oleh: (req.authUser && req.authUser.nama) || '',
     tgl: tgl || new Date().toISOString().slice(0, 10),
     jenis,
     rs,

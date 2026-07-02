@@ -18,7 +18,7 @@ router.post('/', (req, res) => {
   if (!tgl) return res.status(400).json({ error: 'tgl wajib diisi' })
   const totalResep   = total_resep   !== undefined ? +total_resep   : Object.values(detail).reduce((s, k) => s + (+k.resep   || 0), 0)
   const totalNominal = total_nominal !== undefined ? +total_nominal : Object.values(detail).reduce((s, k) => s + (+k.nominal || 0), 0)
-  const item = { id: Date.now(), tgl, shift, tujuan, detail, total_resep: totalResep, total_nominal: totalNominal, ket, created_at: new Date().toISOString() }
+  const item = { id: Date.now(), dibuat_oleh: (req.authUser && req.authUser.nama) || '', tgl, shift, tujuan, detail, total_resep: totalResep, total_nominal: totalNominal, ket, created_at: new Date().toISOString() }
   const data = read('penjualan')
   data.push(item)
   write('penjualan', data)
