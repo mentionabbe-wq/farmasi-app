@@ -108,7 +108,7 @@ async function showPage(p) {
 /* ── DASHBOARD ── */
 async function loadDashboard() {
   const [ang, beli, mut, pj, tujuan, kats, tidakDatang, so] = await Promise.all([
-    API.getAnggaran(), API.getPembelian(), API.getMutasi(),
+    API.getAnggaran(), API.getPenerimaan(), API.getMutasi(),
     API.getPenjualan(), API.getTujuan(), API.getKategori(), API.getTidakDatang(), API.getStokOpname()
   ])
   STATE.tujuan = tujuan; STATE.kategori = kats
@@ -1764,7 +1764,7 @@ async function loadRekap() {
   try {
     const [sum, beli, mut, pj, so] = await Promise.all([
       API.getRekapSummary({ dari, sampai }),
-      API.getPembelian({ dari, sampai }),
+      API.getPenerimaan({ dari, sampai }),
       API.getMutasi({ dari, sampai }),
       API.getPenjualan({ dari, sampai }),
       API.getStokOpname({ dari, sampai })

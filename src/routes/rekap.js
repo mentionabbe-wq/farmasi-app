@@ -11,7 +11,7 @@ const filterDate = (data, dari, sampai) => data.filter(d => {
 router.get('/summary', (req, res) => {
   const { dari, sampai } = req.query
 
-  const pembelian  = filterDate(read('pembelian'),  dari, sampai)
+  const pembelian  = filterDate(read('penerimaan'), dari, sampai)
   const mutasi     = filterDate(read('mutasi'),     dari, sampai)
   const penjualan  = filterDate(read('penjualan'),  dari, sampai)
   const arsip      = filterDate(read('arsip'),      dari, sampai)
@@ -44,7 +44,7 @@ router.get('/summary', (req, res) => {
 router.get('/excel', (req, res) => {
   const { dari, sampai } = req.query
 
-  const pembelian = filterDate(read('pembelian'), dari, sampai).sort((a, b) => b.tgl.localeCompare(a.tgl))
+  const pembelian = filterDate(read('penerimaan'), dari, sampai).sort((a, b) => b.tgl.localeCompare(a.tgl))
   const mutasiAll = filterDate(read('mutasi'),    dari, sampai).sort((a, b) => b.tgl.localeCompare(a.tgl))
   const penjualan = filterDate(read('penjualan'), dari, sampai).sort((a, b) => b.tgl.localeCompare(a.tgl))
   const arsipAll  = filterDate(read('arsip'),     dari, sampai).sort((a, b) => b.tgl.localeCompare(a.tgl))

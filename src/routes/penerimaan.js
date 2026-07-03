@@ -2,8 +2,10 @@ const router = require('express').Router()
 const { read, write } = require('../db')
 
 router.get('/', (req, res) => {
-  const { no_po } = req.query
+  const { no_po, dari, sampai } = req.query
   let data = read('penerimaan').sort((a, b) => b.tgl.localeCompare(a.tgl) || b.id - a.id)
+  if (dari) data = data.filter(d => d.tgl >= dari)
+  if (sampai) data = data.filter(d => d.tgl <= sampai)
   if (no_po) data = data.filter(d => d.no_po === no_po)
   res.json(data)
 })
