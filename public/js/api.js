@@ -52,6 +52,7 @@ const API = (() => {
     // Penerimaan (berdasarkan PO)
     getPenerimaan: (p = {}) => req('GET', '/penerimaan?' + new URLSearchParams(p)),
     savePenerimaan: d => req('POST', '/penerimaan', d),
+    updatePenerimaan: (id, d) => req('PUT', `/penerimaan/${id}`, d),
     delPenerimaan: id => req('DELETE', `/penerimaan/${id}`),
 
     // Barang (directory)

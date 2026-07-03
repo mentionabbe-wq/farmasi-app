@@ -52,6 +52,38 @@ router.post('/', (req, res) => {
   res.status(201).json(rec)
 })
 
+router.put('/:id', (req, res) => {
+  const data = read('penerimaan')
+  const i = data.findIndex(d => String(d.id) === req.params.id)
+  if (i < 0) return res.status(404).json({ error: 'data tidak ditemukan' })
+  const cur = data[i]
+  const { tgl, no_po, no_faktur, tgl_faktur, tgl_jatuh_tempo, supplier, anggaran, harga, pajak, items } = req.body
+  let cleanItems = cur.items
+  if (Array.isArray(items) && items.length) {
+    cleanItems = items.map(it => {
+      const status = ['datang', 'sebagian', 'tidak'].includes(it.status) ? it.status : 'datang'
+      const jumlah = +(it.jumlah || 0)
+      let terima = status === 'datang' ? jumlah : status === 'tidak' ? 0 : +(it.jumlah_terima || 0)
+      if (terima > jumlah) terima = jumlah
+      if (terima < 0) terima = 0
+      return { real_id: it.real_id != null ? it.real_id : null, barang: it.barang || '', jumlah, jumlah_terima: terima, harga_terima: +(it.harga_terima || 0), diskon: +(it.diskon || 0), status }
+    })
+  }
+  const h = harga !== undefined ? +harga : cur.harga
+  const p = pajak !== undefined ? +pajak : cur.pajak
+  data[i] = {
+    ...cur,
+    tgl: tgl ?? cur.tgl, no_po: no_po ?? cur.no_po,
+    no_faktur: no_faktur ?? cur.no_faktur, tgl_faktur: tgl_faktur ?? cur.tgl_faktur,
+    tgl_jatuh_tempo: tgl_jatuh_tempo ?? cur.tgl_jatuh_tempo,
+    supplier: supplier ?? cur.supplier, anggaran: anggaran ?? cur.anggaran,
+    harga: h, pajak: p, total: h + p,
+    items: cleanItems
+  }
+  write('penerimaan', data)
+  res.json(data[i])
+})
+
 router.delete('/:id', (req, res) => {
   write('penerimaan', read('penerimaan').filter(d => String(d.id) !== req.params.id))
   res.json({ ok: true })

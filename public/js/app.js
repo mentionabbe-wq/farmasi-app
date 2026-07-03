@@ -25,6 +25,7 @@ let _realisasiAll = []
 let _penerimaanAll = []
 let _terimaItems = []
 let _terimaHarga = 0
+let _editTerima = null
 let _editPO = null, _editReal = null, _editPin = null, _editHut = null, _editPrb = null, _editIter = null
 let _editMut = null, _editSo = null, _editAng = null
 let _currentUser = null
@@ -295,6 +296,8 @@ document.addEventListener('click', async e => {
 
 /* ── PENERIMAAN (berdasarkan No PO) ── */
 async function loadPembelian() {
+  _editTerima = null
+  qs('terima-save-btn').innerHTML = '<i class="ti ti-device-floppy"></i>Simpan Penerimaan'
   await loadSupplierSelects()
   const [real, td] = await Promise.all([API.getRealisasi(), API.getTidakDatang()])
   _realisasiAll = real
@@ -305,15 +308,16 @@ async function loadPembelian() {
   await renderPenerimaanHistory()
 }
 
-function renderTerimaItems() {
+function renderTerimaItems(prefill) {
   const box = qs('terima-items')
   const noPo = qs('terima-nopo').value.trim()
   if (!noPo) { box.innerHTML = '<div class="empty" style="padding:8px">Pilih No PO untuk menampilkan barang</div>'; _terimaItems = []; recalcTerima(); return }
   const poLines = _realisasiAll.filter(d => d.no_po === noPo)
   if (!poLines.length) { box.innerHTML = `<div class="empty" style="padding:8px">Tidak ada barang untuk PO "${noPo}". Tambahkan dulu di tab Realisasi Pembelian.</div>`; _terimaItems = []; recalcTerima(); return }
   // Hitung jumlah yang sudah diterima sebelumnya per baris PO
+  // (saat edit, penerimaan yang sedang diedit tidak dihitung agar jatahnya kembali tersedia)
   const received = {}
-  _penerimaanAll.filter(p => p.no_po === noPo).forEach(p => (p.items || []).forEach(it => {
+  _penerimaanAll.filter(p => p.no_po === noPo && String(p.id) !== String(_editTerima)).forEach(p => (p.items || []).forEach(it => {
     if (it.real_id != null) received['id:' + it.real_id] = (received['id:' + it.real_id] || 0) + (+it.jumlah_terima || 0)
     else received['nm:' + it.barang] = (received['nm:' + it.barang] || 0) + (+it.jumlah_terima || 0)
   }))
@@ -325,18 +329,25 @@ function renderTerimaItems() {
   _terimaItems = items
   box.innerHTML = `<div class="table-wrap"><table>
     <thead><tr><th>Nama Barang</th><th style="text-align:right">Harga PO</th><th style="text-align:right">Harga Penerimaan</th><th style="text-align:right">Diskon (%)</th><th style="text-align:right">Jml Diterima</th><th>Status</th></tr></thead>
-    <tbody>${items.map((it, i) => `<tr>
+    <tbody>${items.map((it, i) => {
+      const pf = prefill ? (prefill['id:' + it.id] || prefill['nm:' + it.barang]) : null
+      const status = pf ? pf.status : 'datang'
+      const harga = pf ? (+pf.harga_terima || 0) : (+it.harga_satuan || 0)
+      const disk = pf ? (+pf.diskon || 0) : 0
+      const qty = status === 'tidak' ? 0 : status === 'sebagian' ? (+pf.jumlah_terima || 0) : it.sisa
+      return `<tr>
       <td>${it.barang}<div style="font-size:11px;color:var(--tx2)">sisa ${it.sisa} dari ${it.jumlah}</div></td>
       <td style="text-align:right">${fmt(it.harga_satuan)}</td>
-      <td style="text-align:right"><input type="number" class="input-sm terima-hargaterima" data-i="${i}" value="${+it.harga_satuan || 0}" min="0" style="width:96px;text-align:right" oninput="recalcTerima()"></td>
-      <td style="text-align:right"><input type="number" class="input-sm terima-disk" data-i="${i}" value="0" min="0" max="100" style="width:62px;text-align:right" oninput="recalcTerima()"></td>
-      <td style="text-align:right"><input type="number" class="input-sm terima-qty" data-i="${i}" value="${it.sisa}" min="0" max="${it.sisa}" disabled style="width:74px;text-align:right" oninput="recalcTerima()"></td>
+      <td style="text-align:right"><input type="number" class="input-sm terima-hargaterima" data-i="${i}" value="${harga}" min="0" style="width:96px;text-align:right" oninput="recalcTerima()"></td>
+      <td style="text-align:right"><input type="number" class="input-sm terima-disk" data-i="${i}" value="${disk}" min="0" max="100" style="width:62px;text-align:right" oninput="recalcTerima()"></td>
+      <td style="text-align:right"><input type="number" class="input-sm terima-qty" data-i="${i}" value="${qty}" min="0" max="${it.sisa}" ${status === 'sebagian' ? '' : 'disabled'} style="width:74px;text-align:right" oninput="recalcTerima()"></td>
       <td><select class="input-sm terima-status" data-i="${i}" onchange="onTerimaStatus(this)">
-        <option value="datang">Datang</option>
-        <option value="sebagian">Datang Sebagian</option>
-        <option value="tidak">Tidak Datang</option>
+        <option value="datang"${status === 'datang' ? ' selected' : ''}>Datang</option>
+        <option value="sebagian"${status === 'sebagian' ? ' selected' : ''}>Datang Sebagian</option>
+        <option value="tidak"${status === 'tidak' ? ' selected' : ''}>Tidak Datang</option>
       </select></td>
-    </tr>`).join('')}</tbody></table></div>`
+    </tr>`
+    }).join('')}</tbody></table></div>`
   recalcTerima()
 }
 
@@ -408,10 +419,31 @@ async function renderPenerimaanHistory() {
       <td style="text-align:right">${fmt(d.pajak)}</td>
       <td style="text-align:right;font-weight:600">${fmt(total)}</td>
       <td>${d.anggaran ? `<span class="badge gray">${d.anggaran}</span>` : '-'}</td>
-      <td><button class="btn sm danger" data-id="${d.id}" data-action="del-terima"><i class="ti ti-trash"></i></button></td>
+      <td style="white-space:nowrap"><button class="btn sm" data-id="${d.id}" data-action="edit-terima"><i class="ti ti-pencil"></i></button> <button class="btn sm danger" data-id="${d.id}" data-action="del-terima"><i class="ti ti-trash"></i></button></td>
     </tr>`
   }).join('')
 }
+
+document.addEventListener('click', e => {
+  const b = e.target.closest('[data-action="edit-terima"]'); if (!b) return
+  const d = _penerimaanAll.find(x => String(x.id) === b.dataset.id); if (!d) return
+  _editTerima = d.id
+  qs('terima-tgl').value = d.tgl || ''
+  qs('terima-nopo').value = d.no_po || ''
+  qs('terima-faktur').value = d.no_faktur || ''
+  qs('terima-tgl-faktur').value = d.tgl_faktur || ''
+  qs('terima-jatuh-tempo').value = d.tgl_jatuh_tempo || ''
+  qs('terima-supplier').value = d.supplier || ''
+  const prefill = {}
+  ;(d.items || []).forEach(it => {
+    const v = { status: it.status, jumlah_terima: it.jumlah_terima, harga_terima: it.harga_terima, diskon: it.diskon || 0 }
+    if (it.real_id != null) prefill['id:' + it.real_id] = v
+    prefill['nm:' + it.barang] = v
+  })
+  renderTerimaItems(prefill)
+  qs('terima-save-btn').innerHTML = '<i class="ti ti-pencil"></i>Update Penerimaan'
+  qs('terima-nopo').scrollIntoView({ behavior: 'smooth', block: 'center' })
+})
 
 qs('terima-nopo').addEventListener('input', () => {
   renderTerimaItems()
@@ -442,17 +474,19 @@ qs('terima-save-btn').addEventListener('click', async () => {
   const anggaran = match ? (match.anggaran || '') : ''
   showLoading(true)
   try {
-    await API.savePenerimaan({
+    const payload = {
       tgl: qs('terima-tgl').value || today(), no_po: noPo,
       no_faktur: qs('terima-faktur').value.trim(),
       tgl_faktur: qs('terima-tgl-faktur').value, tgl_jatuh_tempo: qs('terima-jatuh-tempo').value,
       supplier: qs('terima-supplier').value.trim(),
       anggaran, harga: _terimaHarga, pajak: Math.round(_terimaHarga * 0.11),
       items
-    })
+    }
+    if (_editTerima) { await API.updatePenerimaan(_editTerima, payload); _editTerima = null; qs('terima-save-btn').innerHTML = '<i class="ti ti-device-floppy"></i>Simpan Penerimaan' }
+    else { await API.savePenerimaan(payload) }
     ;['terima-nopo', 'terima-faktur', 'terima-tgl-faktur', 'terima-jatuh-tempo', 'terima-supplier'].forEach(id => qs(id).value = '')
-    renderTerimaItems()
     await renderPenerimaanHistory()
+    renderTerimaItems()
     renderTidakDatangTable(await API.getTidakDatang())
     toast('Penerimaan disimpan')
   } catch (e) { toast(e.message, 'error') } finally { showLoading(false) }
@@ -463,7 +497,7 @@ document.addEventListener('click', async e => {
     if (!confirm2('Hapus penerimaan ini?')) return
     const id = e.target.closest('[data-id]').dataset.id
     showLoading(true)
-    try { await API.delPenerimaan(id); await renderPenerimaanHistory(); toast('Dihapus') }
+    try { await API.delPenerimaan(id); if (String(_editTerima) === String(id)) { _editTerima = null; qs('terima-save-btn').innerHTML = '<i class="ti ti-device-floppy"></i>Simpan Penerimaan' } await renderPenerimaanHistory(); toast('Dihapus') }
     catch (err) { toast(err.message, 'error') } finally { showLoading(false) }
   }
 })
