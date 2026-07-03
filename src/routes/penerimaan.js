@@ -11,7 +11,7 @@ router.get('/', (req, res) => {
 })
 
 router.post('/', (req, res) => {
-  const { tgl, no_po = '', no_faktur = '', tgl_faktur = '', tgl_jatuh_tempo = '', supplier = '', anggaran = '', harga, pajak, items = [] } = req.body
+  const { tgl, no_po = '', no_faktur = '', tgl_faktur = '', tgl_jatuh_tempo = '', supplier = '', principle = '', anggaran = '', harga, pajak, items = [] } = req.body
   if (!no_po) return res.status(400).json({ error: 'No PO wajib dipilih' })
   if (!Array.isArray(items) || !items.length) return res.status(400).json({ error: 'tidak ada item untuk diterima' })
   const t = tgl || new Date().toISOString().slice(0, 10)
@@ -28,7 +28,7 @@ router.post('/', (req, res) => {
   const h = +(harga || 0), p = +(pajak || 0)
   const rec = {
     id: Date.now(), dibuat_oleh: (req.authUser && req.authUser.nama) || '',
-    tgl: t, no_po, no_faktur, tgl_faktur, tgl_jatuh_tempo, supplier, anggaran,
+    tgl: t, no_po, no_faktur, tgl_faktur, tgl_jatuh_tempo, supplier, principle, anggaran,
     harga: h, pajak: p, total: h + p,
     items: cleanItems,
     created_at: new Date().toISOString()
@@ -57,7 +57,7 @@ router.put('/:id', (req, res) => {
   const i = data.findIndex(d => String(d.id) === req.params.id)
   if (i < 0) return res.status(404).json({ error: 'data tidak ditemukan' })
   const cur = data[i]
-  const { tgl, no_po, no_faktur, tgl_faktur, tgl_jatuh_tempo, supplier, anggaran, harga, pajak, items } = req.body
+  const { tgl, no_po, no_faktur, tgl_faktur, tgl_jatuh_tempo, supplier, principle, anggaran, harga, pajak, items } = req.body
   let cleanItems = cur.items
   if (Array.isArray(items) && items.length) {
     cleanItems = items.map(it => {
@@ -76,7 +76,7 @@ router.put('/:id', (req, res) => {
     tgl: tgl ?? cur.tgl, no_po: no_po ?? cur.no_po,
     no_faktur: no_faktur ?? cur.no_faktur, tgl_faktur: tgl_faktur ?? cur.tgl_faktur,
     tgl_jatuh_tempo: tgl_jatuh_tempo ?? cur.tgl_jatuh_tempo,
-    supplier: supplier ?? cur.supplier, anggaran: anggaran ?? cur.anggaran,
+    supplier: supplier ?? cur.supplier, principle: principle ?? cur.principle, anggaran: anggaran ?? cur.anggaran,
     harga: h, pajak: p, total: h + p,
     items: cleanItems
   }

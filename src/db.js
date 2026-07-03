@@ -38,7 +38,7 @@ if (!fs.existsSync(fp('kat_arsip'))) {
     { id: 'lainnya',   label: 'Lainnya',    is_default: true }
   ])
 }
-;['anggaran','pembelian','po','realisasi','penerimaan','barang','petugas','hutang_obat','obat_belum','bpjs_prb','bpjs_alkes','bpjs_iterasi','pinjaman','mutasi','penjualan','arsip','tidak_datang','stok_opname','users','sessions'].forEach(n => {
+;['anggaran','pembelian','po','realisasi','penerimaan','barang','petugas','principle','hutang_obat','obat_belum','bpjs_prb','bpjs_alkes','bpjs_iterasi','pinjaman','mutasi','penjualan','arsip','tidak_datang','stok_opname','users','sessions'].forEach(n => {
   if (!fs.existsSync(fp(n))) write(n, [])
 })
 if (!fs.existsSync(fp('settings'))) {

@@ -61,6 +61,12 @@ const API = (() => {
     updateBarang: (id, d) => req('PUT', `/barang/${id}`, d),
     delBarang: id => req('DELETE', `/barang/${id}`),
 
+    // Principle (directory)
+    getPrinciple: () => req('GET', '/principle'),
+    savePrinciple: d => req('POST', '/principle', d),
+    updatePrinciple: (id, d) => req('PUT', `/principle/${id}`, d),
+    delPrinciple: id => req('DELETE', `/principle/${id}`),
+
     // Petugas (directory)
     getPetugas: () => req('GET', '/petugas'),
     savePetugas: d => req('POST', '/petugas', d),

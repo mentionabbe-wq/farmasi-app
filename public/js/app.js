@@ -434,6 +434,7 @@ document.addEventListener('click', e => {
   qs('terima-tgl-faktur').value = d.tgl_faktur || ''
   qs('terima-jatuh-tempo').value = d.tgl_jatuh_tempo || ''
   qs('terima-supplier').value = d.supplier || ''
+  qs('terima-principle').value = d.principle || ''
   const prefill = {}
   ;(d.items || []).forEach(it => {
     const v = { status: it.status, jumlah_terima: it.jumlah_terima, harga_terima: it.harga_terima, diskon: it.diskon || 0 }
@@ -451,6 +452,7 @@ qs('terima-nopo').addEventListener('input', () => {
   const match = _realisasiAll.find(d => d.no_po === no)
   if (!match) return
   if (match.supplier && !qs('terima-supplier').value.trim()) qs('terima-supplier').value = match.supplier
+  if (match.principle && !qs('terima-principle').value.trim()) qs('terima-principle').value = match.principle
 })
 qs('terima-filter-nopo').addEventListener('input', renderPenerimaanHistory)
 
@@ -479,12 +481,13 @@ qs('terima-save-btn').addEventListener('click', async () => {
       no_faktur: qs('terima-faktur').value.trim(),
       tgl_faktur: qs('terima-tgl-faktur').value, tgl_jatuh_tempo: qs('terima-jatuh-tempo').value,
       supplier: qs('terima-supplier').value.trim(),
+      principle: qs('terima-principle').value.trim(),
       anggaran, harga: _terimaHarga, pajak: Math.round(_terimaHarga * 0.11),
       items
     }
     if (_editTerima) { await API.updatePenerimaan(_editTerima, payload); _editTerima = null; qs('terima-save-btn').innerHTML = '<i class="ti ti-device-floppy"></i>Simpan Penerimaan' }
     else { await API.savePenerimaan(payload) }
-    ;['terima-nopo', 'terima-faktur', 'terima-tgl-faktur', 'terima-jatuh-tempo', 'terima-supplier'].forEach(id => qs(id).value = '')
+    ;['terima-nopo', 'terima-faktur', 'terima-tgl-faktur', 'terima-jatuh-tempo', 'terima-supplier', 'terima-principle'].forEach(id => qs(id).value = '')
     await renderPenerimaanHistory()
     renderTerimaItems()
     renderTidakDatangTable(await API.getTidakDatang())
@@ -515,7 +518,7 @@ function calcRealTotal() {
 }
 
 async function loadRealisasi() {
-  await Promise.all([loadBarangSelects(), loadSupplierSelects()])
+  await Promise.all([loadBarangSelects(), loadSupplierSelects(), loadPrincipleSelects()])
   const ang = await API.getAnggaran()
   qs('real-anggaran').innerHTML = '<option value="">-- Pilih --</option>' + ang.map(a => `<option value="${a.bulan}">${a.bulan}</option>`).join('')
   _realData = await API.getRealisasi()
@@ -533,7 +536,7 @@ function renderRealisasiTable(data) {
     return `<tr>
       <td>${d.tgl_po}${d.dibuat_oleh ? `<div style="font-size:11px;color:var(--tx3)">oleh ${d.dibuat_oleh}</div>` : ''}</td>
       <td><span class="badge gray">${d.no_po}</span></td>
-      <td>${d.supplier||'-'}</td>
+      <td>${d.supplier||'-'}${d.principle?`<div style="font-size:11px;color:var(--tx2)">${d.principle}</div>`:''}</td>
       <td>${d.anggaran?`<span class="badge gray">${d.anggaran}</span>`:'-'}</td>
       <td>${d.barang}</td>
       <td style="text-align:right">${d.jumlah}</td>
@@ -552,6 +555,7 @@ qs('real-nopo').addEventListener('input', () => {
   const match = _realData.find(d => d.no_po === no)
   if (!match) return
   if (match.supplier && !qs('real-supplier').value.trim()) qs('real-supplier').value = match.supplier
+  if (match.principle && !qs('real-principle').value.trim()) qs('real-principle').value = match.principle
   if (match.anggaran && !qs('real-anggaran').value) qs('real-anggaran').value = match.anggaran
 })
 
@@ -563,7 +567,7 @@ qs('real-save-btn').addEventListener('click', async () => {
   if (!barang) { toast('Nama barang wajib diisi', 'error'); return }
   showLoading(true)
   try {
-    const payload = { no_po, tgl_po: qs('real-tgl').value || today(), supplier: qs('real-supplier').value.trim(), anggaran: qs('real-anggaran').value, barang, jumlah: qs('real-jumlah').value, harga_satuan: qs('real-harga').value }
+    const payload = { no_po, tgl_po: qs('real-tgl').value || today(), supplier: qs('real-supplier').value.trim(), principle: qs('real-principle').value.trim(), anggaran: qs('real-anggaran').value, barang, jumlah: qs('real-jumlah').value, harga_satuan: qs('real-harga').value }
     if (_editReal) { await API.updateRealisasi(_editReal, payload); _editReal = null; qs('real-save-btn').innerHTML = '<i class="ti ti-device-floppy"></i>Simpan Realisasi' }
     else { await API.saveRealisasi(payload) }
     ;['real-barang', 'real-jumlah', 'real-harga', 'real-total'].forEach(id => qs(id).value = '')
@@ -578,6 +582,7 @@ document.addEventListener('click', e => {
   qs('real-nopo').value = d.no_po || ''
   qs('real-tgl').value = d.tgl_po || ''
   qs('real-supplier').value = d.supplier || ''
+  qs('real-principle').value = d.principle || ''
   qs('real-anggaran').value = d.anggaran || ''
   qs('real-barang').value = d.barang || ''
   qs('real-jumlah').value = d.jumlah || ''
@@ -617,10 +622,74 @@ document.querySelectorAll('[data-potab]').forEach(btn => {
     qs('potab-rencana').style.display = tab === 'rencana' ? '' : 'none'
     qs('potab-realisasi').style.display = tab === 'realisasi' ? '' : 'none'
     qs('potab-penerimaan').style.display = tab === 'penerimaan' ? '' : 'none'
+    qs('potab-laporan').style.display = tab === 'laporan' ? '' : 'none'
     if (tab === 'realisasi') loadRealisasi()
     if (tab === 'penerimaan') loadPembelian()
+    if (tab === 'laporan') loadLaporan()
   })
 })
+
+/* ── LAPORAN PEMBELIAN ── */
+async function loadLaporan() {
+  const dari = qs('lap-dari').value, sampai = qs('lap-sampai').value
+  showLoading(true)
+  try {
+    const p = {}; if (dari) p.dari = dari; if (sampai) p.sampai = sampai
+    const [terima, real] = await Promise.all([API.getPenerimaan(p), API.getRealisasi()])
+    const realF = real.filter(d => (!dari || (d.tgl_po || '') >= dari) && (!sampai || (d.tgl_po || '') <= sampai))
+
+    // 1. Penerimaan per distributor
+    const byDist = {}
+    terima.forEach(d => {
+      const k = d.supplier || '(tanpa distributor)'
+      const o = byDist[k] = byDist[k] || { n: 0, h: 0, p: 0, t: 0 }
+      o.n++; o.h += d.harga || 0; o.p += d.pajak || 0
+      o.t += d.total != null ? d.total : (d.harga || 0) + (d.pajak || 0)
+    })
+    const distRows = Object.entries(byDist).sort((a, b) => b[1].t - a[1].t)
+    qs('lap-dist-tbody').innerHTML = distRows.length
+      ? distRows.map(([nama, v]) => `<tr><td>${nama}</td><td style="text-align:right">${v.n}</td><td style="text-align:right">${fmt(v.h)}</td><td style="text-align:right">${fmt(v.p)}</td><td style="text-align:right;font-weight:600">${fmt(v.t)}</td></tr>`).join('')
+      : '<tr><td colspan="5"><div class="empty">Tidak ada data penerimaan pada periode ini</div></td></tr>'
+    qs('lap-dist-tfoot').innerHTML = distRows.length
+      ? `<tr style="font-weight:700;border-top:2px solid var(--bd)"><td>Total (${distRows.length} distributor)</td><td style="text-align:right">${distRows.reduce((s, [, v]) => s + v.n, 0)}</td><td style="text-align:right">${fmt(distRows.reduce((s, [, v]) => s + v.h, 0))}</td><td style="text-align:right">${fmt(distRows.reduce((s, [, v]) => s + v.p, 0))}</td><td style="text-align:right">${fmt(distRows.reduce((s, [, v]) => s + v.t, 0))}</td></tr>` : ''
+
+    // 2. Faktur sudah jatuh tempo
+    const todayStr = today()
+    const jtRows = terima.filter(d => d.tgl_jatuh_tempo && d.tgl_jatuh_tempo <= todayStr)
+      .sort((a, b) => a.tgl_jatuh_tempo.localeCompare(b.tgl_jatuh_tempo))
+    qs('lap-jt-tbody').innerHTML = jtRows.length
+      ? jtRows.map(d => {
+          const total = d.total != null ? d.total : (d.harga || 0) + (d.pajak || 0)
+          const lewat = d.tgl_jatuh_tempo < todayStr
+          return `<tr>
+            <td style="${lewat ? 'color:#E24B4A;font-weight:600' : 'color:var(--amb-dk);font-weight:600'}">${d.tgl_jatuh_tempo}${lewat ? ' ⚠' : ' (hari ini)'}</td>
+            <td>${d.tgl}</td>
+            <td><span class="badge gray">${d.no_po}</span></td>
+            <td style="font-size:12px">${d.no_faktur || '-'}</td>
+            <td>${d.supplier || '-'}</td>
+            <td style="text-align:right;font-weight:600">${fmt(total)}</td>
+          </tr>`
+        }).join('')
+      : '<tr><td colspan="6"><div class="empty"><i class="ti ti-circle-check"></i>Tidak ada faktur yang sudah jatuh tempo</div></td></tr>'
+    qs('lap-jt-tfoot').innerHTML = jtRows.length
+      ? `<tr style="font-weight:700;border-top:2px solid var(--bd)"><td colspan="5">Total (${jtRows.length} faktur)</td><td style="text-align:right">${fmt(jtRows.reduce((s, d) => s + (d.total != null ? d.total : (d.harga || 0) + (d.pajak || 0)), 0))}</td></tr>` : ''
+
+    // 3. Pembelian per principle (dari realisasi)
+    const byPrin = {}
+    realF.forEach(d => {
+      const k = d.principle || '(tanpa principle)'
+      const o = byPrin[k] = byPrin[k] || { n: 0, t: 0 }
+      o.n++; o.t += d.harga_total || 0
+    })
+    const prinRows = Object.entries(byPrin).sort((a, b) => b[1].t - a[1].t)
+    qs('lap-prin-tbody').innerHTML = prinRows.length
+      ? prinRows.map(([nama, v]) => `<tr><td>${nama}</td><td style="text-align:right">${v.n}</td><td style="text-align:right;font-weight:600">${fmt(v.t)}</td></tr>`).join('')
+      : '<tr><td colspan="3"><div class="empty">Tidak ada data realisasi pada periode ini</div></td></tr>'
+    qs('lap-prin-tfoot').innerHTML = prinRows.length
+      ? `<tr style="font-weight:700;border-top:2px solid var(--bd)"><td>Total (${prinRows.length} principle)</td><td style="text-align:right">${prinRows.reduce((s, [, v]) => s + v.n, 0)}</td><td style="text-align:right">${fmt(prinRows.reduce((s, [, v]) => s + v.t, 0))}</td></tr>` : ''
+  } catch (e) { toast(e.message, 'error') } finally { showLoading(false) }
+}
+qs('lap-btn').addEventListener('click', loadLaporan)
 
 /* Modal Kelola Barang */
 async function renderBarangModal() {
@@ -685,8 +754,9 @@ async function loadPO() {
   qs('potab-rencana').style.display = ''
   qs('potab-realisasi').style.display = 'none'
   qs('potab-penerimaan').style.display = 'none'
+  qs('potab-laporan').style.display = 'none'
   document.querySelectorAll('[data-potab]').forEach(b => b.classList.toggle('primary', b.dataset.potab === 'rencana'))
-  await loadSupplierSelects()
+  await Promise.all([loadSupplierSelects(), loadPrincipleSelects()])
   _poData = await API.getPO()
   renderPOTable(_poData)
 }
@@ -1167,6 +1237,53 @@ document.addEventListener('click', async e => {
     if (!confirm2('Hapus petugas ini?')) return
     const id = e.target.closest('[data-id]').dataset.id
     try { await API.delPetugas(id); await renderPetugasModal(); toast('Dihapus') }
+    catch (e) { toast(e.message, 'error') }
+  }
+})
+
+/* ── PRINCIPLE (directory) ── */
+async function loadPrincipleSelects() {
+  const list = await API.getPrinciple()
+  const opts = list.map(p => `<option value="${p.nama}">`).join('')
+  ;['po-principle-list', 'real-principle-list'].forEach(id => { const el = qs(id); if (el) el.innerHTML = opts })
+}
+async function renderPrincipleModal() {
+  const list = await API.getPrinciple()
+  qs('principle-list-modal').innerHTML = list.length
+    ? list.map(p => `<div class="item-row"><div class="item-row-label"><span>${p.nama}</span></div><button class="btn sm" data-id="${p.id}" data-action="edit-principle"><i class="ti ti-pencil"></i></button> <button class="btn sm danger" data-id="${p.id}" data-action="del-principle"><i class="ti ti-trash"></i></button></div>`).join('')
+    : '<div class="empty" style="padding:8px">Belum ada principle</div>'
+}
+async function openPrincipleModal() {
+  qs('principle-modal-srch').value = ''
+  await renderPrincipleModal(); qs('modal-principle').classList.add('open')
+}
+qs('btn-kelola-principle-po').addEventListener('click', openPrincipleModal)
+qs('btn-kelola-principle-real').addEventListener('click', openPrincipleModal)
+qs('principle-close-btn').addEventListener('click', async () => {
+  qs('modal-principle').classList.remove('open'); await loadPrincipleSelects()
+})
+qs('modal-principle').addEventListener('click', async e => {
+  if (e.target === qs('modal-principle')) { qs('modal-principle').classList.remove('open'); await loadPrincipleSelects() }
+})
+qs('principle-add-btn').addEventListener('click', async () => {
+  const nama = qs('principle-new-input').value.trim()
+  if (!nama) { toast('Nama principle tidak boleh kosong', 'error'); return }
+  try { await API.savePrinciple({ nama }); qs('principle-new-input').value = ''; await renderPrincipleModal(); toast('Principle ditambahkan') }
+  catch (e) { toast(e.message, 'error') }
+})
+document.addEventListener('click', async e => {
+  const b = e.target.closest('[data-action="edit-principle"]'); if (!b) return
+  const cur = b.closest('.item-row').querySelector('.item-row-label span').textContent
+  const v = prompt('Nama principle baru:', cur); if (v == null) return
+  const t = v.trim(); if (!t || t === cur) return
+  try { await API.updatePrinciple(b.dataset.id, { nama: t }); await renderPrincipleModal(); await loadPrincipleSelects(); toast('Diperbarui') }
+  catch (err) { toast(err.message, 'error') }
+})
+document.addEventListener('click', async e => {
+  if (e.target.closest('[data-action="del-principle"]')) {
+    if (!confirm2('Hapus principle ini?')) return
+    const id = e.target.closest('[data-id]').dataset.id
+    try { await API.delPrinciple(id); await renderPrincipleModal(); toast('Dihapus') }
     catch (e) { toast(e.message, 'error') }
   }
 })
@@ -1898,6 +2015,7 @@ async function init() {
   qs('supplier-modal-srch').addEventListener('input', () => filterModalItems('supplier-modal-srch', 'supplier-list-modal'))
   qs('barang-modal-srch').addEventListener('input', () => filterModalItems('barang-modal-srch', 'barang-list-modal'))
   qs('petugas-modal-srch').addEventListener('input', () => filterModalItems('petugas-modal-srch', 'petugas-list-modal'))
+  qs('principle-modal-srch').addEventListener('input', () => filterModalItems('principle-modal-srch', 'principle-list-modal'))
   qs('kat-arsip-modal-srch').addEventListener('input', () => filterModalItems('kat-arsip-modal-srch', 'kat-arsip-list-modal'))
   qs('tujuan-modal-srch').addEventListener('input', () => filterModalItems('tujuan-modal-srch', 'tujuan-list-modal'))
   qs('kategori-modal-srch').addEventListener('input', () => filterModalItems('kategori-modal-srch', 'kategori-list-modal'))
