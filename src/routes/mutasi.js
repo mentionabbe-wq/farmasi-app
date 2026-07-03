@@ -43,4 +43,12 @@ router.put('/:id', (req, res) => {
   res.json(data[i])
 })
 
+const { sendSheet } = require('../xlsxutil')
+router.get('/excel', (req, res) => {
+  const tujuanMap = Object.fromEntries(read('tujuan').map(t => [t.id, t.label]))
+  const data = read('mutasi').sort((a, b) => b.tgl.localeCompare(a.tgl) || b.id - a.id)
+  const rows = data.map(d => [d.tgl, d.no || '', tujuanMap[d.tujuan] || d.tujuan || '', d.jml || 0, d.petugas || '', d.ket || '', d.dibuat_oleh || ''])
+  sendSheet(res, 'Mutasi.xlsx', [{ name: 'Mutasi', header: ['Tanggal', 'No', 'Tujuan', 'Jumlah Nominal', 'Petugas', 'Keterangan', 'Dibuat Oleh'], rows, cols: [{ wch: 12 }, { wch: 14 }, { wch: 22 }, { wch: 18 }, { wch: 18 }, { wch: 30 }, { wch: 16 }] }])
+})
+
 module.exports = router

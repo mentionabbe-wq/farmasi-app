@@ -41,6 +41,27 @@ function toast(msg, type = 'success') {
 
 function confirm2(msg) { return window.confirm(msg) }
 
+/* ── EXPORT (download file ber-auth) ── */
+async function downloadFile(path, filename) {
+  showLoading(true)
+  try {
+    const res = await fetch('/api' + path, { headers: { Authorization: 'Bearer ' + (localStorage.getItem('token') || '') } })
+    if (res.status === 401) { localStorage.removeItem('token'); if (window.onAuthExpired) window.onAuthExpired(); throw new Error('Sesi berakhir, silakan login lagi') }
+    if (!res.ok) throw new Error('Gagal export (HTTP ' + res.status + ')')
+    const blob = await res.blob()
+    const url = URL.createObjectURL(blob)
+    const a = document.createElement('a')
+    a.href = url; a.download = filename
+    document.body.appendChild(a); a.click(); a.remove()
+    setTimeout(() => URL.revokeObjectURL(url), 1000)
+    toast('File diunduh')
+  } catch (e) { toast(e.message, 'error') } finally { showLoading(false) }
+}
+document.addEventListener('click', e => {
+  const b = e.target.closest('[data-export]'); if (!b) return
+  downloadFile(b.dataset.export, b.dataset.fn || 'export.xlsx')
+})
+
 /* ── NAVIGATION ── */
 document.querySelectorAll('.nav-btn').forEach(btn => {
   btn.addEventListener('click', () => showPage(btn.dataset.page))
@@ -1749,10 +1770,12 @@ function renderRekapSO(data) {
     </div>`).join('')}</div>`
 }
 
-function updateExcelLink() {
+function updateExcelLink() { /* download ditangani lewat klik ber-auth */ }
+qs('btn-excel').addEventListener('click', e => {
+  e.preventDefault()
   const dari = qs('rekap-dari').value, sampai = qs('rekap-sampai').value
-  qs('btn-excel').href = API.excelUrl(dari, sampai)
-}
+  downloadFile(`/rekap/excel?dari=${dari || ''}&sampai=${sampai || ''}`, 'Rekap_Farmasi.xlsx')
+})
 
 qs('rekap-filter-btn').addEventListener('click', loadRekap)
 qs('rekap-dari').addEventListener('change', updateExcelLink)

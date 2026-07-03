@@ -21,4 +21,11 @@ router.delete('/:id', (req, res) => {
   res.json({ ok: true })
 })
 
+const { sendSheet } = require('../xlsxutil')
+router.get('/excel', (req, res) => {
+  const data = read('tidak_datang').sort((a, b) => b.tgl.localeCompare(a.tgl) || b.id - a.id)
+  const rows = data.map(d => [d.tgl, d.nama || '', d.supplier || '', d.ket || ''])
+  sendSheet(res, 'Obat_Tidak_Datang.xlsx', [{ name: 'Tidak Datang', header: ['Tanggal', 'Nama Obat', 'Supplier', 'Keterangan'], rows, cols: [{ wch: 12 }, { wch: 28 }, { wch: 22 }, { wch: 35 }] }])
+})
+
 module.exports = router

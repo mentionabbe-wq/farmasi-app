@@ -30,4 +30,19 @@ router.delete('/:id', (req, res) => {
   res.json({ ok: true })
 })
 
+const { sendSheet } = require('../xlsxutil')
+router.get('/excel', (req, res) => {
+  const tujuanMap = Object.fromEntries(read('tujuan').map(t => [t.id, t.label]))
+  const kats = read('kategori_pj').sort((a, b) => (a.urutan || 0) - (b.urutan || 0))
+  const data = read('penjualan').sort((a, b) => b.tgl.localeCompare(a.tgl) || b.id - a.id)
+  const header = ['Tanggal', 'Shift', 'Farmasi', 'Total Resep', 'Total Nominal', ...kats.flatMap(k => [k.label + ' Resep', k.label + ' Nominal']), 'Dibuat Oleh']
+  const rows = data.map(d => [
+    d.tgl, d.shift || '', tujuanMap[d.tujuan] || d.tujuan || '', d.total_resep || 0, d.total_nominal || 0,
+    ...kats.flatMap(k => [(d.detail || {})[k.id]?.resep || 0, (d.detail || {})[k.id]?.nominal || 0]),
+    d.dibuat_oleh || ''
+  ])
+  const cols = [{ wch: 12 }, { wch: 10 }, { wch: 18 }, { wch: 12 }, { wch: 16 }, ...kats.flatMap(() => [{ wch: 12 }, { wch: 16 }]), { wch: 16 }]
+  sendSheet(res, 'Penjualan.xlsx', [{ name: 'Penjualan', header, rows, cols }])
+})
+
 module.exports = router

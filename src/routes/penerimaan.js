@@ -55,4 +55,24 @@ router.delete('/:id', (req, res) => {
   res.json({ ok: true })
 })
 
+const { sendSheet } = require('../xlsxutil')
+router.get('/excel', (req, res) => {
+  const data = read('penerimaan').sort((a, b) => b.tgl.localeCompare(a.tgl) || b.id - a.id)
+  const rows = []
+  data.forEach(d => {
+    const items = d.items || []
+    if (!items.length) rows.push([d.tgl, d.no_po, d.no_faktur || '', d.tgl_faktur || '', d.tgl_jatuh_tempo || '', d.supplier || '', d.anggaran || '', '', '', '', '', '', '', d.dibuat_oleh || ''])
+    items.forEach(it => rows.push([
+      d.tgl, d.no_po, d.no_faktur || '', d.tgl_faktur || '', d.tgl_jatuh_tempo || '', d.supplier || '', d.anggaran || '',
+      it.barang || '', it.jumlah || 0, it.jumlah_terima || 0, it.harga_terima || 0, it.diskon || 0, it.status || '', d.dibuat_oleh || ''
+    ]))
+  })
+  sendSheet(res, 'Penerimaan.xlsx', [{
+    name: 'Penerimaan',
+    header: ['Tanggal', 'No PO', 'No Faktur', 'Tgl Faktur', 'Jatuh Tempo', 'Distributor', 'Anggaran', 'Nama Barang', 'Jml PO', 'Jml Diterima', 'Harga Penerimaan', 'Diskon %', 'Status', 'Dibuat Oleh'],
+    rows,
+    cols: [{ wch: 12 }, { wch: 12 }, { wch: 14 }, { wch: 12 }, { wch: 12 }, { wch: 22 }, { wch: 12 }, { wch: 26 }, { wch: 9 }, { wch: 11 }, { wch: 16 }, { wch: 9 }, { wch: 14 }, { wch: 16 }]
+  }])
+})
+
 module.exports = router
