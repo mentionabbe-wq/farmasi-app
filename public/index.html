@@ -203,7 +203,7 @@
             Daftar Realisasi Pembelian
             <input type="text" id="real-filter-nopo" class="input-sm" placeholder="Cari kata kunci (No PO / distributor / barang)..." style="width:230px">
           </div>
-          <div class="table-wrap table-scroll">
+          <div class="table-wrap">
             <table><thead><tr><th>Tgl PO</th><th>No PO</th><th>Distributor</th><th>Anggaran</th><th>Nama Barang</th><th style="text-align:right">Jumlah</th><th style="text-align:right">Harga Satuan</th><th style="text-align:right">Harga Total</th><th></th></tr></thead>
             <tbody id="real-tbody"></tbody>
             <tfoot id="real-tfoot"></tfoot></table>
@@ -246,18 +246,20 @@
       <div class="card">
         <div class="section-title">
           Riwayat Penerimaan
-          <span style="display:flex;gap:6px;flex-wrap:wrap;align-items:center">
+          <span class="export-group">
+            <input type="date" class="input-sm" data-dari title="Dari tanggal (untuk export)">
+            <input type="date" class="input-sm" data-sampai title="Sampai tanggal (untuk export)">
             <button class="btn excel sm" data-export="/penerimaan/excel" data-fn="Penerimaan.xlsx"><i class="ti ti-file-spreadsheet"></i>Export</button>
             <input type="text" id="terima-filter-nopo" class="input-sm" placeholder="Filter No PO..." style="width:140px">
           </span>
         </div>
-        <div class="table-wrap table-scroll">
+        <div class="table-wrap">
           <table><thead><tr><th>Tanggal</th><th>No PO</th><th>No Faktur</th><th>Tgl Faktur</th><th>Jatuh Tempo</th><th>Distributor</th><th>Item</th><th style="text-align:right">Harga Penerimaan</th><th style="text-align:right">Pajak 11%</th><th style="text-align:right">Total</th><th>Anggaran</th><th></th></tr></thead>
           <tbody id="terima-tbody"></tbody></table>
         </div>
       </div>
       <div class="card">
-        <div class="section-title">Obat Tidak Datang<button class="btn excel sm" data-export="/tidak-datang/excel" data-fn="Obat_Tidak_Datang.xlsx"><i class="ti ti-file-spreadsheet"></i>Export</button></div>
+        <div class="section-title">Obat Tidak Datang<span class="export-group"><input type="date" class="input-sm" data-dari title="Dari tanggal (untuk export)"><input type="date" class="input-sm" data-sampai title="Sampai tanggal (untuk export)"><button class="btn excel sm" data-export="/tidak-datang/excel" data-fn="Obat_Tidak_Datang.xlsx"><i class="ti ti-file-spreadsheet"></i>Export</button></span></div>
         <div style="font-size:11px;color:var(--tx2);margin:-4px 0 10px">Terisi otomatis dari Penerimaan: barang berstatus "Tidak Datang" atau kekurangan "Datang Sebagian" akan masuk ke sini.</div>
         <div class="table-wrap">
           <table><thead><tr><th>Tanggal</th><th>Nama Obat</th><th>Supplier</th><th>Keterangan</th><th></th></tr></thead>
@@ -290,7 +292,9 @@
       <div class="card">
         <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
           <div style="font-size:14px;font-weight:500">Data Mutasi per Tujuan</div>
-          <span style="display:flex;gap:6px;flex-wrap:wrap">
+          <span class="export-group">
+            <input type="date" class="input-sm" data-dari title="Dari tanggal (untuk export)">
+            <input type="date" class="input-sm" data-sampai title="Sampai tanggal (untuk export)">
             <button class="btn excel sm" data-export="/mutasi/excel" data-fn="Mutasi.xlsx"><i class="ti ti-file-spreadsheet"></i>Export</button>
             <button class="btn sm" id="btn-kelola-tujuan"><i class="ti ti-settings-2"></i>Kelola Tujuan</button>
           </span>
@@ -333,7 +337,9 @@
       <div class="card">
         <div class="section-title">
           Riwayat Penjualan
-          <span style="display:flex;gap:6px;flex-wrap:wrap;align-items:center">
+          <span class="export-group">
+            <input type="date" class="input-sm" data-dari title="Dari tanggal (untuk export)">
+            <input type="date" class="input-sm" data-sampai title="Sampai tanggal (untuk export)">
             <button class="btn excel sm" data-export="/penjualan/excel" data-fn="Penjualan.xlsx"><i class="ti ti-file-spreadsheet"></i>Export</button>
             <input type="month" id="pj-filter-bulan" class="input-sm">
           </span>
@@ -363,7 +369,7 @@
       </div>
       <div class="card">
         <div class="section-title">Daftar Obat Dihutangkan</div>
-        <div class="table-wrap table-scroll">
+        <div class="table-wrap">
           <table><thead><tr><th>Tanggal</th><th>Nama Item</th><th style="text-align:right">Jumlah Item</th><th style="text-align:right">Jumlah Pasien</th><th>Keterangan</th><th></th></tr></thead>
           <tbody id="hut-tbody"></tbody></table>
         </div>
@@ -421,7 +427,9 @@
         <div class="card">
           <div class="section-title">
             Daftar PRB
-            <span style="display:flex;gap:6px;flex-wrap:wrap;align-items:center">
+            <span class="export-group">
+              <input type="date" class="input-sm" data-dari title="Dari tanggal (untuk export)">
+              <input type="date" class="input-sm" data-sampai title="Sampai tanggal (untuk export)">
               <button class="btn excel sm" data-export="/bpjs-prb/excel" data-fn="BPJS_PRB.xlsx"><i class="ti ti-file-spreadsheet"></i>Export</button>
               <input type="month" id="prb-filter-bulan" class="input-sm">
             </span>
@@ -552,7 +560,9 @@
       <div class="card">
         <div class="section-title">
           Riwayat Pinjaman
-          <span style="display:flex;gap:6px;flex-wrap:wrap;align-items:center">
+          <span class="export-group">
+            <input type="date" class="input-sm" data-dari title="Dari tanggal (untuk export)">
+            <input type="date" class="input-sm" data-sampai title="Sampai tanggal (untuk export)">
             <button class="btn excel sm" data-export="/pinjaman/excel" data-fn="Pinjaman.xlsx"><i class="ti ti-file-spreadsheet"></i>Export</button>
             <select id="pin-filter-jenis" class="input-sm">
               <option value="">Semua Jenis</option>

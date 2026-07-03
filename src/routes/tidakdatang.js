@@ -23,7 +23,8 @@ router.delete('/:id', (req, res) => {
 
 const { sendSheet } = require('../xlsxutil')
 router.get('/excel', (req, res) => {
-  const data = read('tidak_datang').sort((a, b) => b.tgl.localeCompare(a.tgl) || b.id - a.id)
+  const { dari, sampai } = req.query
+  const data = read('tidak_datang').filter(d => (!dari || d.tgl >= dari) && (!sampai || d.tgl <= sampai)).sort((a, b) => b.tgl.localeCompare(a.tgl) || b.id - a.id)
   const rows = data.map(d => [d.tgl, d.nama || '', d.supplier || '', d.ket || ''])
   sendSheet(res, 'Obat_Tidak_Datang.xlsx', [{ name: 'Tidak Datang', header: ['Tanggal', 'Nama Obat', 'Supplier', 'Keterangan'], rows, cols: [{ wch: 12 }, { wch: 28 }, { wch: 22 }, { wch: 35 }] }])
 })

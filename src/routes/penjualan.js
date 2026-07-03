@@ -34,7 +34,8 @@ const { sendSheet } = require('../xlsxutil')
 router.get('/excel', (req, res) => {
   const tujuanMap = Object.fromEntries(read('tujuan').map(t => [t.id, t.label]))
   const kats = read('kategori_pj').sort((a, b) => (a.urutan || 0) - (b.urutan || 0))
-  const data = read('penjualan').sort((a, b) => b.tgl.localeCompare(a.tgl) || b.id - a.id)
+  const { dari, sampai } = req.query
+  const data = read('penjualan').filter(d => (!dari || d.tgl >= dari) && (!sampai || d.tgl <= sampai)).sort((a, b) => b.tgl.localeCompare(a.tgl) || b.id - a.id)
   const header = ['Tanggal', 'Shift', 'Farmasi', 'Total Resep', 'Total Nominal', ...kats.flatMap(k => [k.label + ' Resep', k.label + ' Nominal']), 'Dibuat Oleh']
   const rows = data.map(d => [
     d.tgl, d.shift || '', tujuanMap[d.tujuan] || d.tujuan || '', d.total_resep || 0, d.total_nominal || 0,

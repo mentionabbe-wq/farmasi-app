@@ -40,7 +40,8 @@ router.put('/:id', (req, res) => {
 
 const { sendSheet } = require('../xlsxutil')
 router.get('/excel', (req, res) => {
-  const data = read('bpjs_prb').sort((a, b) => b.tgl.localeCompare(a.tgl) || b.id - a.id)
+  const { dari, sampai } = req.query
+  const data = read('bpjs_prb').filter(d => (!dari || d.tgl >= dari) && (!sampai || d.tgl <= sampai)).sort((a, b) => b.tgl.localeCompare(a.tgl) || b.id - a.id)
   const rows = data.map(d => [d.tgl, d.jumlah_resep || 0, d.total_klaim || 0, d.resep_gagal || 0, d.ket || '', d.dibuat_oleh || ''])
   sendSheet(res, 'BPJS_PRB.xlsx', [{ name: 'PRB', header: ['Tanggal', 'Jumlah Resep', 'Total Klaim', 'Resep Gagal Klaim', 'Keterangan', 'Dibuat Oleh'], rows, cols: [{ wch: 12 }, { wch: 14 }, { wch: 16 }, { wch: 16 }, { wch: 30 }, { wch: 16 }] }])
 })

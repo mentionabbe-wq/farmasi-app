@@ -57,7 +57,8 @@ router.delete('/:id', (req, res) => {
 
 const { sendSheet } = require('../xlsxutil')
 router.get('/excel', (req, res) => {
-  const data = read('penerimaan').sort((a, b) => b.tgl.localeCompare(a.tgl) || b.id - a.id)
+  const { dari, sampai } = req.query
+  const data = read('penerimaan').filter(d => (!dari || d.tgl >= dari) && (!sampai || d.tgl <= sampai)).sort((a, b) => b.tgl.localeCompare(a.tgl) || b.id - a.id)
   const rows = []
   data.forEach(d => {
     const items = d.items || []

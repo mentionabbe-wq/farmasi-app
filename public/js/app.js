@@ -59,8 +59,37 @@ async function downloadFile(path, filename) {
 }
 document.addEventListener('click', e => {
   const b = e.target.closest('[data-export]'); if (!b) return
-  downloadFile(b.dataset.export, b.dataset.fn || 'export.xlsx')
+  const grp = b.closest('.export-group')
+  const dari = grp?.querySelector('[data-dari]')?.value || ''
+  const sampai = grp?.querySelector('[data-sampai]')?.value || ''
+  let path = b.dataset.export
+  if (dari || sampai) path += (path.includes('?') ? '&' : '?') + `dari=${dari}&sampai=${sampai}`
+  downloadFile(path, b.dataset.fn || 'export.xlsx')
 })
+
+/* ── PAGINATION (otomatis, per tbody) ── */
+function setupPager(tbodyId, perPage = 10) {
+  const tbody = document.getElementById(tbodyId); if (!tbody) return
+  const wrap = tbody.closest('.table-wrap'); if (!wrap) return
+  let pager = wrap.nextElementSibling
+  if (!pager || !pager.classList.contains('pager')) { pager = document.createElement('div'); pager.className = 'pager'; wrap.after(pager) }
+  let page = 1
+  const dataRows = () => [...tbody.children].filter(tr => tr.tagName === 'TR' && !(tr.children.length === 1 && tr.children[0].hasAttribute('colspan')))
+  function apply() {
+    const rows = dataRows(), total = rows.length, pages = Math.max(1, Math.ceil(total / perPage))
+    if (page > pages) page = pages
+    if (page < 1) page = 1
+    rows.forEach((tr, i) => { tr.style.display = (i >= (page - 1) * perPage && i < page * perPage) ? '' : 'none' })
+    pager.innerHTML = total > perPage
+      ? `<button class="btn sm" data-pg="prev" ${page <= 1 ? 'disabled' : ''}><i class="ti ti-chevron-left"></i></button>
+         <span style="font-size:12px;color:var(--tx2)">Hal ${page}/${pages} · ${total} data</span>
+         <button class="btn sm" data-pg="next" ${page >= pages ? 'disabled' : ''}><i class="ti ti-chevron-right"></i></button>`
+      : ''
+  }
+  pager.addEventListener('click', e => { const x = e.target.closest('[data-pg]'); if (!x) return; page += x.dataset.pg === 'next' ? 1 : -1; apply() })
+  new MutationObserver(() => { page = 1; apply() }).observe(tbody, { childList: true })
+  apply()
+}
 
 /* ── NAVIGATION ── */
 document.querySelectorAll('.nav-btn').forEach(btn => {
@@ -1827,6 +1856,9 @@ async function init() {
   qs('pj-filter-bulan').value = defDate.slice(0, 7)
   updateExcelLink()
   setupFileUpload()
+
+  // Pagination otomatis untuk tabel-tabel daftar
+  ;['po-tbody', 'real-tbody', 'terima-tbody', 'pin-tbody', 'hut-tbody', 'blm-tbody', 'prb-tbody', 'alkes-tbody', 'iter-tbody', 'so-tbody', 'td-tbody'].forEach(id => setupPager(id))
 
   // Modal search
   qs('supplier-modal-srch').addEventListener('input', () => filterModalItems('supplier-modal-srch', 'supplier-list-modal'))
