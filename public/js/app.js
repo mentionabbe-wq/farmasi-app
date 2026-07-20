@@ -29,6 +29,7 @@ let _editTerima = null
 let _editPO = null, _editReal = null, _editPin = null, _editHut = null, _editPrb = null, _editIter = null
 let _editMut = null, _editSo = null, _editAng = null
 let _currentUser = null
+let _perItems = [], _perData = [], _editPer = null
 
 function showLoading(v) { document.getElementById('loading-overlay').classList.toggle('show', v) }
 
@@ -765,6 +766,9 @@ function renderPOTable(data) {
   const tbody = qs('po-tbody'), tfoot = qs('po-tfoot')
   const filterSup = qs('po-filter-supplier').value.trim().toLowerCase()
   let rows = filterSup ? data.filter(d => (d.supplier || '').toLowerCase().includes(filterSup)) : data.slice()
+  const fDari = qs('po-filter-dari').value, fSampai = qs('po-filter-sampai').value
+  if (fDari) rows = rows.filter(d => (d.tgl || '') >= fDari)
+  if (fSampai) rows = rows.filter(d => (d.tgl || '') <= fSampai)
   const sort = qs('po-sort').value
   const yr = d => (d.tgl || '').slice(0, 4)
   rows.sort((a, b) => {
@@ -796,6 +800,8 @@ function renderPOTable(data) {
 
 qs('po-filter-supplier').addEventListener('input', () => renderPOTable(_poData))
 qs('po-sort').addEventListener('change', () => renderPOTable(_poData))
+qs('po-filter-dari').addEventListener('change', () => renderPOTable(_poData))
+qs('po-filter-sampai').addEventListener('change', () => renderPOTable(_poData))
 
 qs('po-save-btn').addEventListener('click', async () => {
   const supplier = qs('po-supplier').value.trim(), nominal = qs('po-nominal').value
@@ -1118,7 +1124,24 @@ async function loadMutasi() {
   renderMutasiSelect(tujuan)
   await loadPetugasSelects()
   if (!_editMut && _currentUser?.nama) qs('mut-petugas').value = _currentUser.nama
+  // Tab Permintaan
+  qs('muttab-mutasi').style.display = ''
+  qs('muttab-permintaan').style.display = 'none'
+  document.querySelectorAll('[data-muttab]').forEach(b => b.classList.toggle('primary', b.dataset.muttab === 'mutasi'))
+  qs('per-tujuan').innerHTML = tujuan.map(t => `<option value="${t.label}">${t.label}</option>`).join('')
+  await loadBarangSelects()
+  if (!_editPer && _currentUser?.nama && !qs('per-serah').value) qs('per-serah').value = _currentUser.nama
+  await renderPermintaanTable()
 }
+
+document.querySelectorAll('[data-muttab]').forEach(btn => {
+  btn.addEventListener('click', () => {
+    const tab = btn.dataset.muttab
+    document.querySelectorAll('[data-muttab]').forEach(b => b.classList.toggle('primary', b.dataset.muttab === tab))
+    qs('muttab-mutasi').style.display = tab === 'mutasi' ? '' : 'none'
+    qs('muttab-permintaan').style.display = tab === 'permintaan' ? '' : 'none'
+  })
+})
 
 function renderMutasiSelect(tujuan) {
   qs('mut-tujuan-select').innerHTML = tujuan.map(t => `<option value="${t.id}">${t.label}</option>`).join('')

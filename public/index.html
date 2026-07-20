@@ -157,6 +157,8 @@
           <div class="section-title">
             Daftar Rencana Pembelian
             <div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap">
+              <input type="date" id="po-filter-dari" class="input-sm" title="Dari tanggal">
+              <input type="date" id="po-filter-sampai" class="input-sm" title="Sampai tanggal">
               <select id="po-sort" class="input-sm">
                 <option value="tgl-desc">Tanggal: terbaru</option>
                 <option value="tgl-asc">Tanggal: terlama</option>
@@ -321,6 +323,12 @@
 
     <!-- MUTASI -->
     <section class="page" id="page-mutasi">
+      <div class="card potab-bar" style="padding:8px">
+        <button class="btn sm primary" data-muttab="mutasi"><i class="ti ti-transfer"></i>Mutasi Stok</button>
+        <button class="btn sm" data-muttab="permintaan"><i class="ti ti-clipboard-list"></i>Permintaan &amp; Serah Terima</button>
+      </div>
+
+      <div id="muttab-mutasi">
       <div class="card">
         <div class="section-title">Input Mutasi Stok</div>
         <div class="form-row triple">
@@ -351,6 +359,44 @@
         </div>
         <div class="tab-bar" id="mut-tab-bar"></div>
         <div id="mut-tab-panels"></div>
+      </div>
+      </div>
+
+      <div id="muttab-permintaan" style="display:none">
+      <div class="card">
+        <div class="section-title">Form Permintaan Barang</div>
+        <div class="form-row triple">
+          <div class="form-group"><label>Tanggal</label><input type="date" id="per-tgl"></div>
+          <div class="form-group"><label>No. Permintaan</label><input type="text" id="per-no" placeholder="PMT-001"></div>
+          <div class="form-group"><label>Unit / Ruangan</label><select id="per-tujuan"></select></div>
+        </div>
+        <div class="divider"></div>
+        <div class="form-section-label">Daftar Barang yang Diminta</div>
+        <div class="form-row triple">
+          <div class="form-group"><label>Nama Barang</label>
+            <input type="text" id="per-barang" list="per-barang-list" placeholder="Pilih atau ketik nama barang..." autocomplete="off">
+            <datalist id="per-barang-list"></datalist>
+          </div>
+          <div class="form-group"><label>Jumlah</label><input type="text" id="per-jumlah" placeholder="mis. 10"></div>
+          <div class="form-group"><label>Satuan</label><input type="text" id="per-satuan" placeholder="box / vial / pcs"></div>
+        </div>
+        <button class="btn" id="per-add-btn" type="button"><i class="ti ti-plus"></i>Tambah ke Daftar</button>
+        <div id="per-items-list" style="margin:10px 0"></div>
+        <div class="divider"></div>
+        <div class="form-row triple">
+          <div class="form-group"><label>Yang Menyerahkan</label><input type="text" id="per-serah" placeholder="Petugas farmasi"></div>
+          <div class="form-group"><label>Yang Menerima</label><input type="text" id="per-terima" placeholder="Petugas unit/ruangan"></div>
+          <div class="form-group"><label>Keterangan</label><input type="text" id="per-ket" placeholder="Catatan (opsional)"></div>
+        </div>
+        <button class="btn primary" id="per-save-btn"><i class="ti ti-device-floppy"></i>Simpan Permintaan</button>
+      </div>
+      <div class="card">
+        <div class="section-title">Daftar Permintaan &amp; Serah Terima</div>
+        <div class="table-wrap">
+          <table><thead><tr><th>Tanggal</th><th>No</th><th>Unit / Ruangan</th><th>Barang</th><th>Serah / Terima</th><th></th></tr></thead>
+          <tbody id="per-tbody"></tbody></table>
+        </div>
+      </div>
       </div>
     </section>
 

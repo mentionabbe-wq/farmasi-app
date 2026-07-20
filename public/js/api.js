@@ -109,6 +109,12 @@ const API = (() => {
     delPinjaman: id => req('DELETE', `/pinjaman/${id}`),
 
     // Mutasi
+    // Permintaan / Serah Terima
+    getPermintaan: () => req('GET', '/permintaan'),
+    savePermintaan: d => req('POST', '/permintaan', d),
+    updatePermintaan: (id, d) => req('PUT', `/permintaan/${id}`, d),
+    delPermintaan: id => req('DELETE', `/permintaan/${id}`),
+
     getMutasi: (p = {}) => req('GET', '/mutasi?' + new URLSearchParams(p)),
     saveMutasi: d => req('POST', '/mutasi', d),
     updateMutasi: (id, d) => req('PUT', `/mutasi/${id}`, d),
