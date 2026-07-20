@@ -510,7 +510,7 @@ document.addEventListener('click', async e => {
 async function loadBarangSelects() {
   const list = await API.getBarang()
   const opts = list.map(b => `<option value="${b.nama}">`).join('')
-  ;['real-barang-list', 'hut-item-list', 'blm-obat-list'].forEach(id => { const el = qs(id); if (el) el.innerHTML = opts })
+  ;['real-barang-list', 'hut-item-list', 'blm-obat-list', 'per-barang-list'].forEach(id => { const el = qs(id); if (el) el.innerHTML = opts })
 }
 
 function calcRealTotal() {
@@ -1131,6 +1131,7 @@ async function loadMutasi() {
   qs('per-tujuan').innerHTML = tujuan.map(t => `<option value="${t.label}">${t.label}</option>`).join('')
   await loadBarangSelects()
   if (!_editPer && _currentUser?.nama && !qs('per-serah').value) qs('per-serah').value = _currentUser.nama
+  renderPerItemsList()
   await renderPermintaanTable()
 }
 
@@ -1141,6 +1142,109 @@ document.querySelectorAll('[data-muttab]').forEach(btn => {
     qs('muttab-mutasi').style.display = tab === 'mutasi' ? '' : 'none'
     qs('muttab-permintaan').style.display = tab === 'permintaan' ? '' : 'none'
   })
+})
+
+/* ── PERMINTAAN & SERAH TERIMA ── */
+function renderPerItemsList() {
+  const box = qs('per-items-list')
+  if (!_perItems.length) { box.innerHTML = '<div class="empty" style="padding:8px">Belum ada barang di daftar</div>'; return }
+  box.innerHTML = _perItems.map((it, i) => `<div class="item-row">
+    <div class="item-row-label"><span>${it.barang}</span><span class="default-badge">${it.jumlah}${it.satuan ? ' ' + it.satuan : ''}</span></div>
+    <button class="btn sm danger" data-i="${i}" data-action="del-per-item"><i class="ti ti-trash"></i></button>
+  </div>`).join('')
+}
+
+qs('per-add-btn').addEventListener('click', () => {
+  const barang = qs('per-barang').value.trim()
+  if (!barang) { toast('Nama barang wajib diisi', 'error'); return }
+  _perItems.push({ barang, jumlah: qs('per-jumlah').value.trim(), satuan: qs('per-satuan').value.trim() })
+  ;['per-barang', 'per-jumlah', 'per-satuan'].forEach(id => qs(id).value = '')
+  renderPerItemsList()
+  qs('per-barang').focus()
+})
+
+document.addEventListener('click', e => {
+  const b = e.target.closest('[data-action="del-per-item"]'); if (!b) return
+  _perItems.splice(+b.dataset.i, 1)
+  renderPerItemsList()
+})
+
+async function renderPermintaanTable() {
+  _perData = await API.getPermintaan()
+  const tbody = qs('per-tbody')
+  if (!_perData.length) { tbody.innerHTML = '<tr><td colspan="6"><div class="empty"><i class="ti ti-clipboard-list"></i>Belum ada permintaan</div></td></tr>'; return }
+  tbody.innerHTML = _perData.map(d => {
+    const items = d.items || []
+    const ringkas = items.slice(0, 3).map(it => it.barang).join(', ') + (items.length > 3 ? `, +${items.length - 3} lagi` : '')
+    return `<tr>
+      <td>${d.tgl}${d.dibuat_oleh ? `<div style="font-size:11px;color:var(--tx3)">oleh ${d.dibuat_oleh}</div>` : ''}</td>
+      <td>${d.no ? `<span class="badge gray">${d.no}</span>` : '-'}</td>
+      <td>${d.tujuan || '-'}</td>
+      <td>${items.length} item<div style="font-size:11px;color:var(--tx2)">${ringkas}</div></td>
+      <td style="font-size:12px">${d.diserahkan_oleh || '-'} / ${d.diterima_oleh || '-'}</td>
+      <td style="white-space:nowrap">
+        <button class="btn excel sm" data-id="${d.id}" data-action="dl-st" title="Download Serah Terima"><i class="ti ti-download"></i></button>
+        <button class="btn sm" data-id="${d.id}" data-action="edit-per"><i class="ti ti-pencil"></i></button>
+        <button class="btn sm danger" data-id="${d.id}" data-action="del-per"><i class="ti ti-trash"></i></button>
+      </td>
+    </tr>`
+  }).join('')
+}
+
+qs('per-save-btn').addEventListener('click', async () => {
+  const tujuan = qs('per-tujuan').value
+  if (!tujuan) { toast('Unit/ruangan wajib dipilih', 'error'); return }
+  if (!_perItems.length) { toast('Tambahkan minimal 1 barang ke daftar', 'error'); return }
+  showLoading(true)
+  try {
+    const payload = {
+      tgl: qs('per-tgl').value || today(), no: qs('per-no').value.trim(), tujuan,
+      items: _perItems, ket: qs('per-ket').value.trim(),
+      diserahkan_oleh: qs('per-serah').value.trim(), diterima_oleh: qs('per-terima').value.trim()
+    }
+    if (_editPer) { await API.updatePermintaan(_editPer, payload); _editPer = null; qs('per-save-btn').innerHTML = '<i class="ti ti-device-floppy"></i>Simpan Permintaan' }
+    else { await API.savePermintaan(payload) }
+    _perItems = []
+    ;['per-no', 'per-terima', 'per-ket'].forEach(id => qs(id).value = '')
+    renderPerItemsList()
+    await renderPermintaanTable()
+    toast('Permintaan disimpan')
+  } catch (e) { toast(e.message, 'error') } finally { showLoading(false) }
+})
+
+document.addEventListener('click', e => {
+  const b = e.target.closest('[data-action="dl-st"]'); if (!b) return
+  const d = _perData.find(x => String(x.id) === b.dataset.id)
+  downloadFile(`/permintaan/${b.dataset.id}/serah-terima`, `Serah_Terima_${(d?.no || d?.tgl || 'dok').replace(/[^\w-]/g, '_')}.xlsx`)
+})
+
+document.addEventListener('click', e => {
+  const b = e.target.closest('[data-action="edit-per"]'); if (!b) return
+  const d = _perData.find(x => String(x.id) === b.dataset.id); if (!d) return
+  _editPer = d.id
+  qs('per-tgl').value = d.tgl || ''
+  qs('per-no').value = d.no || ''
+  qs('per-tujuan').value = d.tujuan || ''
+  qs('per-serah').value = d.diserahkan_oleh || ''
+  qs('per-terima').value = d.diterima_oleh || ''
+  qs('per-ket').value = d.ket || ''
+  _perItems = (d.items || []).map(it => ({ ...it }))
+  renderPerItemsList()
+  qs('per-save-btn').innerHTML = '<i class="ti ti-pencil"></i>Update Permintaan'
+  qs('per-tgl').scrollIntoView({ behavior: 'smooth', block: 'center' })
+})
+
+document.addEventListener('click', async e => {
+  if (e.target.closest('[data-action="del-per"]')) {
+    if (!confirm2('Hapus permintaan ini?')) return
+    const id = e.target.closest('[data-id]').dataset.id
+    showLoading(true)
+    try {
+      await API.delPermintaan(id)
+      if (String(_editPer) === String(id)) { _editPer = null; _perItems = []; renderPerItemsList(); qs('per-save-btn').innerHTML = '<i class="ti ti-device-floppy"></i>Simpan Permintaan' }
+      await renderPermintaanTable(); toast('Dihapus')
+    } catch (err) { toast(err.message, 'error') } finally { showLoading(false) }
+  }
 })
 
 function renderMutasiSelect(tujuan) {
@@ -2024,7 +2128,7 @@ async function init() {
   qs('topbar-date').textContent = new Date().toLocaleDateString('id-ID', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })
   try { const s = await API.getSettings(); qs('topbar-rs').textContent = s.rs_name || 'RS Medika' } catch {}
   const defDate = today()
-  ;['po-tgl','real-tgl','terima-tgl','pin-tgl','mut-tgl','arsip-tgl','pj-tgl','hut-tgl','blm-tgl','prb-tgl','alkes-tgl','iter-tgl','so-tgl'].forEach(id => { const el = qs(id); if (el) el.value = defDate })
+  ;['po-tgl','real-tgl','terima-tgl','pin-tgl','mut-tgl','arsip-tgl','pj-tgl','hut-tgl','blm-tgl','prb-tgl','alkes-tgl','iter-tgl','so-tgl','per-tgl'].forEach(id => { const el = qs(id); if (el) el.value = defDate })
   qs('rekap-sampai').value = defDate
   qs('rekap-dari').value = defDate.slice(0, 7) + '-01'
   qs('pj-filter-bulan').value = defDate.slice(0, 7)
@@ -2032,7 +2136,7 @@ async function init() {
   setupFileUpload()
 
   // Pagination otomatis untuk tabel-tabel daftar
-  ;['po-tbody', 'real-tbody', 'terima-tbody', 'pin-tbody', 'hut-tbody', 'blm-tbody', 'prb-tbody', 'alkes-tbody', 'iter-tbody', 'so-tbody', 'td-tbody'].forEach(id => setupPager(id))
+  ;['po-tbody', 'real-tbody', 'terima-tbody', 'pin-tbody', 'hut-tbody', 'blm-tbody', 'prb-tbody', 'alkes-tbody', 'iter-tbody', 'so-tbody', 'td-tbody', 'per-tbody'].forEach(id => setupPager(id))
 
   // Modal search
   qs('supplier-modal-srch').addEventListener('input', () => filterModalItems('supplier-modal-srch', 'supplier-list-modal'))
