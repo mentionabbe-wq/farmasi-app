@@ -38,7 +38,22 @@ router.get('/summary', (req, res) => {
     return { ...k, resep, nominal }
   })
 
-  res.json({ totalBeli, totalMut, totalPjN, totalPjR, mutByTujuan, pjByKat, arsipCount: arsip.length })
+  // Rekap penerimaan per principle (fallback: ambil principle dari realisasi via No PO)
+  const realisasi = read('realisasi')
+  const prinByPo = {}
+  realisasi.forEach(r => { if (r.no_po && r.principle && !prinByPo[r.no_po]) prinByPo[r.no_po] = r.principle })
+  const prinMap = {}
+  pembelian.forEach(p => {
+    const nama = p.principle || prinByPo[p.no_po] || '(Tanpa Principle)'
+    if (!prinMap[nama]) prinMap[nama] = { principle: nama, count: 0, harga: 0, pajak: 0, total: 0 }
+    prinMap[nama].count++
+    prinMap[nama].harga += p.harga || 0
+    prinMap[nama].pajak += p.pajak || 0
+    prinMap[nama].total += p.total != null ? p.total : (p.harga || 0) + (p.pajak || 0)
+  })
+  const terimaByPrinciple = Object.values(prinMap).sort((a, b) => b.total - a.total)
+
+  res.json({ totalBeli, totalMut, totalPjN, totalPjR, mutByTujuan, pjByKat, terimaByPrinciple, arsipCount: arsip.length })
 })
 
 router.get('/excel', (req, res) => {
@@ -83,6 +98,25 @@ router.get('/excel', (req, res) => {
   ])
   wsBeli['!cols'] = [{ wch: 12 }, { wch: 25 }, { wch: 20 }, { wch: 16 }, { wch: 35 }]
   XLSX.utils.book_append_sheet(wb, wsBeli, 'Pembelian')
+
+  // Sheet Penerimaan per Principle
+  const prinByPo2 = {}
+  read('realisasi').forEach(r => { if (r.no_po && r.principle && !prinByPo2[r.no_po]) prinByPo2[r.no_po] = r.principle })
+  const prinMap2 = {}
+  pembelian.forEach(p => {
+    const nama = p.principle || prinByPo2[p.no_po] || '(Tanpa Principle)'
+    if (!prinMap2[nama]) prinMap2[nama] = { count: 0, harga: 0, pajak: 0, total: 0 }
+    prinMap2[nama].count++
+    prinMap2[nama].harga += p.harga || 0
+    prinMap2[nama].pajak += p.pajak || 0
+    prinMap2[nama].total += p.total != null ? p.total : (p.harga || 0) + (p.pajak || 0)
+  })
+  const wsPrin = XLSX.utils.aoa_to_sheet([
+    ['Principle / Pabrik', 'Jml Faktur', 'Harga (Rp)', 'Pajak (Rp)', 'Total (Rp)'],
+    ...Object.entries(prinMap2).sort((a, b) => b[1].total - a[1].total).map(([nama, v]) => [nama, v.count, v.harga, v.pajak, v.total])
+  ])
+  wsPrin['!cols'] = [{ wch: 30 }, { wch: 12 }, { wch: 18 }, { wch: 16 }, { wch: 18 }]
+  XLSX.utils.book_append_sheet(wb, wsPrin, 'Per Principle')
 
   // Sheet Mutasi (semua)
   const wsMut = XLSX.utils.aoa_to_sheet([

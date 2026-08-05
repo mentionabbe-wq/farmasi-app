@@ -2051,8 +2051,33 @@ async function loadRekap() {
     renderRekapPenjualan(sum, pj)
     renderRekapPembelian(beli, sum.totalBeli)
     renderRekapMutasi(sum)
+    renderRekapPrinciple(sum)
     renderRekapSO(so)
   } catch (e) { toast(e.message, 'error') } finally { showLoading(false) }
+}
+
+function renderRekapPrinciple(sum) {
+  const tbody = qs('rekap-principle-tbody'), tfoot = qs('rekap-principle-tfoot')
+  const rows = sum.terimaByPrinciple || []
+  if (!rows.length) { tbody.innerHTML = '<tr><td colspan="5"><div class="empty">Tidak ada data penerimaan pada periode ini</div></td></tr>'; tfoot.innerHTML = ''; return }
+  let tC = 0, tH = 0, tP = 0, tT = 0
+  tbody.innerHTML = rows.map(r => {
+    tC += r.count; tH += r.harga; tP += r.pajak; tT += r.total
+    return `<tr>
+      <td style="font-weight:500">${r.principle}</td>
+      <td style="text-align:right">${fmtN(r.count)}</td>
+      <td style="text-align:right">${fmt(r.harga)}</td>
+      <td style="text-align:right">${fmt(r.pajak)}</td>
+      <td style="text-align:right;font-weight:600">${fmt(r.total)}</td>
+    </tr>`
+  }).join('')
+  tfoot.innerHTML = `<tr style="font-weight:700;border-top:2px solid var(--bd)">
+    <td>Total (${rows.length} principle)</td>
+    <td style="text-align:right">${fmtN(tC)}</td>
+    <td style="text-align:right">${fmt(tH)}</td>
+    <td style="text-align:right">${fmt(tP)}</td>
+    <td style="text-align:right">${fmt(tT)}</td>
+  </tr>`
 }
 
 function renderRekapSO(data) {
