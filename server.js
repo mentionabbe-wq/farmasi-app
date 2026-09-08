@@ -25,9 +25,20 @@ function authFromToken(req) {
 app.use((req, res, next) => {
   if (!req.path.startsWith('/api/')) return next()
   req.authUser = authFromToken(req)
-  if (req.path === '/api/auth/login' || req.path === '/api/auth/register') return next()
+  if (req.path === '/api/auth/login' || req.path === '/api/auth/register' || req.path === '/api/version') return next()
   if (!req.authUser) return res.status(401).json({ error: 'Silakan login dulu' })
   next()
+})
+
+// Cek build yang sedang berjalan: buka /api/version di browser
+app.get('/api/version', (req, res) => {
+  let ppt = false
+  try { require.resolve('pptxgenjs'); ppt = true } catch (_) {}
+  res.json({
+    build: '2026-07-22',
+    fitur: { laporan_ppt: ppt },
+    server_start: new Date(Date.now() - Math.round(process.uptime() * 1000)).toISOString()
+  })
 })
 
 app.use('/api/auth',     require('./src/routes/auth'))

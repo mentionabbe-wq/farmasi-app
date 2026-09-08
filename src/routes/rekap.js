@@ -57,7 +57,12 @@ router.get('/summary', (req, res) => {
 })
 
 /* ── LAPORAN BULANAN (PowerPoint) ──────────────────────────────────────── */
-const PptxGenJS = require('pptxgenjs')
+// Di-require saat dipakai saja: kalau dependency belum terpasang (mis. image
+// belum di-rebuild), hanya fitur PPT yang gagal — aplikasi tetap jalan normal.
+function getPptx() {
+  try { return require('pptxgenjs') }
+  catch (e) { return null }
+}
 
 const BULAN_ID = ['Januari','Februari','Maret','April','Mei','Juni','Juli','Agustus','September','Oktober','November','Desember']
 const rp = n => 'Rp ' + Math.round(+n || 0).toLocaleString('id-ID')
@@ -104,6 +109,8 @@ function tabelSlide(pptx, s, header, baris, opsi = {}) {
 
 router.get('/ppt', async (req, res) => {
   try {
+    const PptxGenJS = getPptx()
+    if (!PptxGenJS) return res.status(503).json({ error: 'Fitur PPT belum aktif: dependency pptxgenjs belum terpasang. Rebuild image aplikasi (npm ci) lalu coba lagi.' })
     const { dari, sampai } = req.query
     const rsName = (read('settings') || {}).rs_name || 'Instalasi Farmasi'
     const periode = labelPeriode(dari, sampai)
