@@ -2109,6 +2109,11 @@ qs('btn-excel').addEventListener('click', e => {
   downloadFile(`/rekap/excel?dari=${dari || ''}&sampai=${sampai || ''}`, 'Rekap_Farmasi.xlsx')
 })
 
+qs('btn-ppt').addEventListener('click', () => {
+  const dari = qs('rekap-dari').value, sampai = qs('rekap-sampai').value
+  downloadFile(`/rekap/ppt?dari=${dari || ''}&sampai=${sampai || ''}`, 'Laporan_Farmasi.pptx')
+})
+
 qs('rekap-filter-btn').addEventListener('click', loadRekap)
 qs('rekap-dari').addEventListener('change', updateExcelLink)
 qs('rekap-sampai').addEventListener('change', updateExcelLink)
