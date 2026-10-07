@@ -35,8 +35,8 @@ app.get('/api/version', (req, res) => {
   let ppt = false
   try { require.resolve('pptxgenjs'); ppt = true } catch (_) {}
   res.json({
-    build: '2026-07-22',
-    fitur: { laporan_ppt: ppt },
+    build: '2026-10-06',
+    fitur: { laporan_ppt: ppt, serah_terima_antar_ruangan: true },
     server_start: new Date(Date.now() - Math.round(process.uptime() * 1000)).toISOString()
   })
 })

@@ -1128,7 +1128,10 @@ async function loadMutasi() {
   qs('muttab-mutasi').style.display = ''
   qs('muttab-permintaan').style.display = 'none'
   document.querySelectorAll('[data-muttab]').forEach(b => b.classList.toggle('primary', b.dataset.muttab === 'mutasi'))
-  qs('per-tujuan').innerHTML = tujuan.map(t => `<option value="${t.label}">${t.label}</option>`).join('')
+  const opsiRuangan = tujuan.map(t => `<option value="${t.id}">${t.label}</option>`).join('')
+  qs('per-dari').innerHTML = opsiRuangan
+  qs('per-tujuan').innerHTML = opsiRuangan
+  if (tujuan.length > 1 && !_editPer) qs('per-tujuan').value = tujuan[1].id
   await loadBarangSelects()
   if (!_editPer && _currentUser?.nama && !qs('per-serah').value) qs('per-serah').value = _currentUser.nama
   renderPerItemsList()
@@ -1144,20 +1147,62 @@ document.querySelectorAll('[data-muttab]').forEach(btn => {
   })
 })
 
-/* ── PERMINTAAN & SERAH TERIMA ── */
+/* ── PERMINTAAN & SERAH TERIMA ANTAR RUANGAN ── */
+const PER_STATUS_TEKS = { penuh: 'Terpenuhi', sebagian: 'Dipenuhi sebagian', tidak: 'Tidak terpenuhi' }
+const PER_STATUS_BADGE = { penuh: 'green', sebagian: 'amber', tidak: 'red' }
+
 function renderPerItemsList() {
   const box = qs('per-items-list')
   if (!_perItems.length) { box.innerHTML = '<div class="empty" style="padding:8px">Belum ada barang di daftar</div>'; return }
-  box.innerHTML = _perItems.map((it, i) => `<div class="item-row">
-    <div class="item-row-label"><span>${it.barang}</span><span class="default-badge">${it.jumlah}${it.satuan ? ' ' + it.satuan : ''}</span></div>
-    <button class="btn sm danger" data-i="${i}" data-action="del-per-item"><i class="ti ti-trash"></i></button>
-  </div>`).join('')
+  box.innerHTML = `<div class="table-wrap"><table>
+    <thead><tr><th>Nama Barang</th><th style="text-align:right">Diminta</th><th>Satuan</th><th>Status Pemenuhan</th><th style="text-align:right">Dipenuhi</th><th>Catatan</th><th></th></tr></thead>
+    <tbody>${_perItems.map((it, i) => {
+      const st = it.status || 'penuh'
+      const jml = +(it.jumlah || 0)
+      const penuhi = it.jumlah_penuhi != null ? it.jumlah_penuhi : (st === 'tidak' ? 0 : jml)
+      return `<tr>
+      <td>${it.barang}</td>
+      <td style="text-align:right">${jml}</td>
+      <td>${it.satuan || '-'}</td>
+      <td><select class="input-sm per-status" data-i="${i}" onchange="onPerStatus(this)">
+        <option value="penuh"${st === 'penuh' ? ' selected' : ''}>Terpenuhi</option>
+        <option value="sebagian"${st === 'sebagian' ? ' selected' : ''}>Dipenuhi sebagian</option>
+        <option value="tidak"${st === 'tidak' ? ' selected' : ''}>Tidak terpenuhi</option>
+      </select></td>
+      <td style="text-align:right"><input type="number" class="input-sm per-penuhi" data-i="${i}" value="${penuhi}" min="0" max="${jml}" ${st === 'sebagian' ? '' : 'disabled'} style="width:78px;text-align:right"></td>
+      <td><input type="text" class="input-sm per-iket" data-i="${i}" value="${(it.ket || '').replace(/"/g, '&quot;')}" placeholder="mis. stok kosong" style="width:150px"></td>
+      <td><button class="btn sm danger" data-i="${i}" data-action="del-per-item"><i class="ti ti-trash"></i></button></td>
+    </tr>`
+    }).join('')}</tbody></table></div>`
+}
+
+function onPerStatus(sel) {
+  const i = sel.dataset.i
+  const inp = document.querySelector(`.per-penuhi[data-i="${i}"]`)
+  const max = +(_perItems[i]?.jumlah || 0)
+  if (sel.value === 'sebagian') { inp.disabled = false; if (!+inp.value || +inp.value >= max) inp.value = Math.max(0, max - 1) }
+  else if (sel.value === 'tidak') { inp.disabled = true; inp.value = 0 }
+  else { inp.disabled = true; inp.value = max }
+}
+
+// Simpan isian status/jumlah/catatan dari DOM ke _perItems sebelum render ulang
+function syncPerItemsFromDOM() {
+  _perItems.forEach((it, i) => {
+    const s = document.querySelector(`.per-status[data-i="${i}"]`)
+    const p = document.querySelector(`.per-penuhi[data-i="${i}"]`)
+    const k = document.querySelector(`.per-iket[data-i="${i}"]`)
+    if (s) it.status = s.value
+    if (p) it.jumlah_penuhi = +(p.value || 0)
+    if (k) it.ket = k.value.trim()
+  })
 }
 
 qs('per-add-btn').addEventListener('click', () => {
   const barang = qs('per-barang').value.trim()
   if (!barang) { toast('Nama barang wajib diisi', 'error'); return }
-  _perItems.push({ barang, jumlah: qs('per-jumlah').value.trim(), satuan: qs('per-satuan').value.trim() })
+  syncPerItemsFromDOM()
+  const jumlah = +(qs('per-jumlah').value || 0)
+  _perItems.push({ barang, jumlah, satuan: qs('per-satuan').value.trim(), status: 'penuh', jumlah_penuhi: jumlah, ket: '' })
   ;['per-barang', 'per-jumlah', 'per-satuan'].forEach(id => qs(id).value = '')
   renderPerItemsList()
   qs('per-barang').focus()
@@ -1165,6 +1210,7 @@ qs('per-add-btn').addEventListener('click', () => {
 
 document.addEventListener('click', e => {
   const b = e.target.closest('[data-action="del-per-item"]'); if (!b) return
+  syncPerItemsFromDOM()
   _perItems.splice(+b.dataset.i, 1)
   renderPerItemsList()
 })
@@ -1172,15 +1218,20 @@ document.addEventListener('click', e => {
 async function renderPermintaanTable() {
   _perData = await API.getPermintaan()
   const tbody = qs('per-tbody')
-  if (!_perData.length) { tbody.innerHTML = '<tr><td colspan="6"><div class="empty"><i class="ti ti-clipboard-list"></i>Belum ada permintaan</div></td></tr>'; return }
+  if (!_perData.length) { tbody.innerHTML = '<tr><td colspan="7"><div class="empty"><i class="ti ti-clipboard-list"></i>Belum ada permintaan</div></td></tr>'; return }
+  const tmap = Object.fromEntries((STATE.tujuan || []).map(t => [t.id, t.label]))
+  const lab = id => tmap[id] || id || '-'
   tbody.innerHTML = _perData.map(d => {
     const items = d.items || []
     const ringkas = items.slice(0, 3).map(it => it.barang).join(', ') + (items.length > 3 ? `, +${items.length - 3} lagi` : '')
+    const st = d.status_pemenuhan || 'penuh'
+    const nPenuhi = items.filter(it => it.status !== 'tidak').length
     return `<tr>
       <td>${d.tgl}${d.dibuat_oleh ? `<div style="font-size:11px;color:var(--tx3)">oleh ${d.dibuat_oleh}</div>` : ''}</td>
       <td>${d.no ? `<span class="badge gray">${d.no}</span>` : '-'}</td>
-      <td>${d.tujuan || '-'}</td>
+      <td style="font-size:12px">${lab(d.dari)}<div style="color:var(--tx2)">&rarr; ${lab(d.tujuan)}</div></td>
       <td>${items.length} item<div style="font-size:11px;color:var(--tx2)">${ringkas}</div></td>
+      <td><span class="badge ${PER_STATUS_BADGE[st] || 'gray'}">${PER_STATUS_TEKS[st] || st}</span>${st === 'sebagian' ? `<div style="font-size:11px;color:var(--tx2)">${nPenuhi} dari ${items.length} item</div>` : ''}${d.nilai ? `<div style="font-size:11px;color:var(--tx2)">${fmt(d.nilai)}</div>` : ''}</td>
       <td style="font-size:12px">${d.diserahkan_oleh || '-'} / ${d.diterima_oleh || '-'}</td>
       <td style="white-space:nowrap">
         <button class="btn excel sm" data-id="${d.id}" data-action="dl-st" title="Download Serah Terima"><i class="ti ti-download"></i></button>
@@ -1192,23 +1243,26 @@ async function renderPermintaanTable() {
 }
 
 qs('per-save-btn').addEventListener('click', async () => {
-  const tujuan = qs('per-tujuan').value
-  if (!tujuan) { toast('Unit/ruangan wajib dipilih', 'error'); return }
+  const dari = qs('per-dari').value, tujuan = qs('per-tujuan').value
+  if (!dari || !tujuan) { toast('Ruangan asal dan tujuan wajib dipilih', 'error'); return }
+  if (dari === tujuan) { toast('Ruangan asal dan tujuan tidak boleh sama', 'error'); return }
   if (!_perItems.length) { toast('Tambahkan minimal 1 barang ke daftar', 'error'); return }
+  syncPerItemsFromDOM()
   showLoading(true)
   try {
     const payload = {
-      tgl: qs('per-tgl').value || today(), no: qs('per-no').value.trim(), tujuan,
-      items: _perItems, ket: qs('per-ket').value.trim(),
+      tgl: qs('per-tgl').value || today(), no: qs('per-no').value.trim(), dari, tujuan,
+      items: _perItems, ket: qs('per-ket').value.trim(), nilai: +(qs('per-nilai').value || 0),
       diserahkan_oleh: qs('per-serah').value.trim(), diterima_oleh: qs('per-terima').value.trim()
     }
     if (_editPer) { await API.updatePermintaan(_editPer, payload); _editPer = null; qs('per-save-btn').innerHTML = '<i class="ti ti-device-floppy"></i>Simpan Permintaan' }
     else { await API.savePermintaan(payload) }
     _perItems = []
-    ;['per-no', 'per-terima', 'per-ket'].forEach(id => qs(id).value = '')
+    ;['per-no', 'per-terima', 'per-ket', 'per-nilai'].forEach(id => qs(id).value = '')
     renderPerItemsList()
     await renderPermintaanTable()
-    toast('Permintaan disimpan')
+    buildMutasiTabs(STATE.tujuan || [], await API.getMutasi())   // mutasi otomatis ikut ter-refresh
+    toast('Serah terima disimpan & tercatat di Mutasi')
   } catch (e) { toast(e.message, 'error') } finally { showLoading(false) }
 })
 
@@ -1224,25 +1278,29 @@ document.addEventListener('click', e => {
   _editPer = d.id
   qs('per-tgl').value = d.tgl || ''
   qs('per-no').value = d.no || ''
+  qs('per-dari').value = d.dari || ''
   qs('per-tujuan').value = d.tujuan || ''
+  qs('per-nilai').value = d.nilai || ''
   qs('per-serah').value = d.diserahkan_oleh || ''
   qs('per-terima').value = d.diterima_oleh || ''
   qs('per-ket').value = d.ket || ''
   _perItems = (d.items || []).map(it => ({ ...it }))
   renderPerItemsList()
-  qs('per-save-btn').innerHTML = '<i class="ti ti-pencil"></i>Update Permintaan'
+  qs('per-save-btn').innerHTML = '<i class="ti ti-pencil"></i>Update Serah Terima'
   qs('per-tgl').scrollIntoView({ behavior: 'smooth', block: 'center' })
 })
 
 document.addEventListener('click', async e => {
   if (e.target.closest('[data-action="del-per"]')) {
-    if (!confirm2('Hapus permintaan ini?')) return
+    if (!confirm2('Hapus serah terima ini? Catatan mutasi otomatisnya ikut terhapus.')) return
     const id = e.target.closest('[data-id]').dataset.id
     showLoading(true)
     try {
       await API.delPermintaan(id)
       if (String(_editPer) === String(id)) { _editPer = null; _perItems = []; renderPerItemsList(); qs('per-save-btn').innerHTML = '<i class="ti ti-device-floppy"></i>Simpan Permintaan' }
-      await renderPermintaanTable(); toast('Dihapus')
+      await renderPermintaanTable()
+      buildMutasiTabs(STATE.tujuan || [], await API.getMutasi())
+      toast('Dihapus')
     } catch (err) { toast(err.message, 'error') } finally { showLoading(false) }
   }
 })

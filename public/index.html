@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
   <title>Catatan Harian Farmasi</title>
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@3.0.0/dist/tabler-icons.min.css">
-  <link rel="stylesheet" href="css/style.css?v=20260722">
+  <link rel="stylesheet" href="css/style.css?v=20261006">
 </head>
 <body>
 
@@ -325,7 +325,7 @@
     <section class="page" id="page-mutasi">
       <div class="card potab-bar" style="padding:8px">
         <button class="btn sm primary" data-muttab="mutasi"><i class="ti ti-transfer"></i>Mutasi Stok</button>
-        <button class="btn sm" data-muttab="permintaan"><i class="ti ti-clipboard-list"></i>Permintaan &amp; Serah Terima</button>
+        <button class="btn sm" data-muttab="permintaan"><i class="ti ti-clipboard-list"></i>Permintaan Antar Ruangan</button>
       </div>
 
       <div id="muttab-mutasi">
@@ -364,11 +364,15 @@
 
       <div id="muttab-permintaan" style="display:none">
       <div class="card">
-        <div class="section-title">Form Permintaan Barang</div>
+        <div class="section-title">Form Permintaan Barang Antar Ruangan</div>
         <div class="form-row triple">
           <div class="form-group"><label>Tanggal</label><input type="date" id="per-tgl"></div>
-          <div class="form-group"><label>No. Permintaan</label><input type="text" id="per-no" placeholder="PMT-001"></div>
-          <div class="form-group"><label>Unit / Ruangan</label><select id="per-tujuan"></select></div>
+          <div class="form-group"><label>No. Serah Terima</label><input type="text" id="per-no" placeholder="ST-001"></div>
+          <div class="form-group"><label>Nilai Barang (Rp) — opsional</label><input type="number" id="per-nilai" placeholder="0"></div>
+        </div>
+        <div class="form-row">
+          <div class="form-group"><label>Dari Ruangan (menyerahkan)</label><select id="per-dari"></select></div>
+          <div class="form-group"><label>Ke Ruangan (meminta)</label><select id="per-tujuan"></select></div>
         </div>
         <div class="divider"></div>
         <div class="form-section-label">Daftar Barang yang Diminta</div>
@@ -377,23 +381,23 @@
             <input type="text" id="per-barang" list="per-barang-list" placeholder="Pilih atau ketik nama barang..." autocomplete="off">
             <datalist id="per-barang-list"></datalist>
           </div>
-          <div class="form-group"><label>Jumlah</label><input type="text" id="per-jumlah" placeholder="mis. 10"></div>
+          <div class="form-group"><label>Jumlah Diminta</label><input type="number" id="per-jumlah" placeholder="mis. 10" min="0"></div>
           <div class="form-group"><label>Satuan</label><input type="text" id="per-satuan" placeholder="box / vial / pcs"></div>
         </div>
         <button class="btn" id="per-add-btn" type="button"><i class="ti ti-plus"></i>Tambah ke Daftar</button>
         <div id="per-items-list" style="margin:10px 0"></div>
         <div class="divider"></div>
         <div class="form-row triple">
-          <div class="form-group"><label>Yang Menyerahkan</label><input type="text" id="per-serah" placeholder="Petugas farmasi"></div>
-          <div class="form-group"><label>Yang Menerima</label><input type="text" id="per-terima" placeholder="Petugas unit/ruangan"></div>
+          <div class="form-group"><label>Yang Menyerahkan</label><input type="text" id="per-serah" placeholder="Petugas ruangan asal"></div>
+          <div class="form-group"><label>Yang Menerima</label><input type="text" id="per-terima" placeholder="Petugas ruangan tujuan"></div>
           <div class="form-group"><label>Keterangan</label><input type="text" id="per-ket" placeholder="Catatan (opsional)"></div>
         </div>
         <button class="btn primary" id="per-save-btn"><i class="ti ti-device-floppy"></i>Simpan Permintaan</button>
       </div>
       <div class="card">
-        <div class="section-title">Daftar Permintaan &amp; Serah Terima</div>
+        <div class="section-title">Daftar Permintaan &amp; Serah Terima Antar Ruangan</div>
         <div class="table-wrap">
-          <table><thead><tr><th>Tanggal</th><th>No</th><th>Unit / Ruangan</th><th>Barang</th><th>Serah / Terima</th><th></th></tr></thead>
+          <table><thead><tr><th>Tanggal</th><th>No</th><th>Dari &rarr; Ke</th><th>Barang</th><th>Status</th><th>Serah / Terima</th><th></th></tr></thead>
           <tbody id="per-tbody"></tbody></table>
         </div>
       </div>
@@ -875,8 +879,8 @@
 <div id="toast"></div>
 <div id="loading-overlay"><div class="spinner"></div></div>
 
-<script src="js/api.js?v=20260722"></script>
-<script src="js/app.js?v=20260722"></script>
+<script src="js/api.js?v=20261006"></script>
+<script src="js/app.js?v=20261006"></script>
 
 </body>
 </html>
